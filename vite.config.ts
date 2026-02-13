@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -12,11 +11,7 @@ export default defineConfig({
     port: 3000
   },
   define: {
-    // This shims the entire process.env object more robustly
-    'process.env': {
-      API_KEY: JSON.stringify(process.env.API_KEY || '').replace(/"/g, '') 
-    },
-    // Also explicitly replace the string to catch library internal usage
+    // Inject the API key as a literal string in the bundled code
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY || '')
   }
 });
