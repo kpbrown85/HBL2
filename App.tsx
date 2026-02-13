@@ -43,8 +43,21 @@ import {
   Edit3,
   Home,
   Monitor,
-  Check
+  Check,
+  AlertTriangle
 } from 'lucide-react';
+
+// Safety wrapper for localStorage to prevent site crashes on quota errors
+const safeSave = (key: string, data: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {
+    console.error(`Storage failed for ${key}:`, e);
+    if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+      alert("Error: Image is too large to save! Try a smaller photo or a lower resolution.");
+    }
+  }
+};
 
 const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -61,7 +74,7 @@ const App: React.FC = () => {
   const [passwordInput, setPasswordInput] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
 
-  // Branding State
+  // Branding State - Robust Initialization
   const defaultBranding = {
     siteName: "Helena Backcountry Llamas",
     accentName: "Llamas",
@@ -72,30 +85,41 @@ const App: React.FC = () => {
   };
 
   const [branding, setBranding] = useState(() => {
-    const saved = localStorage.getItem('hbl_branding');
-    return saved ? JSON.parse(saved) : defaultBranding;
+    try {
+      const saved = localStorage.getItem('hbl_branding');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed || defaultBranding;
+    } catch {
+      return defaultBranding;
+    }
   });
 
-  // Fleet Management State
+  // Fleet Management State - Robust Initialization
   const [llamas, setLlamas] = useState<Llama[]>(() => {
-    const saved = localStorage.getItem('hbl_llamas');
-    return saved ? JSON.parse(saved) : LLAMAS;
+    try {
+      const saved = localStorage.getItem('hbl_llamas');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : LLAMAS;
+    } catch {
+      return LLAMAS;
+    }
   });
 
-  // Gallery Management
+  // Gallery Management - Robust Initialization
   const [gallery, setGallery] = useState<GalleryImage[]>(() => {
-    const saved = localStorage.getItem('hbl_gallery');
-    return saved ? JSON.parse(saved) : GALLERY_IMAGES;
+    try {
+      const saved = localStorage.getItem('hbl_gallery');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : GALLERY_IMAGES;
+    } catch {
+      return GALLERY_IMAGES;
+    }
   });
   
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [localPreviews, setLocalPreviews] = useState<string[]>([]);
-  
-  // Reordering state
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -110,17 +134,18 @@ const App: React.FC = () => {
     });
   }, []);
 
+  // Use the safety wrapper for all persistence effects
   useEffect(() => {
-    localStorage.setItem('hbl_gallery', JSON.stringify(gallery));
+    safeSave('hbl_gallery', gallery);
   }, [gallery]);
 
   useEffect(() => {
-    localStorage.setItem('hbl_branding', JSON.stringify(branding));
-    document.title = branding.siteName;
+    safeSave('hbl_branding', branding);
+    document.title = branding?.siteName || "Helena Backcountry Llamas";
   }, [branding]);
 
   useEffect(() => {
-    localStorage.setItem('hbl_llamas', JSON.stringify(llamas));
+    safeSave('hbl_llamas', llamas);
   }, [llamas]);
 
   const openAdminTab = (tab: typeof adminTab) => {
@@ -146,7 +171,7 @@ const App: React.FC = () => {
     <a 
       href={href} 
       onClick={(e) => scrollToSection(e, id)} 
-      className="text-sm font-bold text-stone-600 hover:text-green-800 transition-colors uppercase tracking-widest block md:inline"
+      className="text-sm font-black text-stone-600 hover:text-green-800 transition-colors uppercase tracking-widest block md:inline"
     >
       {children}
     </a>
@@ -193,6 +218,11 @@ const App: React.FC = () => {
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>, target: 'logo' | 'hero' | 'guide' | 'llama') => {
     const file = e.target.files?.[0];
     if (file && isAdmin) {
+      // Basic size check (approx 2MB for safe base64 encoding in localStorage)
+      if (file.size > 2 * 1024 * 1024) {
+        if (!confirm("This photo is quite large. Large photos can sometimes cause the site to run slowly. Proceed?")) return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
@@ -227,11 +257,21 @@ const App: React.FC = () => {
   const handleConfirmUpload = async () => {
     if (localPreviews.length === 0 || !isAdmin) return;
     setIsUploadingFile(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Artificially delay slightly for UX feel
+    await new Promise(resolve => setTimeout(resolve, 500));
     const newImages: GalleryImage[] = localPreviews.map(url => ({
       url,
       caption: `Bulk Upload ${new Date().toLocaleDateString()}`
     }));
+    
+    // Check if adding these will likely exceed quota
+    const totalEstimate = JSON.stringify([...newImages, ...gallery]).length;
+    if (totalEstimate > 4 * 1024 * 1024) {
+      alert("You are trying to upload too many high-resolution photos at once. Try uploading fewer images.");
+      setIsUploadingFile(false);
+      return;
+    }
+
     setGallery([...newImages, ...gallery]);
     setLocalPreviews([]);
     setIsUploadingFile(false);
@@ -244,31 +284,6 @@ const App: React.FC = () => {
       updatedGallery.splice(index, 1);
       setGallery(updatedGallery);
     }
-  };
-
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index);
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedIndex !== null && draggedIndex !== index) {
-      setDropTargetIndex(index);
-    }
-  };
-
-  const handleDragLeave = () => {
-    setDropTargetIndex(null);
-  };
-
-  const handleDrop = (index: number) => {
-    if (draggedIndex === null || !isAdmin) return;
-    const items = [...gallery];
-    const [reorderedItem] = items.splice(draggedIndex, 1);
-    items.splice(index, 0, reorderedItem);
-    setGallery(items);
-    setDraggedIndex(null);
-    setDropTargetIndex(null);
   };
 
   const copyConfig = (data: any) => {
@@ -286,29 +301,31 @@ const App: React.FC = () => {
   };
 
   const Logo = ({ light = false }: { light?: boolean }) => {
-    const siteTitle = branding.siteName;
-    const accent = branding.accentName;
+    const siteTitle = branding?.siteName || defaultBranding.siteName;
+    const accent = branding?.accentName || defaultBranding.accentName;
+    
+    // Safe splitting
     const parts = siteTitle.split(accent);
     
     return (
       <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-        {branding.logoType === 'icon' ? (
+        {branding?.logoType === 'icon' ? (
           <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg`}>
             <Mountain className="w-6 h-6" />
           </div>
         ) : (
           <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-stone-100 bg-white flex items-center justify-center">
-            {branding.logoUrl ? (
+            {branding?.logoUrl ? (
               <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
             ) : (
               <ImageIcon className="text-stone-300 w-5 h-5" />
             )}
           </div>
         )}
-        <span className={`text-xl font-bold tracking-tight ${light ? 'text-white' : 'text-stone-900'}`}>
+        <span className={`text-xl font-black tracking-tight ${light ? 'text-white' : 'text-stone-900'}`}>
           {parts[0]}
           {accent && <span className={`${light ? 'text-green-400' : 'text-green-800'} italic`}>{accent}</span>}
-          {parts[1]}
+          {parts.slice(1).join(accent)}
         </span>
       </div>
     );
@@ -331,7 +348,7 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-300">
             <div className="flex justify-between items-center mb-8">
-              <h3 className="text-3xl font-black text-stone-900">Admin Login</h3>
+              <h3 className="text-3xl font-black text-stone-900 leading-tight">Admin Login</h3>
               <button onClick={() => setShowAdminLogin(false)} className="p-2 hover:bg-stone-100 rounded-full">
                 <X />
               </button>
@@ -348,7 +365,7 @@ const App: React.FC = () => {
                   autoFocus
                 />
               </div>
-              <button type="submit" className="w-full bg-green-800 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-green-900 shadow-xl">
+              <button type="submit" className="w-full bg-green-800 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-green-900 shadow-xl">
                 <LogIn className="w-5 h-5" /> Access Management
               </button>
             </form>
@@ -364,7 +381,7 @@ const App: React.FC = () => {
           <header className="bg-white border-b border-stone-200 px-4 md:px-12 py-6 flex items-center justify-between shrink-0 z-20">
             <div className="flex items-center gap-4">
                <div className="w-10 h-10 bg-green-800 text-white rounded-xl flex items-center justify-center shadow-lg"><Settings className="w-5 h-5" /></div>
-               <div className="hidden sm:block">
+               <div className="hidden sm:block text-left">
                  <h2 className="text-xl font-black text-stone-900 leading-none">Management Console</h2>
                  <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mt-1">Live Website Editor</p>
                </div>
@@ -407,20 +424,20 @@ const App: React.FC = () => {
                    <div className="space-y-10 text-left">
                      <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-stone-200 space-y-8">
                         <div>
-                          <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">Company Display Name</label>
+                          <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 text-left">Company Display Name</label>
                           <input 
                             type="text"
-                            className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-800/5 focus:border-green-800 font-bold text-lg"
-                            value={branding.siteName}
+                            className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-800/5 focus:border-green-800 font-black text-lg"
+                            value={branding?.siteName || ""}
                             onChange={(e) => setBranding({...branding, siteName: e.target.value})}
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">Accent Styled Word</label>
+                          <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 text-left">Accent Styled Word</label>
                           <input 
                             type="text"
-                            className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-800/5 focus:border-green-800 font-bold italic text-green-700"
-                            value={branding.accentName}
+                            className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-800/5 focus:border-green-800 font-black italic text-green-700"
+                            value={branding?.accentName || ""}
                             onChange={(e) => setBranding({...branding, accentName: e.target.value})}
                           />
                         </div>
@@ -430,9 +447,9 @@ const App: React.FC = () => {
                         <h4 className="text-sm font-black uppercase tracking-widest text-stone-900 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-green-800" /> Key Section Assets</h4>
                         <div className="grid grid-cols-2 gap-6">
                            <div className="space-y-3">
-                              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Main Hero Background</label>
+                              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest text-left block">Main Hero Background</label>
                               <button onClick={() => heroInputRef.current?.click()} className="w-full aspect-square bg-stone-100 rounded-2xl overflow-hidden border-2 border-dashed border-stone-200 group relative">
-                                {branding.heroImageUrl ? <img src={branding.heroImageUrl} className="w-full h-full object-cover" /> : <Camera className="w-6 h-6 text-stone-300" />}
+                                {branding?.heroImageUrl ? <img src={branding.heroImageUrl} className="w-full h-full object-cover" /> : <Camera className="w-6 h-6 text-stone-300" />}
                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-black uppercase">
                                   <Upload className="w-5 h-5 mb-1" /> Swap Image
                                 </div>
@@ -440,9 +457,9 @@ const App: React.FC = () => {
                               <input type="file" ref={heroInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'hero')} />
                            </div>
                            <div className="space-y-3">
-                              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Guide Profile Photo</label>
+                              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest text-left block">Guide Profile Photo</label>
                               <button onClick={() => guideInputRef.current?.click()} className="w-full aspect-square bg-stone-100 rounded-2xl overflow-hidden border-2 border-dashed border-stone-200 group relative">
-                                {branding.guideImageUrl ? <img src={branding.guideImageUrl} className="w-full h-full object-cover" /> : <Camera className="w-6 h-6 text-stone-300" />}
+                                {branding?.guideImageUrl ? <img src={branding.guideImageUrl} className="w-full h-full object-cover" /> : <Camera className="w-6 h-6 text-stone-300" />}
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-black uppercase">
                                   <Upload className="w-5 h-5 mb-1" /> Swap Image
                                 </div>
@@ -463,11 +480,15 @@ const App: React.FC = () => {
                         <div className="p-8 border border-black/5 rounded-[2rem] bg-white flex justify-center">
                           <Logo />
                         </div>
-                        <div className="pt-8 border-t border-white/10 space-y-4">
+                        <div className="pt-8 border-t border-white/10 space-y-4 text-left">
                            <h5 className="font-bold text-lg">Visual Status</h5>
                            <div className="flex flex-wrap gap-2">
                               <div className="bg-green-500/20 text-green-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-2"><Check className="w-3 h-3" /> Brand Synced</div>
                               <div className="bg-white/10 text-white/60 px-4 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-2"><Monitor className="w-3 h-3" /> Responsive Ready</div>
+                           </div>
+                           <div className="mt-4 p-4 bg-amber-900/20 border border-amber-900/30 rounded-2xl flex items-start gap-3">
+                             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                             <p className="text-[10px] text-amber-200 leading-relaxed font-medium">To prevent app crashes, please use photos under 2MB. Your browser has a storage limit of 5MB total.</p>
                            </div>
                         </div>
                      </div>
@@ -532,7 +553,7 @@ const App: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                            <div>
-                              <label className="block text-[10px] font-black uppercase text-stone-400 mb-2">Primary Role</label>
+                              <label className="block text-[10px] font-black uppercase text-stone-400 mb-2 text-left">Primary Role</label>
                               <select 
                                 className="w-full bg-stone-50 border border-stone-100 p-2 rounded-xl text-xs font-bold"
                                 value={llama.specialty}
@@ -545,7 +566,7 @@ const App: React.FC = () => {
                               </select>
                            </div>
                            <div>
-                              <label className="block text-[10px] font-black uppercase text-stone-400 mb-2">Max Capacity</label>
+                              <label className="block text-[10px] font-black uppercase text-stone-400 mb-2 text-left">Max Capacity</label>
                               <div className="flex items-center gap-2 bg-stone-50 px-3 py-2 rounded-xl border border-stone-100">
                                 <input 
                                   type="number" 
@@ -601,7 +622,7 @@ const App: React.FC = () => {
                    </div>
                    <div className="flex w-full lg:w-auto gap-4">
                       <input 
-                        className="flex-1 lg:w-72 bg-white/10 border border-white/20 px-6 py-4 rounded-2xl outline-none placeholder:text-white/30 font-bold"
+                        className="flex-1 lg:w-72 bg-white/10 border border-white/20 px-6 py-4 rounded-2xl outline-none placeholder:text-white/30 font-black"
                         placeholder="Glacial peaks at sunrise..."
                         value={aiPrompt}
                         onChange={(e) => setAiPrompt(e.target.value)}
@@ -668,7 +689,7 @@ const App: React.FC = () => {
           {/* Staging Bar (Floating at bottom if images pending) */}
           {localPreviews.length > 0 && (
             <div className="fixed bottom-24 sm:bottom-12 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl bg-stone-900 text-white p-6 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex items-center justify-between z-50 animate-in slide-in-from-bottom-10">
-               <div className="flex items-center gap-4">
+               <div className="flex items-center gap-4 text-left">
                   <div className="flex -space-x-4">
                      {localPreviews.slice(0, 3).map((p, i) => (
                         <div key={i} className="w-10 h-10 rounded-full border-2 border-stone-900 overflow-hidden bg-stone-700">
@@ -729,7 +750,7 @@ const App: React.FC = () => {
               <NavLink href="#gallery" id="gallery">Gallery</NavLink>
               <NavLink href="#reviews" id="reviews">Reviews</NavLink>
               <NavLink href="#faq" id="faq">Guide FAQ</NavLink>
-              <a href="#booking" onClick={(e) => scrollToSection(e, 'booking')} className="bg-green-800 text-white px-7 py-3 rounded-full font-bold hover:bg-green-900 transition-all flex items-center gap-2 shadow-lg shadow-green-800/30 active:scale-95">
+              <a href="#booking" onClick={(e) => scrollToSection(e, 'booking')} className="bg-green-800 text-white px-7 py-3 rounded-full font-black hover:bg-green-900 transition-all flex items-center gap-2 shadow-lg shadow-green-800/30 active:scale-95">
                 Book Your Trek <ChevronRight className="w-4 h-4" />
               </a>
             </div>
@@ -746,7 +767,7 @@ const App: React.FC = () => {
             <NavLink href="#gallery" id="gallery">Gallery</NavLink>
             <NavLink href="#reviews" id="reviews">Reviews</NavLink>
             <NavLink href="#faq" id="faq">Guide FAQ</NavLink>
-            <a href="#booking" onClick={(e) => scrollToSection(e, 'booking')} className="block w-full text-center bg-green-800 text-white py-4 rounded-2xl font-bold">Book Your Trek</a>
+            <a href="#booking" onClick={(e) => scrollToSection(e, 'booking')} className="block w-full text-center bg-green-800 text-white py-4 rounded-2xl font-black">Book Your Trek</a>
           </div>
         )}
       </nav>
@@ -754,7 +775,7 @@ const App: React.FC = () => {
       {/* Hero Section */}
       <section className="relative h-[95vh] flex items-center justify-center overflow-hidden text-left md:text-center group">
         <div className="absolute inset-0 z-0">
-          <img src={branding.heroImageUrl} alt="Montana Peaks" className="w-full h-full object-cover brightness-[0.4] scale-105" />
+          <img src={branding?.heroImageUrl || defaultBranding.heroImageUrl} alt="Montana Peaks" className="w-full h-full object-cover brightness-[0.4] scale-105" />
           <div className="absolute inset-0 bg-gradient-to-b from-stone-900/50 via-transparent to-stone-900/80"></div>
         </div>
         
@@ -770,11 +791,11 @@ const App: React.FC = () => {
         )}
 
         <div className="relative z-10 max-w-5xl mx-auto px-4">
-          <h1 className="text-6xl md:text-8xl font-bold text-white mb-8 leading-[1.1]">Elevate the Trek. <br /><span className="italic text-green-400 font-light">Unload the Journey.</span></h1>
+          <h1 className="text-6xl md:text-8xl font-black text-white mb-8 leading-[1.1]">Elevate the Trek. <br /><span className="italic text-green-400 font-light">Unload the Journey.</span></h1>
           <p className="text-xl md:text-2xl text-stone-200 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">{slogan}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <a href="#booking" onClick={(e) => scrollToSection(e, 'booking')} className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-12 py-5 rounded-full text-lg font-black transition-all shadow-2xl shadow-green-900/40 active:scale-95">Plan Your Adventure</a>
-            <a href="#about" onClick={(e) => scrollToSection(e, 'about')} className="w-full sm:w-auto bg-white/10 backdrop-blur-md border border-white/30 hover:bg-white/20 text-white px-12 py-5 rounded-full text-lg font-bold transition-all">Meet the Crew</a>
+            <a href="#about" onClick={(e) => scrollToSection(e, 'about')} className="w-full sm:w-auto bg-white/10 backdrop-blur-md border border-white/30 hover:bg-white/20 text-white px-12 py-5 rounded-full text-lg font-black transition-all">Meet the Crew</a>
           </div>
         </div>
       </section>
@@ -810,7 +831,7 @@ const App: React.FC = () => {
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-8 group-hover:bg-green-800 transition-all duration-500">
                   <div className="group-hover:text-white transition-colors duration-500">{benefit.icon}</div>
                 </div>
-                <h3 className="text-2xl font-bold text-stone-900 mb-4">{benefit.title}</h3>
+                <h3 className="text-2xl font-black text-stone-900 mb-4">{benefit.title}</h3>
                 <p className="text-stone-600 leading-relaxed text-lg">{benefit.description}</p>
               </div>
             ))}
@@ -879,9 +900,9 @@ const App: React.FC = () => {
                 <img src={img.url} alt={img.caption} loading="lazy" className="w-full h-auto object-cover transition-transform group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-transparent opacity-0 group-hover:opacity-100 transition-all flex items-end p-8">
                   <div className="flex justify-between w-full items-end">
-                    <div>
-                      <p className="text-lg font-bold text-white mb-2">{img.caption}</p>
-                      <p className="text-[10px] text-green-400 font-bold uppercase tracking-widest flex items-center gap-2">
+                    <div className="text-left">
+                      <p className="text-lg font-black text-white mb-2">{img.caption}</p>
+                      <p className="text-[10px] text-green-400 font-black uppercase tracking-widest flex items-center gap-2">
                         <MapPin className="w-3 h-3" /> Montana High Country
                       </p>
                     </div>
@@ -911,17 +932,17 @@ const App: React.FC = () => {
                 <div className="inline-flex items-center gap-2 text-green-800 bg-green-100 px-5 py-2 rounded-full text-xs font-black uppercase tracking-[0.2em] mb-8"><MessageCircle className="w-4 h-4" /> Herd Wisdom</div>
                 <h2 className="text-5xl font-black text-stone-900 mb-8">Ask Our Head Guide</h2>
                 <form onSubmit={handleAdviceSubmit} className="relative mb-8 group">
-                  <input type="text" placeholder="e.g. Best weight distribution?" className="w-full bg-stone-50 border-2 border-stone-100 px-8 py-6 rounded-[2rem] outline-none focus:border-green-300 transition-all" value={adviceQuery} onChange={(e) => setAdviceQuery(e.target.value)} />
-                  <button disabled={isAdviceLoading} className="absolute right-3 top-3 bottom-3 bg-green-800 text-white px-10 rounded-[1.5rem] font-bold active:scale-95 disabled:opacity-50">
+                  <input type="text" placeholder="e.g. Best weight distribution?" className="w-full bg-stone-50 border-2 border-stone-100 px-8 py-6 rounded-[2rem] outline-none focus:border-green-300 transition-all font-black" value={adviceQuery} onChange={(e) => setAdviceQuery(e.target.value)} />
+                  <button disabled={isAdviceLoading} className="absolute right-3 top-3 bottom-3 bg-green-800 text-white px-10 rounded-[1.5rem] font-black active:scale-95 disabled:opacity-50">
                     {isAdviceLoading ? <Loader2 className="animate-spin" /> : <ArrowRight />}
                   </button>
                 </form>
-                {adviceResponse && <div className="p-8 bg-green-50 rounded-[2rem] border-2 border-green-100/50 animate-in slide-in-from-bottom-4"><p className="text-green-900 italic font-bold leading-relaxed">"{adviceResponse}"</p></div>}
+                {adviceResponse && <div className="p-8 bg-green-50 rounded-[2rem] border-2 border-green-100/50 animate-in slide-in-from-bottom-4"><p className="text-green-900 italic font-black leading-relaxed">"{adviceResponse}"</p></div>}
               </div>
               
               {/* Head Guide Photo Section */}
               <div className="w-full md:w-2/5 aspect-[4/5] rounded-[3rem] overflow-hidden bg-stone-100 shadow-2xl relative group">
-                <img src={branding.guideImageUrl} className="w-full h-full object-cover" />
+                <img src={branding?.guideImageUrl || defaultBranding.guideImageUrl} className="w-full h-full object-cover" />
                 {isAdmin && (
                   <button 
                     onClick={() => openAdminTab('branding')}
@@ -943,8 +964,8 @@ const App: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
             {FAQS.map((faq, i) => (
               <div key={i} className="bg-stone-50 rounded-[2.5rem] p-10 border border-stone-100 hover:border-green-100 transition-colors group">
-                <h3 className="text-2xl font-bold text-stone-900 mb-6 flex items-start gap-4 transition-colors group-hover:text-green-800"><span className="w-8 h-8 rounded-full bg-green-800 text-white flex-shrink-0 flex items-center justify-center text-xs">?</span>{faq.question}</h3>
-                <p className="text-stone-600 pl-12 leading-relaxed">{faq.answer}</p>
+                <h3 className="text-2xl font-black text-stone-900 mb-6 flex items-start gap-4 transition-colors group-hover:text-green-800"><span className="w-8 h-8 rounded-full bg-green-800 text-white flex-shrink-0 flex items-center justify-center text-xs">?</span>{faq.question}</h3>
+                <p className="text-stone-600 pl-12 leading-relaxed font-medium">{faq.answer}</p>
               </div>
             ))}
           </div>
@@ -966,14 +987,14 @@ const App: React.FC = () => {
               <div className="flex items-center gap-3 mb-10">
                 <Logo light />
               </div>
-              <p className="max-w-md mb-12 text-lg">Pioneering backcountry exploration in Helena, Montana since 2018.</p>
+              <p className="max-w-md mb-12 text-lg font-medium">Pioneering backcountry exploration in Helena, Montana since 2018.</p>
               <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${isAdmin ? 'bg-green-800 text-white rotate-0' : 'bg-stone-900 rotate-12 hover:rotate-0 shadow-lg shadow-black'}`}>
                 {isAdmin ? <Unlock /> : <Lock />}
               </button>
             </div>
           </div>
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8 font-bold text-xs uppercase tracking-widest">
-            <p>© {new Date().getFullYear()} {branding.siteName}.</p>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 font-black text-xs uppercase tracking-widest">
+            <p>© {new Date().getFullYear()} {branding?.siteName || defaultBranding.siteName}.</p>
             <div className="flex gap-8">
                <a href="#" className="hover:text-white transition-colors">Safety Protocols</a>
                <a href="#" className="hover:text-white transition-colors">Privacy</a>
