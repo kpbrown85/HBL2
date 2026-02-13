@@ -16,14 +16,14 @@ export async function getLlamaAdvice(question: string) {
         temperature: 0.7,
       }
     });
-    return response.text;
+    return response.text || "I'm sorry, I'm out grazing right now. Please try again later!";
   } catch (error) {
     console.error("Gemini Error:", error);
     return "I'm sorry, I'm out grazing right now. Please try again later!";
   }
 }
 
-export async function generateWelcomeSlogan() {
+export async function generateWelcomeSlogan(): Promise<string> {
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -33,7 +33,7 @@ export async function generateWelcomeSlogan() {
         temperature: 1,
       }
     });
-    return response.text;
+    return response.text || "The Ultimate Montana Backcountry Partner.";
   } catch {
     return "The Ultimate Montana Backcountry Partner.";
   }

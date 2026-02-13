@@ -38,7 +38,6 @@ import {
   ClipboardList,
   ArrowUpRight,
   ExternalLink,
-  // Fix: Import missing GraduationCap icon
   GraduationCap
 } from 'lucide-react';
 
@@ -89,7 +88,9 @@ const App: React.FC = () => {
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    generateWelcomeSlogan().then(setSlogan);
+    generateWelcomeSlogan().then(val => {
+      if (val) setSlogan(val);
+    });
   }, []);
 
   useEffect(() => {
@@ -115,7 +116,6 @@ const App: React.FC = () => {
     setIsMenuOpen(false);
   };
 
-  // Fix: Define NavLink component to handle navigation consistency and automatic menu closing
   const NavLink = ({ href, id, children }: { href: string; id: string; children: React.ReactNode }) => (
     <a 
       href={href} 
@@ -894,7 +894,7 @@ const App: React.FC = () => {
 
       <footer className="bg-stone-950 text-stone-500 py-32 relative text-left">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-20 border-b border-stone-800 pb-20 mb-20">
+          <div className="grid grid-cols-1 md:col-span-4 gap-20 border-b border-stone-800 pb-20 mb-20">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center gap-3 mb-10">
                 <Logo light />
