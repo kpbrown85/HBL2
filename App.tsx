@@ -33,7 +33,13 @@ import {
   Settings,
   RefreshCcw,
   Palette,
-  Eye
+  Eye,
+  LayoutDashboard,
+  ClipboardList,
+  ArrowUpRight,
+  ExternalLink,
+  // Fix: Import missing GraduationCap icon
+  GraduationCap
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -46,11 +52,12 @@ const App: React.FC = () => {
   // Admin State
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [showBrandingModal, setShowBrandingModal] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [adminTab, setAdminTab] = useState<'branding' | 'gallery' | 'bookings'>('branding');
   const [passwordInput, setPasswordInput] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
 
-  // Branding State & Persistence
+  // Branding State
   const defaultBranding = {
     siteName: "Helena Backcountry Llamas",
     accentName: "Llamas",
@@ -69,7 +76,6 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : GALLERY_IMAGES;
   });
   
-  const [isAddingImage, setIsAddingImage] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
@@ -109,6 +115,17 @@ const App: React.FC = () => {
     setIsMenuOpen(false);
   };
 
+  // Fix: Define NavLink component to handle navigation consistency and automatic menu closing
+  const NavLink = ({ href, id, children }: { href: string; id: string; children: React.ReactNode }) => (
+    <a 
+      href={href} 
+      onClick={(e) => scrollToSection(e, id)} 
+      className="text-sm font-bold text-stone-600 hover:text-green-800 transition-colors uppercase tracking-widest block md:inline"
+    >
+      {children}
+    </a>
+  );
+
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordInput === "llama123") {
@@ -140,7 +157,6 @@ const App: React.FC = () => {
       };
       setGallery([newImage, ...gallery]);
       setAiPrompt("");
-      setIsAddingImage(false);
     } catch (error) {
       alert("Failed to generate image. Please try again.");
     } finally {
@@ -182,12 +198,11 @@ const App: React.FC = () => {
     await new Promise(resolve => setTimeout(resolve, 800));
     const newImages: GalleryImage[] = localPreviews.map(url => ({
       url,
-      caption: `Trail Log: ${new Date().toLocaleDateString()}`
+      caption: `Bulk Upload ${new Date().toLocaleDateString()}`
     }));
     setGallery([...newImages, ...gallery]);
     setLocalPreviews([]);
     setIsUploadingFile(false);
-    setIsAddingImage(false);
   };
 
   const handleDeleteImage = (index: number) => {
@@ -199,7 +214,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Drag and Drop Logic for Reordering
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
   };
@@ -233,28 +247,11 @@ const App: React.FC = () => {
     });
   };
 
-  const resetGallery = () => {
-    if (confirm("Reset gallery to original defaults?")) {
-      setGallery(GALLERY_IMAGES);
-      localStorage.removeItem('hbl_gallery');
-    }
-  };
-
   const resetBranding = () => {
-    if (confirm("Restore original brand identity? This will reset the logo and site name.")) {
+    if (confirm("Restore original brand identity?")) {
       setBranding(defaultBranding);
     }
   };
-
-  const NavLink = ({ href, id, children }: { href: string, id: string, children: React.ReactNode }) => (
-    <a 
-      href={href} 
-      onClick={(e) => scrollToSection(e, id)}
-      className="text-stone-600 hover:text-green-700 font-medium transition-colors"
-    >
-      {children}
-    </a>
-  );
 
   const Logo = ({ light = false }: { light?: boolean }) => {
     const siteTitle = branding.siteName;
@@ -317,136 +314,368 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Enhanced Branding Manager Modal */}
-      {showBrandingModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
-          <div className="bg-white rounded-[3rem] p-10 md:p-14 max-w-3xl w-full shadow-2xl animate-in fade-in zoom-in slide-in-from-bottom-8 duration-500 overflow-y-auto max-h-[90vh] border border-stone-100">
-            <div className="flex justify-between items-start mb-10">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
-                  <Palette className="w-3 h-3" /> Visual Identity
-                </div>
-                <h3 className="text-4xl font-black text-stone-900">Branding Manager</h3>
-                <p className="text-stone-500 font-medium">Customize your brand presence across the entire site.</p>
-              </div>
-              <button onClick={() => setShowBrandingModal(false)} className="p-3 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-full transition-all">
-                <X />
-              </button>
-            </div>
-
-            <div className="space-y-12">
-              {/* Live Preview Section */}
-              <div className="relative group">
-                <div className="absolute -top-3 left-6 z-10 bg-white px-3 py-1 rounded-full border border-stone-100 shadow-sm flex items-center gap-2">
-                  <Eye className="w-3 h-3 text-green-600" />
-                  <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Real-time Preview</span>
-                </div>
-                <div className="bg-stone-50 rounded-[2.5rem] p-10 border-2 border-dashed border-stone-200 flex items-center justify-center">
-                   <div className="bg-white px-8 py-5 rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-100">
-                     <Logo />
-                   </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                {/* Text Customization */}
-                <div className="space-y-8">
-                  <h4 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100 pb-3">Company Identity</h4>
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Primary Site Name</label>
-                      <input 
-                        type="text"
-                        className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-700/5 focus:border-green-800 transition-all font-bold text-stone-900"
-                        placeholder="e.g. Helena Backcountry Llamas"
-                        value={branding.siteName}
-                        onChange={(e) => setBranding({ ...branding, siteName: e.target.value })}
-                      />
+      {/* COMPREHENSIVE ADMIN DASHBOARD OVERLAY */}
+      {showDashboard && isAdmin && (
+        <div className="fixed inset-0 z-[100] bg-stone-100/60 backdrop-blur-xl flex items-center justify-center p-0 md:p-8 animate-in fade-in duration-300">
+          <div className="bg-white w-full h-full md:rounded-[3.5rem] shadow-2xl flex flex-col overflow-hidden border border-white relative">
+            
+            {/* Sidebar / Topbar Container */}
+            <div className="flex flex-col md:flex-row h-full">
+              
+              {/* Sidebar */}
+              <aside className="w-full md:w-80 bg-stone-900 text-white p-8 flex flex-col justify-between shrink-0">
+                <div>
+                  <div className="flex items-center gap-3 mb-12">
+                    <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-stone-900">
+                      <LayoutDashboard className="w-6 h-6" />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Accent Word (The Styled Word)</label>
-                      <input 
-                        type="text"
-                        className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-700/5 focus:border-green-800 transition-all font-bold text-green-700 italic"
-                        placeholder="e.g. Llamas"
-                        value={branding.accentName}
-                        onChange={(e) => setBranding({ ...branding, accentName: e.target.value })}
-                      />
-                      <p className="mt-2 text-[10px] text-stone-400 font-medium italic">This word will automatically receive the brand highlight styling.</p>
+                      <h3 className="font-black text-xl tracking-tight leading-none">Management</h3>
+                      <p className="text-[10px] text-stone-500 font-bold uppercase tracking-widest mt-1">Admin Console</p>
                     </div>
                   </div>
+
+                  <nav className="space-y-2">
+                    <button 
+                      onClick={() => setAdminTab('branding')}
+                      className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all ${adminTab === 'branding' ? 'bg-white text-stone-900 shadow-xl shadow-black/20' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      <Palette className="w-5 h-5" /> Brand Identity
+                    </button>
+                    <button 
+                      onClick={() => setAdminTab('gallery')}
+                      className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all ${adminTab === 'gallery' ? 'bg-white text-stone-900 shadow-xl shadow-black/20' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      <ImageIcon className="w-5 h-5" /> Media Gallery
+                    </button>
+                    <button 
+                      onClick={() => setAdminTab('bookings')}
+                      className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all ${adminTab === 'bookings' ? 'bg-white text-stone-900 shadow-xl shadow-black/20' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      <ClipboardList className="w-5 h-5" /> Fleet Bookings
+                    </button>
+                  </nav>
                 </div>
 
-                {/* Logo Customization */}
-                <div className="space-y-8">
-                  <h4 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100 pb-3">Logo & Mark</h4>
-                  <div className="space-y-6">
-                    <div className="flex p-1 bg-stone-100 rounded-2xl gap-1">
-                      <button 
-                        onClick={() => setBranding({ ...branding, logoType: 'icon' })}
-                        className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${branding.logoType === 'icon' ? 'bg-white text-stone-900 shadow-md' : 'text-stone-400 hover:text-stone-600'}`}
-                      >
-                        <Mountain className="w-4 h-4" /> Preset Icon
-                      </button>
-                      <button 
-                        onClick={() => setBranding({ ...branding, logoType: 'image' })}
-                        className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${branding.logoType === 'image' ? 'bg-white text-stone-900 shadow-md' : 'text-stone-400 hover:text-stone-600'}`}
-                      >
-                        <ImageIcon className="w-4 h-4" /> Upload Custom
-                      </button>
+                <div className="space-y-4">
+                  <button 
+                    onClick={() => setShowDashboard(false)}
+                    className="w-full bg-white/10 hover:bg-white/20 px-6 py-4 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border border-white/5"
+                  >
+                    <Eye className="w-4 h-4" /> Exit Dashboard
+                  </button>
+                  <button 
+                    onClick={() => setIsAdmin(false)}
+                    className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 px-6 py-4 rounded-2xl font-bold text-sm transition-all border border-red-500/10"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </aside>
+
+              {/* Main Dashboard Content */}
+              <main className="flex-1 overflow-y-auto p-6 md:p-12 lg:p-16">
+                
+                {/* BRANDING TAB */}
+                {adminTab === 'branding' && (
+                  <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
+                    <header className="flex justify-between items-end border-b border-stone-100 pb-10">
+                      <div>
+                        <h2 className="text-4xl font-black text-stone-900 mb-2">Visual Identity</h2>
+                        <p className="text-stone-500 font-medium">Define your company's aesthetic presence across the platform.</p>
+                      </div>
+                      <div className="flex gap-4">
+                        <button onClick={resetBranding} className="p-3 hover:bg-stone-100 rounded-full text-stone-400" title="Reset to Defaults">
+                          <RefreshCcw className="w-6 h-6" />
+                        </button>
+                      </div>
+                    </header>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                      <div className="space-y-10">
+                        <div className="space-y-6">
+                          <div>
+                            <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Display Name</label>
+                            <input 
+                              type="text"
+                              className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-700/5 focus:border-green-800 transition-all font-bold"
+                              value={branding.siteName}
+                              onChange={(e) => setBranding({...branding, siteName: e.target.value})}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Accent Word (Styled)</label>
+                            <input 
+                              type="text"
+                              className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-700/5 focus:border-green-800 transition-all font-bold italic text-green-700"
+                              value={branding.accentName}
+                              onChange={(e) => setBranding({...branding, accentName: e.target.value})}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest">Logo Configuration</label>
+                          <div className="flex gap-4">
+                            <button 
+                              onClick={() => setBranding({...branding, logoType: 'icon'})}
+                              className={`flex-1 py-4 px-6 rounded-2xl border-2 font-bold flex flex-col items-center gap-2 transition-all ${branding.logoType === 'icon' ? 'border-green-800 bg-green-50 text-green-900' : 'border-stone-100 text-stone-400'}`}
+                            >
+                              <Mountain className="w-6 h-6" /> Preset Icon
+                            </button>
+                            <button 
+                              onClick={() => logoInputRef.current?.click()}
+                              className={`flex-1 py-4 px-6 rounded-2xl border-2 font-bold flex flex-col items-center gap-2 transition-all ${branding.logoType === 'image' ? 'border-green-800 bg-green-50 text-green-900' : 'border-stone-100 text-stone-400'}`}
+                            >
+                              <Upload className="w-6 h-6" /> Custom Mark
+                            </button>
+                            <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                          </div>
+                        </div>
+
+                        <button 
+                          onClick={() => copyConfig(branding)}
+                          className="w-full bg-stone-900 text-white py-5 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl active:scale-95"
+                        >
+                          {copySuccess ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5" />}
+                          {copySuccess ? "Config Copied" : "Export Theme JSON"}
+                        </button>
+                      </div>
+
+                      <div className="bg-stone-50 rounded-[3rem] p-10 border border-stone-100 flex flex-col items-center justify-center space-y-8">
+                        <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Live Header Preview</p>
+                        <div className="bg-white px-10 py-6 rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-100">
+                          <Logo />
+                        </div>
+                        <div className="bg-stone-900 px-10 py-6 rounded-2xl shadow-xl border border-stone-800">
+                          <Logo light />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* GALLERY TAB */}
+                {adminTab === 'gallery' && (
+                  <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
+                    <header className="flex flex-col md:flex-row md:items-end justify-between border-b border-stone-100 pb-10 gap-6">
+                      <div>
+                        <h2 className="text-4xl font-black text-stone-900 mb-2">Media Assets</h2>
+                        <p className="text-stone-500 font-medium">Manage the visual storytelling of your backcountry routes.</p>
+                      </div>
+                      <div className="flex gap-4">
+                        <button 
+                          onClick={() => fileInputRef.current?.click()}
+                          className="bg-stone-900 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-xl"
+                        >
+                          <Upload className="w-5 h-5" /> Bulk Upload
+                        </button>
+                        <input type="file" ref={fileInputRef} className="hidden" multiple accept="image/*" onChange={handleFileSelect} />
+                      </div>
+                    </header>
+
+                    {/* AI Generation Mini-tool */}
+                    <div className="bg-green-50 p-8 rounded-[2.5rem] border border-green-100 flex flex-col md:flex-row items-center gap-8">
+                      <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-green-700 shadow-sm shrink-0">
+                        <Sparkles className="w-8 h-8" />
+                      </div>
+                      <div className="flex-1 space-y-1 text-center md:text-left">
+                        <h4 className="font-black text-green-900">AI Background Generator</h4>
+                        <p className="text-green-800/60 text-sm">Need a specific Montana landscape? Generate one instantly.</p>
+                      </div>
+                      <div className="flex w-full md:w-auto gap-3">
+                        <input 
+                          type="text"
+                          placeholder="Glacial lake with granite peaks..."
+                          className="flex-1 md:w-64 bg-white border border-green-200 px-6 py-4 rounded-xl outline-none focus:ring-4 focus:ring-green-700/5"
+                          value={aiPrompt}
+                          onChange={(e) => setAiPrompt(e.target.value)}
+                        />
+                        <button 
+                          disabled={!aiPrompt || isGenerating}
+                          onClick={handleAiGenerate}
+                          className="bg-green-800 text-white px-6 py-4 rounded-xl font-bold disabled:opacity-50"
+                        >
+                          {isGenerating ? <Loader2 className="animate-spin" /> : "Generate"}
+                        </button>
+                      </div>
                     </div>
 
-                    {branding.logoType === 'image' && (
-                      <div 
-                        onClick={() => logoInputRef.current?.click()}
-                        className="relative h-44 border-2 border-dashed border-stone-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-stone-50 transition-all overflow-hidden group"
-                      >
-                        {branding.logoUrl ? (
-                          <>
-                            <img src={branding.logoUrl} className="w-full h-full object-contain p-6" alt="Logo Preview" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                               <div className="bg-white/20 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/30 text-white text-xs font-bold flex items-center gap-2">
-                                  <RefreshCcw className="w-3 h-3" /> Change Logo
-                               </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="text-center space-y-4">
-                            <div className="w-14 h-14 bg-stone-100 rounded-2xl flex items-center justify-center mx-auto text-stone-400 group-hover:scale-110 transition-transform">
-                              <Upload />
-                            </div>
-                            <p className="text-xs font-bold text-stone-400 uppercase tracking-widest">Click to browse files</p>
+                    {/* Staging Area for Uploads */}
+                    {localPreviews.length > 0 && (
+                      <div className="p-10 bg-white rounded-[3rem] border-2 border-dashed border-stone-200 space-y-8 animate-in zoom-in duration-300">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-xl font-black text-stone-900">Upload Staging ({localPreviews.length})</h4>
+                          <div className="flex gap-4">
+                            <button onClick={() => setLocalPreviews([])} className="text-stone-400 font-bold hover:text-red-500 transition-colors">Discard All</button>
+                            <button 
+                              onClick={handleConfirmUpload}
+                              className="bg-green-800 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2"
+                              disabled={isUploadingFile}
+                            >
+                              {isUploadingFile ? <Loader2 className="animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                              Confirm & Save
+                            </button>
                           </div>
-                        )}
-                        <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                          {localPreviews.map((src, i) => (
+                            <div key={i} className="aspect-square rounded-2xl overflow-hidden bg-stone-100 relative group">
+                              <img src={src} className="w-full h-full object-cover" />
+                              <button 
+                                onClick={() => setLocalPreviews(prev => prev.filter((_, idx) => idx !== i))}
+                                className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
-                  </div>
-                </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center gap-4 pt-10 border-t border-stone-100">
-                <button 
-                  onClick={() => copyConfig(branding)} 
-                  className="w-full sm:flex-1 bg-stone-900 text-white py-5 rounded-[1.5rem] font-bold flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl active:scale-95"
-                >
-                  {copySuccess ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5" />}
-                  {copySuccess ? "Config Copied" : "Export Branding JSON"}
-                </button>
-                <button 
-                  onClick={resetBranding} 
-                  className="w-full sm:w-auto px-10 bg-stone-100 text-stone-500 py-5 rounded-[1.5rem] font-bold hover:bg-stone-200 transition-all flex items-center justify-center gap-2"
-                >
-                  <RefreshCcw className="w-4 h-4" /> Reset Defaults
-                </button>
-              </div>
+                    {/* Active Gallery Grid with Drag Reordering */}
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-xs font-black uppercase tracking-[0.3em] text-stone-400">Current Fleet Assets</h4>
+                        <button onClick={() => copyConfig(gallery)} className="text-[10px] font-black uppercase text-stone-400 hover:text-stone-900 transition-all flex items-center gap-2">
+                          <Copy className="w-3 h-3" /> Export Gallery State
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {gallery.map((img, i) => (
+                          <div 
+                            key={i}
+                            draggable
+                            onDragStart={() => handleDragStart(i)}
+                            onDragOver={(e) => handleDragOver(e, i)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={() => handleDrop(i)}
+                            className={`aspect-square rounded-3xl overflow-hidden bg-stone-100 relative group cursor-grab active:cursor-grabbing transition-all duration-300
+                              ${draggedIndex === i ? 'opacity-20 scale-90' : 'opacity-100'}
+                              ${dropTargetIndex === i ? 'ring-4 ring-green-600 ring-offset-4 ring-offset-white scale-105' : ''}`}
+                          >
+                            <img src={img.url} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-stone-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                              <button onClick={() => handleDeleteImage(i)} className="bg-red-500 text-white p-3 rounded-full hover:scale-110 transition-transform">
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                              <div className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white cursor-grab">
+                                <GripVertical className="w-5 h-5" />
+                              </div>
+                            </div>
+                            <div className="absolute bottom-4 left-4 right-4 bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/20">
+                              <p className="text-[10px] font-bold text-white truncate">{img.caption}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* BOOKINGS TAB (MOCK) */}
+                {adminTab === 'bookings' && (
+                  <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
+                    <header className="border-b border-stone-100 pb-10">
+                      <h2 className="text-4xl font-black text-stone-900 mb-2">Fleet Bookings</h2>
+                      <p className="text-stone-500 font-medium">Review and confirm upcoming backcountry expeditions.</p>
+                    </header>
+
+                    <div className="bg-white rounded-[3rem] border border-stone-100 shadow-xl overflow-hidden">
+                      <table className="w-full text-left">
+                        <thead className="bg-stone-50 border-b border-stone-100">
+                          <tr>
+                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Client</th>
+                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Dates</th>
+                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Llamas</th>
+                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Status</th>
+                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-stone-50">
+                          {[
+                            { name: 'Sarah Miller', date: 'Aug 12 - 18', count: 4, status: 'Confirmed', email: 'sarah@example.com' },
+                            { name: 'Tom Hudson', date: 'Sep 05 - 12', count: 2, status: 'Pending', email: 'tom@hudson.co' },
+                            { name: 'Gravel Expeditions', date: 'Oct 01 - 10', count: 8, status: 'Clinic Required', email: 'ops@gravel.com' },
+                          ].map((item, i) => (
+                            <tr key={i} className="hover:bg-stone-50/50 transition-colors group">
+                              <td className="px-8 py-8">
+                                <div className="flex items-center gap-4">
+                                  <div className="w-10 h-10 bg-stone-100 rounded-xl flex items-center justify-center text-stone-400 font-bold group-hover:bg-green-100 group-hover:text-green-700 transition-colors">
+                                    {item.name[0]}
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-stone-900 leading-none">{item.name}</p>
+                                    <p className="text-xs text-stone-400 mt-1">{item.email}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-8 py-8 font-medium text-stone-600">{item.date}</td>
+                              <td className="px-8 py-8">
+                                <span className="bg-stone-100 px-3 py-1 rounded-lg text-xs font-black text-stone-600">
+                                  {item.count} Units
+                                </span>
+                              </td>
+                              <td className="px-8 py-8">
+                                <div className={`flex items-center gap-2 text-xs font-bold ${item.status === 'Confirmed' ? 'text-green-600' : item.status === 'Pending' ? 'text-amber-500' : 'text-blue-500'}`}>
+                                  <div className={`w-1.5 h-1.5 rounded-full ${item.status === 'Confirmed' ? 'bg-green-600' : item.status === 'Pending' ? 'bg-amber-500' : 'bg-blue-500'}`} />
+                                  {item.status}
+                                </div>
+                              </td>
+                              <td className="px-8 py-8 text-right">
+                                <button className="p-2 hover:bg-white rounded-lg text-stone-300 hover:text-stone-900 border border-transparent hover:border-stone-200 transition-all">
+                                  <ArrowUpRight className="w-5 h-5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      <div className="bg-stone-900 text-white p-10 rounded-[2.5rem] shadow-xl relative overflow-hidden group">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-6">Revenue Estimate</p>
+                        <h5 className="text-4xl font-black mb-1">$12,450</h5>
+                        <p className="text-green-400 text-xs font-bold">+12% vs last month</p>
+                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                          <LayoutDashboard className="w-16 h-16" />
+                        </div>
+                      </div>
+                      <div className="bg-stone-50 p-10 rounded-[2.5rem] border border-stone-100 flex flex-col justify-between">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-6">Fleet Utilization</p>
+                        <div className="space-y-4">
+                          <div className="flex justify-between text-sm font-bold">
+                            <span>Aug Expeditions</span>
+                            <span>92%</span>
+                          </div>
+                          <div className="w-full bg-stone-200 h-2 rounded-full overflow-hidden">
+                            <div className="bg-green-600 h-full w-[92%]" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-stone-50 p-10 rounded-[2.5rem] border border-stone-100 flex flex-col justify-between">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-6">Upcoming Clinics</p>
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-stone-400">
+                            <GraduationCap className="w-6 h-6" />
+                          </div>
+                          <span className="text-2xl font-black text-stone-900">14</span>
+                          <span className="text-stone-400 font-medium">Registered</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </main>
             </div>
           </div>
         </div>
       )}
 
-      {/* Navigation Bar */}
+      {/* Main UI */}
       <nav className="fixed w-full z-50 bg-white/90 backdrop-blur-lg border-b border-stone-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center">
@@ -498,24 +727,25 @@ const App: React.FC = () => {
 
       {/* Admin Quick Bar */}
       {isAdmin && (
-        <div className="bg-green-900 text-white py-3 px-4 flex flex-wrap items-center justify-center gap-6 sticky top-20 z-40 shadow-xl border-b border-green-800">
+        <div className="bg-green-900 text-white py-3 px-4 flex flex-wrap items-center justify-center gap-6 sticky top-20 z-40 shadow-xl border-b border-green-800 animate-in slide-in-from-top duration-500">
           <span className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2"><Unlock className="w-3 h-3" /> Management Mode Active</span>
-          <button onClick={() => setShowBrandingModal(true)} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full text-xs font-bold transition-all border border-white/20">
-            <Settings className="w-3 h-3" /> Branding Manager
+          <button 
+            onClick={() => {
+              setAdminTab('branding');
+              setShowDashboard(true);
+            }} 
+            className="flex items-center gap-2 bg-white text-stone-900 hover:bg-stone-100 px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+          >
+            <LayoutDashboard className="w-3 h-3" /> Open Admin Dashboard
           </button>
-          <button onClick={() => copyConfig(gallery)} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full text-xs font-bold transition-all border border-white/20">
-            {copySuccess ? <CheckCircle2 className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
-            {copySuccess ? "Gallery Copied!" : "Copy Gallery Config"}
-          </button>
-          <button onClick={resetGallery} className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/40 px-4 py-1.5 rounded-full text-xs font-bold transition-all border border-red-500/20">
-            <Trash2 className="w-3 h-3" /> Reset Gallery
+          <div className="h-4 w-px bg-white/20" />
+          <button onClick={() => setIsAdmin(false)} className="text-[10px] font-black uppercase text-white/60 hover:text-white transition-all">
+            Exit Admin
           </button>
         </div>
       )}
 
-      {/* Main Content Sections (Benefits, About, Gear, etc.) */}
-      {/* ... keeping sections as defined in constants ... */}
-      
+      {/* Main Sections */}
       <section id="benefits" className="py-32 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
@@ -562,7 +792,6 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* Gallery Section with Enhanced Reordering */}
       <section id="gallery" className="py-32 bg-stone-950 text-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between mb-20 gap-8 text-left">
@@ -573,59 +802,17 @@ const App: React.FC = () => {
               </div>
             </div>
             {isAdmin && (
-              <div className="flex gap-4">
-                <button onClick={() => {setIsAddingImage(!isAddingImage); setLocalPreviews([]);}} className="bg-green-800 hover:bg-green-700 px-8 py-4 rounded-full font-bold shadow-xl flex items-center gap-2 transition-all active:scale-95">
-                  {isAddingImage ? <X /> : <Plus />} {isAddingImage ? "Cancel" : "Update Photos"}
-                </button>
-              </div>
+              <button onClick={() => setShowDashboard(true)} className="bg-green-800 hover:bg-green-700 px-8 py-4 rounded-full font-bold shadow-xl flex items-center gap-2 transition-all active:scale-95">
+                <Settings className="w-5 h-5" /> Manage Assets
+              </button>
             )}
           </div>
-
-          {isAdmin && isAddingImage && (
-            <div className="mb-16 bg-white/5 backdrop-blur-md border border-white/10 rounded-[3rem] p-12 text-left animate-in slide-in-from-bottom duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <div className="space-y-8">
-                  <div className="flex items-center gap-3"><Sparkles className="text-green-400 w-6 h-6" /><h3 className="text-2xl font-black">AI Scenic Generator</h3></div>
-                  <input type="text" placeholder="e.g., Snowy peaks reflected in a lake" className="w-full bg-white/10 border border-white/20 px-6 py-4 rounded-2xl outline-none" value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} />
-                  <button disabled={isGenerating || !aiPrompt} onClick={handleAiGenerate} className="w-full bg-green-600 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 active:scale-95">
-                    {isGenerating ? <Loader2 className="animate-spin" /> : <ImageIcon />} {isGenerating ? "Generating..." : "Generate Landscape"}
-                  </button>
-                </div>
-                <div className="space-y-8 md:border-l md:border-white/10 md:pl-12">
-                  <div className="flex items-center justify-between"><div className="flex items-center gap-3"><Upload className="text-green-400 w-6 h-6" /><h3 className="text-2xl font-black">Batch Upload</h3></div>{localPreviews.length > 0 && <button onClick={() => setLocalPreviews([])} className="text-xs text-red-400 font-bold underline">Clear All</button>}</div>
-                  <input type="file" className="hidden" ref={fileInputRef} accept="image/*" multiple onChange={handleFileSelect} />
-                  
-                  {localPreviews.length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                        {localPreviews.map((preview, idx) => (
-                          <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-white/10 bg-stone-900">
-                            <img src={preview} alt="Staged" className="w-full h-full object-cover" />
-                            <button onClick={() => setLocalPreviews(prev => prev.filter((_, i) => i !== idx))} className="absolute top-1 right-1 bg-black/60 rounded-full p-1"><X className="w-3 h-3" /></button>
-                          </div>
-                        ))}
-                        <button onClick={() => fileInputRef.current?.click()} className="aspect-square border-2 border-dashed border-white/10 rounded-lg flex items-center justify-center hover:bg-white/5"><Plus className="w-5 h-5 text-stone-600" /></button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div onClick={() => fileInputRef.current?.click()} className="h-40 border-2 border-dashed border-white/20 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 group transition-colors">
-                      <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Plus className="text-stone-600" /></div>
-                      <span className="text-stone-500 font-bold">Choose multiple files...</span>
-                    </div>
-                  )}
-                  <button disabled={localPreviews.length === 0 || isUploadingFile} onClick={handleConfirmUpload} className="w-full bg-green-800 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 active:scale-95">
-                    {isUploadingFile ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} {isUploadingFile ? "Processing Batch..." : "Confirm & Upload to Site"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
           
           <PhotoCarousel images={gallery} />
 
           <div className="mt-20 flex items-center justify-between mb-10">
             <h4 className="text-xs font-black uppercase tracking-[0.3em] text-stone-500 flex items-center gap-3">
-              {isAdmin && <GripVertical className="w-4 h-4 text-green-600" />} {isAdmin ? "Drag cards to reorder fleet gallery" : "Expedition Snapshots"}
+              Expedition Snapshots
             </h4>
           </div>
 
@@ -633,29 +820,9 @@ const App: React.FC = () => {
             {gallery.map((img, i) => (
               <div 
                 key={img.url + i} 
-                draggable={isAdmin} 
-                onDragStart={() => handleDragStart(i)} 
-                onDragOver={(e) => handleDragOver(e, i)} 
-                onDragLeave={handleDragLeave}
-                onDrop={() => handleDrop(i)} 
-                className={`relative group overflow-hidden rounded-[2rem] break-inside-avoid shadow-2xl bg-stone-900/50 min-h-[200px] transition-all duration-300 
-                  ${isAdmin ? 'cursor-grab active:cursor-grabbing' : ''} 
-                  ${draggedIndex === i ? 'opacity-40 grayscale blur-[2px] scale-95' : 'opacity-100'} 
-                  ${dropTargetIndex === i ? 'ring-4 ring-green-600 ring-offset-4 ring-offset-stone-950 scale-[1.02]' : 'ring-0'}`}
+                className="relative group overflow-hidden rounded-[2rem] break-inside-avoid shadow-2xl bg-stone-900/50 min-h-[200px] transition-all duration-300"
               >
                 <img src={img.url} alt={img.caption} loading="lazy" className="w-full h-auto object-cover transition-transform group-hover:scale-110" />
-                
-                {isAdmin && (
-                  <>
-                    <button onClick={() => handleDeleteImage(i)} className="absolute top-6 right-6 z-20 w-10 h-10 bg-red-600/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-90">
-                      <Trash2 className="w-5 h-5 text-white" />
-                    </button>
-                    <div className="absolute top-6 left-6 z-20 w-10 h-10 bg-green-800/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg pointer-events-none">
-                      <GripVertical className="w-5 h-5 text-white" />
-                    </div>
-                  </>
-                )}
-
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-transparent opacity-0 group-hover:opacity-100 transition-all flex items-end p-8">
                   <div className="flex justify-between w-full items-end">
                     <div>
@@ -672,7 +839,6 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* Other Sections (Reviews, FAQ, etc.) */}
       <section id="reviews" className="py-32 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-20">
