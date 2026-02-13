@@ -331,18 +331,21 @@ const App: React.FC = () => {
   };
 
   const Logo = ({ light = false }: { light?: boolean }) => {
-    const siteTitle = branding?.siteName || defaultBranding.siteName;
-    const accent = branding?.accentName || defaultBranding.accentName;
-    const parts = siteTitle.split(accent);
+    const siteTitle = (branding?.siteName || defaultBranding.siteName).toString();
+    const accent = (branding?.accentName || defaultBranding.accentName).toString();
+    
+    // Improved regex-based split to handle case sensitivity and multiple matches
+    const regex = new RegExp(`(${accent})`, 'gi');
+    const parts = siteTitle.split(regex);
     
     return (
-      <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+      <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
         {branding?.logoType === 'icon' ? (
-          <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg`}>
+          <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg shrink-0`}>
             <Mountain className="w-6 h-6" />
           </div>
         ) : (
-          <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-stone-100 bg-white flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-stone-100 bg-white flex items-center justify-center shrink-0">
             {branding?.logoUrl ? (
               <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
             ) : (
@@ -351,9 +354,11 @@ const App: React.FC = () => {
           </div>
         )}
         <span className={`text-xl font-black tracking-tight ${light ? 'text-white' : 'text-stone-900'}`}>
-          {parts[0]}
-          {accent && <span className={`${light ? 'text-green-400' : 'text-green-800'} italic`}>{accent}</span>}
-          {parts.slice(1).join(accent)}
+          {parts.map((part, i) => (
+            part.toLowerCase() === accent.toLowerCase() 
+              ? <span key={i} className={`${light ? 'text-green-400' : 'text-green-800'} italic`}>{part}</span>
+              : <span key={i}>{part}</span>
+          ))}
         </span>
       </div>
     );
