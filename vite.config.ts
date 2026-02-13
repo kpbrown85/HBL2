@@ -12,10 +12,7 @@ export default defineConfig({
     port: 3000
   },
   define: {
-    // Robust shim for process and process.env
-    'process.env': {
-      API_KEY: JSON.stringify(process.env.API_KEY || '')
-    },
+    // Inject the API key from environment variables during the build process
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY || '')
   }
 });
