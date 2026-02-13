@@ -21,34 +21,34 @@ import {
 export const LLAMAS: Llama[] = [
   {
     id: '1',
-    name: 'Bismarck',
+    name: 'Wookie',
     age: 8,
-    personality: 'The Stoic Leader. Bismarck is unfazed by creek crossings or rocky terrain.',
+    personality: 'The Stoic Leader. Wookie is unfazed by creek crossings or rocky terrain.',
     maxLoad: 80,
     imageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=800',
     specialty: 'Lead Llama'
   },
   {
     id: '2',
-    name: 'Copper',
+    name: 'Boulder',
     age: 5,
-    personality: 'Playful and curious. Copper is the best camp companion you could ask for.',
+    personality: 'Rugged and reliable. Boulder is as solid as his name on technical trails.',
     maxLoad: 65,
     imageUrl: 'https://images.unsplash.com/photo-1574347781534-f87f4c084610?auto=format&fit=crop&q=80&w=800',
     specialty: 'Backpacking'
   },
   {
     id: '3',
-    name: 'Atlas',
+    name: 'Everett',
     age: 10,
-    personality: 'The Workhorse. Atlas has helped pack out record-setting bulls for years.',
+    personality: 'The Workhorse. Everett has helped pack out record-setting bulls for years.',
     maxLoad: 90,
-    imageUrl: 'https://images.unsplash.com/photo-1591073113064-0731238495a6?auto=format&fit=crop&q=80&w=800',
+    imageUrl: 'https://images.unsplash.com/photo-159107311313064-0731238495a6?auto=format&fit=crop&q=80&w=800',
     specialty: 'Hunting'
   },
   {
     id: '4',
-    name: 'Willow',
+    name: 'Murphy',
     age: 6,
     personality: 'Gentle and patient. Perfect for families or first-time llama packers.',
     maxLoad: 70,
@@ -63,7 +63,7 @@ export const GALLERY_IMAGES: GalleryImage[] = [
   { url: 'https://images.unsplash.com/photo-1493246507139-91e8bef99c02?auto=format&fit=crop&q=80&w=1200', caption: 'Morning mist in the Blackfoot Valley' },
   { url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=1200', caption: 'Packing out of the Bob Marshall' },
   { url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=1200', caption: 'Granite peaks at sunset' },
-  { url: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&q=80&w=1200', caption: 'Curious Copper on the trail' },
+  { url: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&q=80&w=1200', caption: 'Everett on the trail' },
 ];
 
 export const FAQS: FAQItem[] = [
@@ -90,21 +90,21 @@ export const REVIEWS: Review[] = [
     id: 'r1',
     name: 'Sarah M.',
     rating: 5,
-    comment: 'Bismarck was an absolute pro. We packed into the Scapegoat Wilderness for 6 days and he never missed a step. The best backpacking trip of my life!',
+    comment: 'Wookie was an absolute pro. We packed into the Scapegoat Wilderness for 6 days and he never missed a step. The best backpacking trip of my life!',
     date: 'Aug 2024'
   },
   {
     id: 'r2',
     name: 'Tom Jenkins',
     rating: 5,
-    comment: 'Used Atlas for a late season elk hunt. He carried out a heavy load without breaking a sweat. Much easier to manage than horses.',
+    comment: 'Used Everett for a late season elk hunt. He carried out a heavy load without breaking a sweat. Much easier to manage than horses.',
     date: 'Oct 2024'
   },
   {
     id: 'r3',
     name: 'The Robertson Family',
     rating: 4,
-    comment: 'Our kids loved Willow. The clinic was very helpful for us as first-timers. We will be back next summer!',
+    comment: 'Our kids loved Murphy. The clinic was very helpful for us as first-timers. We will be back next summer!',
     date: 'July 2024'
   }
 ];
