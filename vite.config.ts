@@ -5,15 +5,14 @@ export default defineConfig({
   root: '.',
   build: {
     outDir: 'dist',
-    target: 'esnext'
+    target: 'esnext',
+    minify: 'esbuild'
   },
   server: {
     port: 3000
   },
   define: {
-    // This shims process.env for the browser environment
-    'process.env': {
-      API_KEY: process.env.API_KEY
-    }
+    // Specifically target the exact string to avoid breaking libraries that check for the process object
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || '')
   }
 });
