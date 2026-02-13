@@ -12,7 +12,11 @@ export default defineConfig({
     port: 3000
   },
   define: {
-    // Specifically target the exact string to avoid breaking libraries that check for the process object
+    // This shims the entire process.env object more robustly
+    'process.env': {
+      API_KEY: JSON.stringify(process.env.API_KEY || '').replace(/"/g, '') 
+    },
+    // Also explicitly replace the string to catch library internal usage
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY || '')
   }
 });
