@@ -37,11 +37,13 @@ import {
   LayoutDashboard,
   ClipboardList,
   ArrowUpRight,
-  ExternalLink,
   GraduationCap,
   Users,
   Camera,
-  Edit3
+  Edit3,
+  Home,
+  Monitor,
+  Check
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -312,6 +314,16 @@ const App: React.FC = () => {
     );
   };
 
+  const AdminTabButton = ({ id, label, icon: Icon }: { id: typeof adminTab, label: string, icon: any }) => (
+    <button 
+      onClick={() => setAdminTab(id)}
+      className={`flex items-center gap-2 px-6 py-3 rounded-full font-black text-sm transition-all ${adminTab === id ? 'bg-stone-900 text-white shadow-lg' : 'text-stone-400 hover:bg-stone-100 hover:text-stone-900'}`}
+    >
+      <Icon className="w-4 h-4" />
+      {label}
+    </button>
+  );
+
   return (
     <div className="min-h-screen">
       {/* Admin Login Modal */}
@@ -346,391 +358,366 @@ const App: React.FC = () => {
 
       {/* COMPREHENSIVE ADMIN DASHBOARD OVERLAY */}
       {showDashboard && isAdmin && (
-        <div className="fixed inset-0 z-[100] bg-stone-100/60 backdrop-blur-xl flex items-center justify-center p-0 md:p-8 animate-in fade-in duration-300">
-          <div className="bg-white w-full h-full md:rounded-[3.5rem] shadow-2xl flex flex-col overflow-hidden border border-white relative">
+        <div className="fixed inset-0 z-[100] bg-stone-100 flex flex-col animate-in fade-in duration-300">
+          
+          {/* Top Persistent Dashboard Header */}
+          <header className="bg-white border-b border-stone-200 px-4 md:px-12 py-6 flex items-center justify-between shrink-0 z-20">
+            <div className="flex items-center gap-4">
+               <div className="w-10 h-10 bg-green-800 text-white rounded-xl flex items-center justify-center shadow-lg"><Settings className="w-5 h-5" /></div>
+               <div className="hidden sm:block">
+                 <h2 className="text-xl font-black text-stone-900 leading-none">Management Console</h2>
+                 <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mt-1">Live Website Editor</p>
+               </div>
+            </div>
+
+            {/* Desktop Navigation Tabs */}
+            <nav className="hidden lg:flex items-center gap-2 bg-stone-50 p-1.5 rounded-full border border-stone-200">
+              <AdminTabButton id="branding" label="Identity" icon={Palette} />
+              <AdminTabButton id="fleet" label="Herd" icon={Users} />
+              <AdminTabButton id="gallery" label="Gallery" icon={ImageIcon} />
+              <AdminTabButton id="bookings" label="Bookings" icon={ClipboardList} />
+            </nav>
+
+            <button 
+              onClick={() => setShowDashboard(false)}
+              className="bg-stone-100 hover:bg-stone-200 text-stone-900 px-6 py-3 rounded-full font-black text-xs flex items-center gap-2 transition-all"
+            >
+              <Home className="w-4 h-4" /> <span className="hidden sm:inline">Return to Website</span><span className="sm:hidden">Exit</span>
+            </button>
+          </header>
+
+          {/* Main Dashboard Workspace */}
+          <main className="flex-1 overflow-y-auto bg-stone-50 p-6 md:p-12 lg:p-20 relative">
             
-            {/* Sidebar / Topbar Container */}
-            <div className="flex flex-col md:flex-row h-full">
-              
-              {/* Sidebar */}
-              <aside className="w-full md:w-80 bg-stone-900 text-white p-6 md:p-8 flex flex-col justify-between shrink-0">
-                <div className="overflow-x-auto md:overflow-visible">
-                  <div className="flex items-center gap-3 mb-8 md:mb-12">
-                    <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-stone-900 shrink-0">
-                      <LayoutDashboard className="w-6 h-6" />
+            {/* Identity/Branding Tab */}
+            {adminTab === 'branding' && (
+              <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500">
+                 <div className="flex justify-between items-end">
+                    <div className="text-left">
+                      <h3 className="text-4xl font-black text-stone-900 mb-2">Visual Identity</h3>
+                      <p className="text-stone-500 font-medium">Customize your brand name, logos, and key section imagery.</p>
                     </div>
-                    <div className="hidden md:block">
-                      <h3 className="font-black text-xl tracking-tight leading-none text-left">Management</h3>
-                      <p className="text-[10px] text-stone-500 font-bold uppercase tracking-widest mt-1 text-left">Admin Console</p>
-                    </div>
-                  </div>
-
-                  <nav className="flex md:flex-col gap-2 pb-4 md:pb-0">
-                    <button 
-                      onClick={() => setAdminTab('branding')}
-                      className={`flex-1 md:w-full flex items-center gap-3 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold transition-all whitespace-nowrap ${adminTab === 'branding' ? 'bg-white text-stone-900 shadow-xl' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
-                    >
-                      <Palette className="w-5 h-5" /> <span className="text-sm md:text-base">Identity</span>
+                    <button onClick={resetBranding} className="text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-red-500 flex items-center gap-2 mb-2 transition-colors">
+                      <RefreshCcw className="w-3 h-3" /> Reset Defaults
                     </button>
-                    <button 
-                      onClick={() => setAdminTab('fleet')}
-                      className={`flex-1 md:w-full flex items-center gap-3 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold transition-all whitespace-nowrap ${adminTab === 'fleet' ? 'bg-white text-stone-900 shadow-xl' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
-                    >
-                      <Users className="w-5 h-5" /> <span className="text-sm md:text-base">Herd</span>
-                    </button>
-                    <button 
-                      onClick={() => setAdminTab('gallery')}
-                      className={`flex-1 md:w-full flex items-center gap-3 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold transition-all whitespace-nowrap ${adminTab === 'gallery' ? 'bg-white text-stone-900 shadow-xl' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
-                    >
-                      <ImageIcon className="w-5 h-5" /> <span className="text-sm md:text-base">Gallery</span>
-                    </button>
-                    <button 
-                      onClick={() => setAdminTab('bookings')}
-                      className={`flex-1 md:w-full flex items-center gap-3 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold transition-all whitespace-nowrap ${adminTab === 'bookings' ? 'bg-white text-stone-900 shadow-xl' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
-                    >
-                      <ClipboardList className="w-5 h-5" /> <span className="text-sm md:text-base">Bookings</span>
-                    </button>
-                  </nav>
-                </div>
+                 </div>
 
-                <div className="hidden md:flex flex-col gap-4">
-                  <button 
-                    onClick={() => setShowDashboard(false)}
-                    className="w-full bg-white/10 hover:bg-white/20 px-6 py-4 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border border-white/5"
-                  >
-                    <Eye className="w-4 h-4" /> Exit Dashboard
-                  </button>
-                  <button 
-                    onClick={() => setIsAdmin(false)}
-                    className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 px-6 py-4 rounded-2xl font-bold text-sm transition-all border border-red-500/10"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              </aside>
-
-              {/* Main Dashboard Content */}
-              <main className="flex-1 overflow-y-auto p-6 md:p-12 lg:p-16 relative">
-                <button onClick={() => setShowDashboard(false)} className="md:hidden absolute top-4 right-4 bg-stone-100 p-3 rounded-full"><X className="w-5 h-5"/></button>
-                
-                {/* BRANDING TAB */}
-                {adminTab === 'branding' && (
-                  <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
-                    <header className="flex justify-between items-end border-b border-stone-100 pb-10">
-                      <div>
-                        <h2 className="text-4xl font-black text-stone-900 mb-2 text-left">Visual Identity</h2>
-                        <p className="text-stone-500 font-medium text-left">Define your company's aesthetic presence across the platform.</p>
-                      </div>
-                      <div className="flex gap-4">
-                        <button onClick={resetBranding} className="p-3 hover:bg-stone-100 rounded-full text-stone-400" title="Reset to Defaults">
-                          <RefreshCcw className="w-6 h-6" />
-                        </button>
-                      </div>
-                    </header>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-                      <div className="space-y-10 text-left">
-                        <div className="space-y-6">
-                          <div>
-                            <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Display Name</label>
-                            <input 
-                              type="text"
-                              className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-700/5 focus:border-green-800 transition-all font-bold"
-                              value={branding.siteName}
-                              onChange={(e) => setBranding({...branding, siteName: e.target.value})}
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Accent Word (Styled)</label>
-                            <input 
-                              type="text"
-                              className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-700/5 focus:border-green-800 transition-all font-bold italic text-green-700"
-                              value={branding.accentName}
-                              onChange={(e) => setBranding({...branding, accentName: e.target.value})}
-                            />
-                          </div>
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                   {/* Left Column: Form Settings */}
+                   <div className="space-y-10 text-left">
+                     <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-stone-200 space-y-8">
+                        <div>
+                          <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">Company Display Name</label>
+                          <input 
+                            type="text"
+                            className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-800/5 focus:border-green-800 font-bold text-lg"
+                            value={branding.siteName}
+                            onChange={(e) => setBranding({...branding, siteName: e.target.value})}
+                          />
                         </div>
-
-                        <div className="space-y-6">
-                          <h4 className="text-xs font-black uppercase tracking-widest text-stone-900 border-b border-stone-100 pb-2">Primary Section Images</h4>
-                          
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                               <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest">Hero Backdrop</label>
-                               <button onClick={() => heroInputRef.current?.click()} className="w-full aspect-video bg-stone-100 rounded-xl overflow-hidden border-2 border-dashed border-stone-200 flex items-center justify-center group relative">
-                                 {branding.heroImageUrl ? <img src={branding.heroImageUrl} className="w-full h-full object-cover" /> : <Camera className="text-stone-300" />}
-                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Upload className="text-white" /></div>
-                               </button>
-                               <input type="file" ref={heroInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'hero')} />
-                            </div>
-                            <div className="space-y-2">
-                               <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest">Guide Sidebar</label>
-                               <button onClick={() => guideInputRef.current?.click()} className="w-full aspect-video bg-stone-100 rounded-xl overflow-hidden border-2 border-dashed border-stone-200 flex items-center justify-center group relative">
-                                 {branding.guideImageUrl ? <img src={branding.guideImageUrl} className="w-full h-full object-cover" /> : <Camera className="text-stone-300" />}
-                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Upload className="text-white" /></div>
-                               </button>
-                               <input type="file" ref={guideInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'guide')} />
-                            </div>
-                          </div>
+                        <div>
+                          <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">Accent Styled Word</label>
+                          <input 
+                            type="text"
+                            className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-800/5 focus:border-green-800 font-bold italic text-green-700"
+                            value={branding.accentName}
+                            onChange={(e) => setBranding({...branding, accentName: e.target.value})}
+                          />
                         </div>
+                     </div>
 
-                        <div className="space-y-4">
-                          <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest">Logo Configuration</label>
-                          <div className="flex gap-4">
-                            <button 
-                              onClick={() => setBranding({...branding, logoType: 'icon'})}
-                              className={`flex-1 py-4 px-6 rounded-2xl border-2 font-bold flex flex-col items-center gap-2 transition-all ${branding.logoType === 'icon' ? 'border-green-800 bg-green-50 text-green-900' : 'border-stone-100 text-stone-400'}`}
-                            >
-                              <Mountain className="w-6 h-6" /> Preset Icon
-                            </button>
-                            <button 
-                              onClick={() => logoInputRef.current?.click()}
-                              className={`flex-1 py-4 px-6 rounded-2xl border-2 font-bold flex flex-col items-center gap-2 transition-all ${branding.logoType === 'image' ? 'border-green-800 bg-green-50 text-green-900' : 'border-stone-100 text-stone-400'}`}
-                            >
-                              <Upload className="w-6 h-6" /> Custom Mark
-                            </button>
-                            <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'logo')} />
-                          </div>
+                     <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-stone-200 space-y-8">
+                        <h4 className="text-sm font-black uppercase tracking-widest text-stone-900 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-green-800" /> Key Section Assets</h4>
+                        <div className="grid grid-cols-2 gap-6">
+                           <div className="space-y-3">
+                              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Main Hero Background</label>
+                              <button onClick={() => heroInputRef.current?.click()} className="w-full aspect-square bg-stone-100 rounded-2xl overflow-hidden border-2 border-dashed border-stone-200 group relative">
+                                {branding.heroImageUrl ? <img src={branding.heroImageUrl} className="w-full h-full object-cover" /> : <Camera className="w-6 h-6 text-stone-300" />}
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-black uppercase">
+                                  <Upload className="w-5 h-5 mb-1" /> Swap Image
+                                </div>
+                              </button>
+                              <input type="file" ref={heroInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'hero')} />
+                           </div>
+                           <div className="space-y-3">
+                              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Guide Profile Photo</label>
+                              <button onClick={() => guideInputRef.current?.click()} className="w-full aspect-square bg-stone-100 rounded-2xl overflow-hidden border-2 border-dashed border-stone-200 group relative">
+                                {branding.guideImageUrl ? <img src={branding.guideImageUrl} className="w-full h-full object-cover" /> : <Camera className="w-6 h-6 text-stone-300" />}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-black uppercase">
+                                  <Upload className="w-5 h-5 mb-1" /> Swap Image
+                                </div>
+                              </button>
+                              <input type="file" ref={guideInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'guide')} />
+                           </div>
                         </div>
+                     </div>
+                   </div>
 
-                        <button 
-                          onClick={() => copyConfig(branding)}
-                          className="w-full bg-stone-900 text-white py-5 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl active:scale-95"
-                        >
-                          {copySuccess ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5" />}
-                          {copySuccess ? "Config Copied" : "Export Theme JSON"}
-                        </button>
-                      </div>
-
-                      <div className="bg-stone-50 rounded-[3rem] p-10 border border-stone-100 flex flex-col items-center justify-center space-y-8">
-                        <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Live Header Preview</p>
-                        <div className="bg-white px-10 py-6 rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-100">
-                          <Logo />
-                        </div>
-                        <div className="bg-stone-900 px-10 py-6 rounded-2xl shadow-xl border border-stone-800">
+                   {/* Right Column: Live Preview Card */}
+                   <div className="space-y-12">
+                     <div className="bg-stone-900 p-12 rounded-[3.5rem] shadow-2xl text-white space-y-8 sticky top-0">
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-500">Live Header Preview</p>
+                        <div className="p-8 border border-white/5 rounded-[2rem] bg-white/5 flex justify-center">
                           <Logo light />
                         </div>
-                      </div>
-                    </div>
+                        <div className="p-8 border border-black/5 rounded-[2rem] bg-white flex justify-center">
+                          <Logo />
+                        </div>
+                        <div className="pt-8 border-t border-white/10 space-y-4">
+                           <h5 className="font-bold text-lg">Visual Status</h5>
+                           <div className="flex flex-wrap gap-2">
+                              <div className="bg-green-500/20 text-green-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-2"><Check className="w-3 h-3" /> Brand Synced</div>
+                              <div className="bg-white/10 text-white/60 px-4 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-2"><Monitor className="w-3 h-3" /> Responsive Ready</div>
+                           </div>
+                        </div>
+                     </div>
+                   </div>
+                 </div>
+              </div>
+            )}
+
+            {/* Herd/Fleet Tab */}
+            {adminTab === 'fleet' && (
+              <div className="max-w-6xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500">
+                <header className="flex justify-between items-end border-b border-stone-200 pb-10">
+                  <div className="text-left">
+                    <h2 className="text-4xl font-black text-stone-900 mb-2">Herd Profiles</h2>
+                    <p className="text-stone-500 font-medium">Individual stats and biographies for your packing fleet.</p>
                   </div>
-                )}
+                  <button 
+                    onClick={() => {
+                      const newLlama: Llama = {
+                        id: Date.now().toString(),
+                        name: 'New Llama',
+                        age: 5,
+                        personality: 'New herd member...',
+                        maxLoad: 70,
+                        imageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=800',
+                        specialty: 'Backpacking'
+                      };
+                      setLlamas([...llamas, newLlama]);
+                    }}
+                    className="bg-stone-900 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-2 shadow-xl hover:bg-stone-800 transition-all"
+                  >
+                    <Plus className="w-5 h-5" /> Add Llama
+                  </button>
+                </header>
 
-                {/* FLEET TAB */}
-                {adminTab === 'fleet' && (
-                  <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
-                    <header className="flex justify-between items-end border-b border-stone-100 pb-10">
-                      <div className="text-left">
-                        <h2 className="text-4xl font-black text-stone-900 mb-2">Herd Profiles</h2>
-                        <p className="text-stone-500 font-medium">Manage individual llama stats, personalities, and portraits.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {llamas.map((llama) => (
+                    <div key={llama.id} className="bg-white border border-stone-200 rounded-[3rem] p-8 space-y-6 shadow-sm group hover:shadow-xl transition-all text-left">
+                      <div className="w-full aspect-[4/3] rounded-[2rem] overflow-hidden bg-stone-100 relative shadow-inner">
+                        <img src={llama.imageUrl} className="w-full h-full object-cover" />
+                        <button 
+                          onClick={() => {
+                            setActiveLlamaEdit(llama.id);
+                            llamaPhotoInputRef.current?.click();
+                          }}
+                          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white"
+                        >
+                          <Camera className="w-10 h-10 mb-2" />
+                          <span className="font-black text-[10px] uppercase tracking-widest">Swap Portrait</span>
+                        </button>
                       </div>
-                      <button 
-                        onClick={() => {
-                          const newLlama: Llama = {
-                            id: Date.now().toString(),
-                            name: 'New Llama',
-                            age: 5,
-                            personality: 'Describe their personality...',
-                            maxLoad: 70,
-                            imageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=800',
-                            specialty: 'Backpacking'
-                          };
-                          setLlamas([...llamas, newLlama]);
-                        }}
-                        className="bg-green-800 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2"
-                      >
-                        <Plus className="w-5 h-5" /> Add Llama
-                      </button>
-                    </header>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {llamas.map((llama) => (
-                        <div key={llama.id} className="bg-white border border-stone-100 rounded-[2.5rem] p-8 flex flex-col sm:flex-row gap-8 shadow-sm hover:shadow-md transition-shadow group text-left">
-                          <div className="w-full sm:w-40 h-40 rounded-[2rem] overflow-hidden bg-stone-100 shrink-0 relative">
-                            <img src={llama.imageUrl} className="w-full h-full object-cover" />
-                            <button 
-                              onClick={() => {
-                                setActiveLlamaEdit(llama.id);
-                                llamaPhotoInputRef.current?.click();
-                              }}
-                              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                            >
-                              <Camera className="w-8 h-8" />
-                            </button>
-                          </div>
-                          <div className="flex-1 space-y-4">
-                            <div className="flex justify-between items-start">
-                              <input 
-                                className="text-2xl font-black text-stone-900 outline-none w-full bg-transparent focus:bg-stone-50 rounded px-2"
-                                value={llama.name}
-                                onChange={(e) => setLlamas(llamas.map(l => l.id === llama.id ? {...l, name: e.target.value} : l))}
-                              />
-                              <button 
-                                onClick={() => setLlamas(llamas.filter(l => l.id !== llama.id))}
-                                className="text-stone-300 hover:text-red-500 transition-colors p-2"
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center gap-4">
+                           <input 
+                             className="text-2xl font-black text-stone-900 w-full outline-none bg-transparent focus:bg-stone-50 px-2 rounded-lg"
+                             value={llama.name}
+                             onChange={(e) => setLlamas(llamas.map(l => l.id === llama.id ? {...l, name: e.target.value} : l))}
+                           />
+                           <button onClick={() => setLlamas(llamas.filter(l => l.id !== llama.id))} className="text-stone-300 hover:text-red-500 transition-colors">
+                              <Trash2 className="w-5 h-5" />
+                           </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                           <div>
+                              <label className="block text-[10px] font-black uppercase text-stone-400 mb-2">Primary Role</label>
+                              <select 
+                                className="w-full bg-stone-50 border border-stone-100 p-2 rounded-xl text-xs font-bold"
+                                value={llama.specialty}
+                                onChange={(e) => setLlamas(llamas.map(l => l.id === llama.id ? {...l, specialty: e.target.value as Llama['specialty']} : l))}
                               >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-[10px] font-black uppercase text-stone-400">Specialty</label>
-                                <select 
-                                  className="w-full bg-stone-50 border border-stone-100 rounded-lg p-2 text-sm font-bold"
-                                  value={llama.specialty}
-                                  onChange={(e) => setLlamas(llamas.map(l => l.id === llama.id ? {...l, specialty: e.target.value as Llama['specialty']} : l))}
-                                >
-                                  <option>Lead Llama</option>
-                                  <option>Hunting</option>
-                                  <option>Backpacking</option>
-                                  <option>Gentle Soul</option>
-                                </select>
-                              </div>
-                              <div>
-                                <label className="text-[10px] font-black uppercase text-stone-400">Max Load (lbs)</label>
+                                <option>Lead Llama</option>
+                                <option>Hunting</option>
+                                <option>Backpacking</option>
+                                <option>Gentle Soul</option>
+                              </select>
+                           </div>
+                           <div>
+                              <label className="block text-[10px] font-black uppercase text-stone-400 mb-2">Max Capacity</label>
+                              <div className="flex items-center gap-2 bg-stone-50 px-3 py-2 rounded-xl border border-stone-100">
                                 <input 
-                                  type="number"
-                                  className="w-full bg-stone-50 border border-stone-100 rounded-lg p-2 text-sm font-bold"
-                                  value={llama.maxLoad}
+                                  type="number" 
+                                  className="w-full bg-transparent font-black text-xs outline-none" 
+                                  value={llama.maxLoad} 
                                   onChange={(e) => setLlamas(llamas.map(l => l.id === llama.id ? {...l, maxLoad: parseInt(e.target.value)} : l))}
                                 />
+                                <span className="text-[10px] font-black text-stone-400">LBS</span>
                               </div>
-                            </div>
-                            <textarea 
-                              className="w-full bg-stone-50 border border-stone-100 rounded-lg p-3 text-xs font-medium resize-none h-20"
-                              value={llama.personality}
-                              onChange={(e) => setLlamas(llamas.map(l => l.id === llama.id ? {...l, personality: e.target.value} : l))}
-                            />
-                          </div>
+                           </div>
                         </div>
-                      ))}
-                      <input type="file" ref={llamaPhotoInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'llama')} />
-                    </div>
-                  </div>
-                )}
-
-                {/* GALLERY TAB */}
-                {adminTab === 'gallery' && (
-                  <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
-                    <header className="flex flex-col md:flex-row md:items-end justify-between border-b border-stone-100 pb-10 gap-6">
-                      <div className="text-left">
-                        <h2 className="text-4xl font-black text-stone-900 mb-2">Media Assets</h2>
-                        <p className="text-stone-500 font-medium">Manage the visual storytelling of your backcountry routes.</p>
-                      </div>
-                      <div className="flex gap-4">
-                        <button 
-                          onClick={() => fileInputRef.current?.click()}
-                          className="bg-stone-900 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-xl shrink-0"
-                        >
-                          <Upload className="w-5 h-5" /> Bulk Upload
-                        </button>
-                        <input type="file" ref={fileInputRef} className="hidden" multiple accept="image/*" onChange={handleFileSelect} />
-                      </div>
-                    </header>
-
-                    {/* Staging area */}
-                    {localPreviews.length > 0 && (
-                       <div className="p-8 bg-stone-50 rounded-[2rem] border-2 border-dashed border-stone-200">
-                         <div className="flex justify-between items-center mb-6">
-                            <h4 className="font-bold">Staging {localPreviews.length} images</h4>
-                            <div className="flex gap-3">
-                              <button onClick={() => setLocalPreviews([])} className="text-sm text-stone-400 font-bold">Cancel</button>
-                              <button onClick={handleConfirmUpload} className="bg-green-800 text-white px-6 py-2 rounded-xl text-sm font-bold">Save All</button>
-                            </div>
-                         </div>
-                         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4">
-                            {localPreviews.map((p, i) => (
-                              <div key={i} className="aspect-square rounded-lg overflow-hidden bg-white shadow-sm border border-stone-100">
-                                <img src={p} className="w-full h-full object-cover" />
-                              </div>
-                            ))}
-                         </div>
-                       </div>
-                    )}
-
-                    {/* AI Generation Mini-tool */}
-                    <div className="bg-green-50 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-green-100 flex flex-col md:flex-row items-center gap-6 md:gap-8">
-                      <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-green-700 shadow-sm shrink-0">
-                        <Sparkles className="w-8 h-8" />
-                      </div>
-                      <div className="flex-1 space-y-1 text-center md:text-left">
-                        <h4 className="font-black text-green-900">AI Background Generator</h4>
-                        <p className="text-green-800/60 text-sm">Need a specific Montana landscape? Generate one instantly.</p>
-                      </div>
-                      <div className="flex w-full md:w-auto gap-3">
-                        <input 
-                          type="text"
-                          placeholder="Glacial lake..."
-                          className="flex-1 md:w-64 bg-white border border-green-200 px-6 py-3 rounded-xl outline-none focus:ring-4 focus:ring-green-700/5 text-sm"
-                          value={aiPrompt}
-                          onChange={(e) => setAiPrompt(e.target.value)}
+                        <textarea 
+                           className="w-full h-24 bg-stone-50 border border-stone-100 p-4 rounded-xl text-xs font-medium resize-none outline-none focus:bg-white focus:ring-2 focus:ring-green-800/10"
+                           placeholder="Llama personality..."
+                           value={llama.personality}
+                           onChange={(e) => setLlamas(llamas.map(l => l.id === llama.id ? {...l, personality: e.target.value} : l))}
                         />
-                        <button 
-                          disabled={!aiPrompt || isGenerating}
-                          onClick={handleAiGenerate}
-                          className="bg-green-800 text-white px-6 py-3 rounded-xl font-bold disabled:opacity-50 text-sm"
-                        >
-                          {isGenerating ? <Loader2 className="animate-spin w-4 h-4" /> : "Generate"}
-                        </button>
                       </div>
                     </div>
+                  ))}
+                  <input type="file" ref={llamaPhotoInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'llama')} />
+                </div>
+              </div>
+            )}
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                      {gallery.map((img, i) => (
-                        <div key={i} className="aspect-square rounded-2xl md:rounded-3xl overflow-hidden bg-stone-100 relative group transition-all duration-300">
-                          <img src={img.url} className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-stone-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                            <button onClick={() => handleDeleteImage(i)} className="bg-red-500 text-white p-3 rounded-full hover:scale-110 transition-transform">
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
+            {/* Gallery Tab */}
+            {adminTab === 'gallery' && (
+              <div className="max-w-6xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500">
+                <header className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-stone-200 pb-10 gap-6">
+                  <div className="text-left">
+                    <h2 className="text-4xl font-black text-stone-900 mb-2">Expedition Journal</h2>
+                    <p className="text-stone-500 font-medium">Manage the photo gallery shown to prospective trekkers.</p>
+                  </div>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-stone-900 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-2 shadow-xl hover:bg-stone-800 shrink-0"
+                    >
+                      <Upload className="w-5 h-5" /> Upload Photos
+                    </button>
+                    <input type="file" ref={fileInputRef} className="hidden" multiple accept="image/*" onChange={handleFileSelect} />
+                  </div>
+                </header>
+
+                {/* AI Generator In-Situ */}
+                <div className="bg-green-800 text-white p-10 rounded-[3rem] shadow-2xl shadow-green-900/20 flex flex-col lg:flex-row items-center gap-10">
+                   <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center shrink-0">
+                      <Sparkles className="w-10 h-10 text-green-400" />
+                   </div>
+                   <div className="flex-1 space-y-2 text-center lg:text-left">
+                      <h4 className="text-2xl font-black">Generate AI Backdrops</h4>
+                      <p className="text-green-100 font-medium">Need more scenery? Let Gemini create a custom Montana landscape.</p>
+                   </div>
+                   <div className="flex w-full lg:w-auto gap-4">
+                      <input 
+                        className="flex-1 lg:w-72 bg-white/10 border border-white/20 px-6 py-4 rounded-2xl outline-none placeholder:text-white/30 font-bold"
+                        placeholder="Glacial peaks at sunrise..."
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                      />
+                      <button 
+                        disabled={isGenerating || !aiPrompt}
+                        onClick={handleAiGenerate}
+                        className="bg-white text-green-900 px-8 py-4 rounded-2xl font-black disabled:opacity-50 hover:bg-green-50 transition-all"
+                      >
+                        {isGenerating ? <Loader2 className="animate-spin" /> : "Generate"}
+                      </button>
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {gallery.map((img, i) => (
+                    <div key={i} className="aspect-square rounded-[2rem] overflow-hidden bg-white shadow-sm border border-stone-200 relative group transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl">
+                       <img src={img.url} className="w-full h-full object-cover" />
+                       <div className="absolute inset-0 bg-stone-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button onClick={() => handleDeleteImage(i)} className="bg-red-500 text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform">
+                             <Trash2 className="w-6 h-6" />
+                          </button>
+                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Bookings Tab (Mock) */}
+            {adminTab === 'bookings' && (
+              <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500">
+                 <header className="border-b border-stone-200 pb-10 text-left">
+                    <h2 className="text-4xl font-black text-stone-900 mb-2">Fleet Logistics</h2>
+                    <p className="text-stone-500 font-medium">Monitoring the current deployment of the backcountry herd.</p>
+                 </header>
+                 <div className="bg-white rounded-[3rem] border border-stone-200 shadow-xl overflow-hidden">
+                    <table className="w-full text-left">
+                      <thead className="bg-stone-100/50">
+                        <tr>
+                          <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Explorer</th>
+                          <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Window</th>
+                          <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Unit Count</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-stone-100">
+                         <tr className="hover:bg-stone-50 transition-colors">
+                            <td className="px-8 py-8 font-black text-stone-900">Sarah Miller</td>
+                            <td className="px-8 py-8 font-medium text-stone-500">Aug 12 - 18</td>
+                            <td className="px-8 py-8"><span className="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">4 Units</span></td>
+                         </tr>
+                         <tr className="hover:bg-stone-50 transition-colors">
+                            <td className="px-8 py-8 font-black text-stone-900">Tom Hudson</td>
+                            <td className="px-8 py-8 font-medium text-stone-500">Sep 05 - 12</td>
+                            <td className="px-8 py-8"><span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">2 Units</span></td>
+                         </tr>
+                      </tbody>
+                    </table>
+                 </div>
+              </div>
+            )}
+          </main>
+
+          {/* Staging Bar (Floating at bottom if images pending) */}
+          {localPreviews.length > 0 && (
+            <div className="fixed bottom-24 sm:bottom-12 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl bg-stone-900 text-white p-6 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex items-center justify-between z-50 animate-in slide-in-from-bottom-10">
+               <div className="flex items-center gap-4">
+                  <div className="flex -space-x-4">
+                     {localPreviews.slice(0, 3).map((p, i) => (
+                        <div key={i} className="w-10 h-10 rounded-full border-2 border-stone-900 overflow-hidden bg-stone-700">
+                           <img src={p} className="w-full h-full object-cover" />
                         </div>
-                      ))}
-                    </div>
+                     ))}
+                     {localPreviews.length > 3 && (
+                        <div className="w-10 h-10 rounded-full border-2 border-stone-900 bg-stone-700 flex items-center justify-center text-[10px] font-black">
+                           +{localPreviews.length - 3}
+                        </div>
+                     )}
                   </div>
-                )}
-
-                {/* BOOKINGS TAB (MOCK) */}
-                {adminTab === 'bookings' && (
-                  <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
-                    <header className="border-b border-stone-100 pb-10 text-left">
-                      <h2 className="text-4xl font-black text-stone-900 mb-2">Fleet Bookings</h2>
-                      <p className="text-stone-500 font-medium">Review and confirm upcoming backcountry expeditions.</p>
-                    </header>
-                    <div className="bg-white rounded-[2rem] md:rounded-[3rem] border border-stone-100 shadow-xl overflow-x-auto">
-                      <table className="w-full text-left min-w-[600px]">
-                        <thead className="bg-stone-50 border-b border-stone-100">
-                          <tr>
-                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Client</th>
-                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Dates</th>
-                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Llamas</th>
-                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-stone-50">
-                          {[
-                            { name: 'Sarah Miller', date: 'Aug 12 - 18', count: 4, status: 'Confirmed' },
-                            { name: 'Tom Hudson', date: 'Sep 05 - 12', count: 2, status: 'Pending' },
-                          ].map((item, i) => (
-                            <tr key={i} className="hover:bg-stone-50/50 transition-colors">
-                              <td className="px-8 py-8 font-bold text-stone-900">{item.name}</td>
-                              <td className="px-8 py-8 font-medium text-stone-600">{item.date}</td>
-                              <td className="px-8 py-8"><span className="bg-stone-100 px-3 py-1 rounded-lg text-xs font-black text-stone-600">{item.count} Units</span></td>
-                              <td className="px-8 py-8"><span className="text-xs font-bold text-green-600">{item.status}</span></td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                  <div>
+                    <h4 className="text-sm font-black tracking-tight">{localPreviews.length} images pending</h4>
+                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Awaiting cloud synchronization</p>
                   </div>
-                )}
-
-              </main>
+               </div>
+               <div className="flex gap-3">
+                  <button onClick={() => setLocalPreviews([])} className="px-4 py-2 text-stone-400 font-black text-xs uppercase hover:text-white transition-colors">Discard</button>
+                  <button onClick={handleConfirmUpload} className="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-black text-xs uppercase shadow-lg transition-all active:scale-95">
+                    {isUploadingFile ? <Loader2 className="animate-spin w-4 h-4" /> : "Save to Fleet"}
+                  </button>
+               </div>
             </div>
-          </div>
+          )}
+
+          {/* Mobile Bottom Navigation Bar */}
+          <nav className="lg:hidden bg-white border-t border-stone-200 px-6 py-4 flex items-center justify-around shrink-0 z-20">
+             <button onClick={() => setAdminTab('branding')} className={`flex flex-col items-center gap-1 ${adminTab === 'branding' ? 'text-green-800' : 'text-stone-300'}`}>
+                <Palette className="w-6 h-6" />
+                <span className="text-[9px] font-black uppercase tracking-widest">Identity</span>
+             </button>
+             <button onClick={() => setAdminTab('fleet')} className={`flex flex-col items-center gap-1 ${adminTab === 'fleet' ? 'text-green-800' : 'text-stone-300'}`}>
+                <Users className="w-6 h-6" />
+                <span className="text-[9px] font-black uppercase tracking-widest">Herd</span>
+             </button>
+             <button onClick={() => setAdminTab('gallery')} className={`flex flex-col items-center gap-1 ${adminTab === 'gallery' ? 'text-green-800' : 'text-stone-300'}`}>
+                <ImageIcon className="w-6 h-6" />
+                <span className="text-[9px] font-black uppercase tracking-widest">Gallery</span>
+             </button>
+             <button onClick={() => setAdminTab('bookings')} className={`flex flex-col items-center gap-1 ${adminTab === 'bookings' ? 'text-green-800' : 'text-stone-300'}`}>
+                <ClipboardList className="w-6 h-6" />
+                <span className="text-[9px] font-black uppercase tracking-widest">Trips</span>
+             </button>
+          </nav>
         </div>
       )}
 
-      {/* Main UI */}
+      {/* Standard Website UI */}
       <nav className="fixed w-full z-50 bg-white/90 backdrop-blur-lg border-b border-stone-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center">
@@ -771,14 +758,14 @@ const App: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-stone-900/50 via-transparent to-stone-900/80"></div>
         </div>
         
-        {/* Admin Overlay for Hero */}
+        {/* Management Quick Edit */}
         {isAdmin && (
            <button 
             onClick={() => openAdminTab('branding')}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-green-600/80 backdrop-blur-lg text-white p-8 rounded-full border-4 border-white/20 shadow-2xl opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-green-800/80 backdrop-blur-xl text-white p-8 rounded-full border-4 border-white/20 shadow-2xl opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 flex flex-col items-center"
           >
-            <Camera className="w-12 h-12" />
-            <span className="block mt-2 font-black uppercase text-xs tracking-widest">Swap Hero</span>
+            <Camera className="w-12 h-12 mb-2" />
+            <span className="font-black uppercase text-[10px] tracking-widest">Edit Backdrop</span>
           </button>
         )}
 
@@ -792,15 +779,15 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* Admin Quick Bar */}
+      {/* Management Quick Access Bar */}
       {isAdmin && (
-        <div className="bg-green-900 text-white py-3 px-4 flex flex-wrap items-center justify-center gap-6 sticky top-20 z-40 shadow-xl border-b border-green-800 animate-in slide-in-from-top duration-500">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-left"><Unlock className="w-3 h-3" /> Management Mode Active</span>
+        <div className="bg-stone-900 text-white py-3 px-4 flex flex-wrap items-center justify-center gap-6 sticky top-20 z-40 shadow-2xl border-b border-white/10 animate-in slide-in-from-top duration-500">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-left"><Unlock className="w-3 h-3 text-green-400" /> Management Mode Active</span>
           <button 
-            onClick={() => openAdminTab('branding')} 
-            className="flex items-center gap-2 bg-white text-stone-900 hover:bg-stone-100 px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+            onClick={() => setShowDashboard(true)} 
+            className="flex items-center gap-2 bg-white text-stone-900 hover:bg-stone-100 px-4 py-1.5 rounded-full text-xs font-black transition-all"
           >
-            <LayoutDashboard className="w-3 h-3" /> Open Management Console
+            <LayoutDashboard className="w-3 h-3" /> Open Dashboard
           </button>
           <div className="h-4 w-px bg-white/20" />
           <button onClick={() => setIsAdmin(false)} className="text-[10px] font-black uppercase text-white/60 hover:text-white transition-all">
@@ -809,7 +796,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Main Sections */}
+      {/* Content Sections */}
       <section id="benefits" className="py-32 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
@@ -839,7 +826,7 @@ const App: React.FC = () => {
               <p className="text-stone-600 text-xl leading-relaxed">Our herd is meticulously trained for the variable conditions of the Northern Rockies.</p>
             </div>
             {isAdmin && (
-              <button onClick={() => openAdminTab('fleet')} className="bg-stone-900 text-white px-8 py-4 rounded-full font-bold flex items-center gap-2 shadow-lg"><Edit3 className="w-4 h-4" /> Edit Fleet</button>
+              <button onClick={() => openAdminTab('fleet')} className="bg-stone-900 text-white px-8 py-4 rounded-full font-black text-xs uppercase flex items-center gap-2 shadow-lg active:scale-95"><Edit3 className="w-4 h-4" /> Edit Fleet</button>
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
@@ -869,7 +856,7 @@ const App: React.FC = () => {
               </div>
             </div>
             {isAdmin && (
-              <button onClick={() => openAdminTab('gallery')} className="bg-green-800 hover:bg-green-700 px-8 py-4 rounded-full font-bold shadow-xl flex items-center gap-2 transition-all active:scale-95">
+              <button onClick={() => openAdminTab('gallery')} className="bg-green-800 hover:bg-green-700 px-8 py-4 rounded-full font-black text-xs uppercase shadow-xl flex items-center gap-2 transition-all active:scale-95">
                 <Settings className="w-5 h-5" /> Manage Assets
               </button>
             )}
@@ -938,10 +925,10 @@ const App: React.FC = () => {
                 {isAdmin && (
                   <button 
                     onClick={() => openAdminTab('branding')}
-                    className="absolute inset-0 bg-stone-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white"
+                    className="absolute inset-0 bg-stone-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white p-4"
                   >
                     <Camera className="w-12 h-12 mb-2" />
-                    <span className="font-black text-xs uppercase tracking-widest">Update Photo</span>
+                    <span className="font-black text-[10px] uppercase tracking-widest text-center">Swap Profile Photo</span>
                   </button>
                 )}
               </div>
