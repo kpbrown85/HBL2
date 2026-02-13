@@ -30,7 +30,9 @@ import {
   LogIn,
   CheckCircle2,
   Copy,
-  Files
+  Files,
+  Settings,
+  Type
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -43,8 +45,20 @@ const App: React.FC = () => {
   // Admin State
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showBrandingModal, setShowBrandingModal] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
+
+  // Branding State
+  const [branding, setBranding] = useState(() => {
+    const saved = localStorage.getItem('hbl_branding');
+    return saved ? JSON.parse(saved) : {
+      siteName: "Helena Backcountry Llamas",
+      accentName: "Llamas",
+      logoType: 'icon' as 'icon' | 'image',
+      logoUrl: ""
+    };
+  });
 
   // Gallery Management
   const [gallery, setGallery] = useState<GalleryImage[]>(() => {
@@ -58,6 +72,7 @@ const App: React.FC = () => {
   const [localPreviews, setLocalPreviews] = useState<string[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     generateWelcomeSlogan().then(setSlogan);
@@ -66,6 +81,11 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('hbl_gallery', JSON.stringify(gallery));
   }, [gallery]);
+
+  useEffect(() => {
+    localStorage.setItem('hbl_branding', JSON.stringify(branding));
+    document.title = branding.siteName;
+  }, [branding]);
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
@@ -137,10 +157,20 @@ const App: React.FC = () => {
     }
   };
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && isAdmin) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBranding({ ...branding, logoUrl: reader.result as string, logoType: 'image' });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleConfirmUpload = async () => {
     if (localPreviews.length === 0 || !isAdmin) return;
     setIsUploadingFile(true);
-    // Simulate a slight delay for processing
     await new Promise(resolve => setTimeout(resolve, 800));
     
     const newImages: GalleryImage[] = localPreviews.map(url => ({
@@ -182,8 +212,8 @@ const App: React.FC = () => {
     setDraggedIndex(null);
   };
 
-  const copyGalleryConfig = () => {
-    const configString = JSON.stringify(gallery, null, 2);
+  const copyConfig = (data: any) => {
+    const configString = JSON.stringify(data, null, 2);
     navigator.clipboard.writeText(configString).then(() => {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 3000);
@@ -191,7 +221,7 @@ const App: React.FC = () => {
   };
 
   const resetGallery = () => {
-    if (confirm("Reset gallery to original defaults? This will erase any images you've added.")) {
+    if (confirm("Reset gallery to original defaults?")) {
       setGallery(GALLERY_IMAGES);
       localStorage.removeItem('hbl_gallery');
     }
@@ -205,6 +235,24 @@ const App: React.FC = () => {
     >
       {children}
     </a>
+  );
+
+  const Logo = () => (
+    <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+      {branding.logoType === 'icon' ? (
+        <div className="w-10 h-10 bg-green-800 rounded-lg flex items-center justify-center shadow-lg shadow-green-900/20">
+          <Mountain className="text-white w-6 h-6" />
+        </div>
+      ) : (
+        <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-stone-100 bg-white">
+          <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+        </div>
+      )}
+      <span className="text-xl font-bold tracking-tight text-stone-900">
+        {branding.siteName.replace(branding.accentName, "")}
+        <span className="text-green-800 italic">{branding.accentName}</span>
+      </span>
+    </div>
   );
 
   return (
@@ -238,17 +286,73 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {showBrandingModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[3rem] p-12 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div className="flex justify-between items-center mb-10">
+              <h3 className="text-3xl font-black text-stone-900 flex items-center gap-3"><Settings className="text-green-700" /> Branding</h3>
+              <button onClick={() => setShowBrandingModal(false)} className="p-2 hover:bg-stone-100 rounded-full">
+                <X />
+              </button>
+            </div>
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest">Site Name</label>
+                <div className="flex gap-4">
+                  <input 
+                    type="text"
+                    className="flex-1 bg-stone-100 border border-stone-200 px-6 py-4 rounded-2xl outline-none"
+                    placeholder="Full Site Name"
+                    value={branding.siteName}
+                    onChange={(e) => setBranding({ ...branding, siteName: e.target.value })}
+                  />
+                  <input 
+                    type="text"
+                    className="w-32 bg-stone-100 border border-stone-200 px-6 py-4 rounded-2xl outline-none text-green-700 font-bold"
+                    placeholder="Accent Word"
+                    value={branding.accentName}
+                    onChange={(e) => setBranding({ ...branding, accentName: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest">Logo Style</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button 
+                    onClick={() => setBranding({ ...branding, logoType: 'icon' })}
+                    className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${branding.logoType === 'icon' ? 'bg-green-50 border-green-800' : 'bg-white border-stone-100 hover:border-stone-200'}`}
+                  >
+                    <Mountain className={branding.logoType === 'icon' ? 'text-green-800' : 'text-stone-300'} />
+                    <span className="text-xs font-bold">Icon Logo</span>
+                  </button>
+                  <button 
+                    onClick={() => logoInputRef.current?.click()}
+                    className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${branding.logoType === 'image' ? 'bg-green-50 border-green-800' : 'bg-white border-stone-100 hover:border-stone-200'}`}
+                  >
+                    <ImageIcon className={branding.logoType === 'image' ? 'text-green-800' : 'text-stone-300'} />
+                    <span className="text-xs font-bold">Upload Logo</span>
+                  </button>
+                  <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                </div>
+              </div>
+
+              <button 
+                onClick={() => copyConfig(branding)} 
+                className="w-full bg-stone-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-all"
+              >
+                {copySuccess ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5" />}
+                {copySuccess ? "Copied!" : "Copy Branding Config for GitHub"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <nav className="fixed w-full z-50 bg-white/90 backdrop-blur-lg border-b border-stone-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <div className="w-10 h-10 bg-green-800 rounded-lg flex items-center justify-center shadow-lg shadow-green-900/20">
-                <Mountain className="text-white w-6 h-6" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-stone-900">
-                Helena Backcountry <span className="text-green-800 italic">Llamas</span>
-              </span>
-            </div>
+            <Logo />
             <div className="hidden md:flex items-center gap-8">
               <NavLink href="#about" id="about">The Herd</NavLink>
               <NavLink href="#benefits" id="benefits">Why Llamas?</NavLink>
@@ -297,16 +401,20 @@ const App: React.FC = () => {
       {isAdmin && (
         <div className="bg-green-900 text-white py-3 px-4 flex flex-wrap items-center justify-center gap-6 sticky top-20 z-40 shadow-xl border-b border-green-800">
           <span className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2"><Unlock className="w-3 h-3" /> Management Mode Active</span>
-          <button onClick={copyGalleryConfig} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full text-xs font-bold transition-all border border-white/20">
+          <button onClick={() => setShowBrandingModal(true)} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full text-xs font-bold transition-all border border-white/20">
+            <Settings className="w-3 h-3" /> Branding Settings
+          </button>
+          <button onClick={() => copyConfig(gallery)} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full text-xs font-bold transition-all border border-white/20">
             {copySuccess ? <CheckCircle2 className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
-            {copySuccess ? "Config Copied!" : "Copy Gallery Code for GitHub"}
+            {copySuccess ? "Gallery Copied!" : "Copy Gallery Config"}
           </button>
           <button onClick={resetGallery} className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/40 px-4 py-1.5 rounded-full text-xs font-bold transition-all border border-red-500/20">
-            <Trash2 className="w-3 h-3" /> Reset to Defaults
+            <Trash2 className="w-3 h-3" /> Reset Gallery
           </button>
         </div>
       )}
 
+      {/* Rest of the sections (benefits, about, gear, gallery, etc.) */}
       <section id="benefits" className="py-32 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
@@ -394,7 +502,6 @@ const App: React.FC = () => {
                         ))}
                         <button onClick={() => fileInputRef.current?.click()} className="aspect-square border-2 border-dashed border-white/10 rounded-lg flex items-center justify-center hover:bg-white/5"><Plus className="w-5 h-5 text-stone-600" /></button>
                       </div>
-                      <p className="text-xs text-stone-500 font-bold flex items-center gap-2"><Files className="w-3 h-3" /> {localPreviews.length} files staged for upload</p>
                     </div>
                   ) : (
                     <div onClick={() => fileInputRef.current?.click()} className="h-40 border-2 border-dashed border-white/20 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 group">
@@ -484,7 +591,10 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 text-left">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-20 border-b border-stone-800 pb-20 mb-20">
             <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-3 mb-10"><Mountain className="text-green-800 w-10 h-10" /><span className="text-2xl font-black text-white">Helena Backcountry <span className="text-green-800">Llamas</span></span></div>
+              <div className="flex items-center gap-3 mb-10">
+                {branding.logoType === 'icon' ? <Mountain className="text-green-800 w-10 h-10" /> : <div className="w-10 h-10 rounded-lg overflow-hidden bg-white"><img src={branding.logoUrl} className="w-full h-full object-contain" /></div>}
+                <span className="text-2xl font-black text-white">{branding.siteName.replace(branding.accentName, "")} <span className="text-green-800">{branding.accentName}</span></span>
+              </div>
               <p className="max-w-md mb-12 text-lg">Pioneering backcountry exploration in Helena, Montana since 2018.</p>
               <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${isAdmin ? 'bg-green-800 text-white rotate-0' : 'bg-stone-900 rotate-12 hover:rotate-0'}`}>
                 {isAdmin ? <Unlock /> : <Lock />}
@@ -492,7 +602,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-col md:flex-row justify-between items-center gap-8 font-bold text-xs uppercase tracking-widest">
-            <p>© {new Date().getFullYear()} Helena Backcountry Llamas.</p>
+            <p>© {new Date().getFullYear()} {branding.siteName}.</p>
           </div>
         </div>
       </footer>
