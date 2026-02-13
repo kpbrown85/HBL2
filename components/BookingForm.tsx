@@ -12,7 +12,8 @@ import {
   Phone, 
   User,
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  Info
 } from 'lucide-react';
 
 export const BookingForm: React.FC = () => {
@@ -182,7 +183,7 @@ export const BookingForm: React.FC = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-stone-100">
+    <form onSubmit={handleSubmit} className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-stone-100 text-left">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
         <div className="space-y-8">
           <div className="flex items-center gap-3 border-b border-stone-50 pb-4 mb-8">
@@ -347,5 +348,3 @@ export const BookingForm: React.FC = () => {
     </form>
   );
 };
-
-import { Info } from 'lucide-react';
