@@ -40,7 +40,8 @@ import {
   ExternalLink,
   GraduationCap,
   Users,
-  Camera
+  Camera,
+  Edit3
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -119,6 +120,11 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('hbl_llamas', JSON.stringify(llamas));
   }, [llamas]);
+
+  const openAdminTab = (tab: typeof adminTab) => {
+    setAdminTab(tab);
+    setShowDashboard(true);
+  };
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
@@ -347,47 +353,47 @@ const App: React.FC = () => {
             <div className="flex flex-col md:flex-row h-full">
               
               {/* Sidebar */}
-              <aside className="w-full md:w-80 bg-stone-900 text-white p-8 flex flex-col justify-between shrink-0">
-                <div>
-                  <div className="flex items-center gap-3 mb-12">
-                    <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-stone-900">
+              <aside className="w-full md:w-80 bg-stone-900 text-white p-6 md:p-8 flex flex-col justify-between shrink-0">
+                <div className="overflow-x-auto md:overflow-visible">
+                  <div className="flex items-center gap-3 mb-8 md:mb-12">
+                    <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-stone-900 shrink-0">
                       <LayoutDashboard className="w-6 h-6" />
                     </div>
-                    <div>
-                      <h3 className="font-black text-xl tracking-tight leading-none">Management</h3>
-                      <p className="text-[10px] text-stone-500 font-bold uppercase tracking-widest mt-1">Admin Console</p>
+                    <div className="hidden md:block">
+                      <h3 className="font-black text-xl tracking-tight leading-none text-left">Management</h3>
+                      <p className="text-[10px] text-stone-500 font-bold uppercase tracking-widest mt-1 text-left">Admin Console</p>
                     </div>
                   </div>
 
-                  <nav className="space-y-2">
+                  <nav className="flex md:flex-col gap-2 pb-4 md:pb-0">
                     <button 
                       onClick={() => setAdminTab('branding')}
-                      className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all ${adminTab === 'branding' ? 'bg-white text-stone-900 shadow-xl shadow-black/20' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
+                      className={`flex-1 md:w-full flex items-center gap-3 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold transition-all whitespace-nowrap ${adminTab === 'branding' ? 'bg-white text-stone-900 shadow-xl' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
                     >
-                      <Palette className="w-5 h-5" /> Brand Identity
+                      <Palette className="w-5 h-5" /> <span className="text-sm md:text-base">Identity</span>
                     </button>
                     <button 
                       onClick={() => setAdminTab('fleet')}
-                      className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all ${adminTab === 'fleet' ? 'bg-white text-stone-900 shadow-xl shadow-black/20' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
+                      className={`flex-1 md:w-full flex items-center gap-3 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold transition-all whitespace-nowrap ${adminTab === 'fleet' ? 'bg-white text-stone-900 shadow-xl' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
                     >
-                      <Users className="w-5 h-5" /> Herd Profiles
+                      <Users className="w-5 h-5" /> <span className="text-sm md:text-base">Herd</span>
                     </button>
                     <button 
                       onClick={() => setAdminTab('gallery')}
-                      className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all ${adminTab === 'gallery' ? 'bg-white text-stone-900 shadow-xl shadow-black/20' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
+                      className={`flex-1 md:w-full flex items-center gap-3 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold transition-all whitespace-nowrap ${adminTab === 'gallery' ? 'bg-white text-stone-900 shadow-xl' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
                     >
-                      <ImageIcon className="w-5 h-5" /> Media Gallery
+                      <ImageIcon className="w-5 h-5" /> <span className="text-sm md:text-base">Gallery</span>
                     </button>
                     <button 
                       onClick={() => setAdminTab('bookings')}
-                      className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all ${adminTab === 'bookings' ? 'bg-white text-stone-900 shadow-xl shadow-black/20' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
+                      className={`flex-1 md:w-full flex items-center gap-3 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold transition-all whitespace-nowrap ${adminTab === 'bookings' ? 'bg-white text-stone-900 shadow-xl' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
                     >
-                      <ClipboardList className="w-5 h-5" /> Fleet Bookings
+                      <ClipboardList className="w-5 h-5" /> <span className="text-sm md:text-base">Bookings</span>
                     </button>
                   </nav>
                 </div>
 
-                <div className="space-y-4">
+                <div className="hidden md:flex flex-col gap-4">
                   <button 
                     onClick={() => setShowDashboard(false)}
                     className="w-full bg-white/10 hover:bg-white/20 px-6 py-4 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border border-white/5"
@@ -404,7 +410,8 @@ const App: React.FC = () => {
               </aside>
 
               {/* Main Dashboard Content */}
-              <main className="flex-1 overflow-y-auto p-6 md:p-12 lg:p-16">
+              <main className="flex-1 overflow-y-auto p-6 md:p-12 lg:p-16 relative">
+                <button onClick={() => setShowDashboard(false)} className="md:hidden absolute top-4 right-4 bg-stone-100 p-3 rounded-full"><X className="w-5 h-5"/></button>
                 
                 {/* BRANDING TAB */}
                 {adminTab === 'branding' && (
@@ -447,10 +454,10 @@ const App: React.FC = () => {
                         <div className="space-y-6">
                           <h4 className="text-xs font-black uppercase tracking-widest text-stone-900 border-b border-stone-100 pb-2">Primary Section Images</h4>
                           
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest">Hero Backdrop</label>
-                               <button onClick={() => heroInputRef.current?.click()} className="w-full aspect-video bg-stone-100 rounded-xl overflow-hidden border-2 border-dashed border-stone-200 flex items-center justify-center group">
+                               <button onClick={() => heroInputRef.current?.click()} className="w-full aspect-video bg-stone-100 rounded-xl overflow-hidden border-2 border-dashed border-stone-200 flex items-center justify-center group relative">
                                  {branding.heroImageUrl ? <img src={branding.heroImageUrl} className="w-full h-full object-cover" /> : <Camera className="text-stone-300" />}
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Upload className="text-white" /></div>
                                </button>
@@ -458,7 +465,7 @@ const App: React.FC = () => {
                             </div>
                             <div className="space-y-2">
                                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest">Guide Sidebar</label>
-                               <button onClick={() => guideInputRef.current?.click()} className="w-full aspect-video bg-stone-100 rounded-xl overflow-hidden border-2 border-dashed border-stone-200 flex items-center justify-center group">
+                               <button onClick={() => guideInputRef.current?.click()} className="w-full aspect-video bg-stone-100 rounded-xl overflow-hidden border-2 border-dashed border-stone-200 flex items-center justify-center group relative">
                                  {branding.guideImageUrl ? <img src={branding.guideImageUrl} className="w-full h-full object-cover" /> : <Camera className="text-stone-300" />}
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Upload className="text-white" /></div>
                                </button>
@@ -537,8 +544,8 @@ const App: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       {llamas.map((llama) => (
-                        <div key={llama.id} className="bg-white border border-stone-100 rounded-[2.5rem] p-8 flex gap-8 shadow-sm hover:shadow-md transition-shadow group text-left">
-                          <div className="w-40 h-40 rounded-[2rem] overflow-hidden bg-stone-100 shrink-0 relative">
+                        <div key={llama.id} className="bg-white border border-stone-100 rounded-[2.5rem] p-8 flex flex-col sm:flex-row gap-8 shadow-sm hover:shadow-md transition-shadow group text-left">
+                          <div className="w-full sm:w-40 h-40 rounded-[2rem] overflow-hidden bg-stone-100 shrink-0 relative">
                             <img src={llama.imageUrl} className="w-full h-full object-cover" />
                             <button 
                               onClick={() => {
@@ -612,7 +619,7 @@ const App: React.FC = () => {
                       <div className="flex gap-4">
                         <button 
                           onClick={() => fileInputRef.current?.click()}
-                          className="bg-stone-900 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-xl"
+                          className="bg-stone-900 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-xl shrink-0"
                         >
                           <Upload className="w-5 h-5" /> Bulk Upload
                         </button>
@@ -620,8 +627,28 @@ const App: React.FC = () => {
                       </div>
                     </header>
 
+                    {/* Staging area */}
+                    {localPreviews.length > 0 && (
+                       <div className="p-8 bg-stone-50 rounded-[2rem] border-2 border-dashed border-stone-200">
+                         <div className="flex justify-between items-center mb-6">
+                            <h4 className="font-bold">Staging {localPreviews.length} images</h4>
+                            <div className="flex gap-3">
+                              <button onClick={() => setLocalPreviews([])} className="text-sm text-stone-400 font-bold">Cancel</button>
+                              <button onClick={handleConfirmUpload} className="bg-green-800 text-white px-6 py-2 rounded-xl text-sm font-bold">Save All</button>
+                            </div>
+                         </div>
+                         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4">
+                            {localPreviews.map((p, i) => (
+                              <div key={i} className="aspect-square rounded-lg overflow-hidden bg-white shadow-sm border border-stone-100">
+                                <img src={p} className="w-full h-full object-cover" />
+                              </div>
+                            ))}
+                         </div>
+                       </div>
+                    )}
+
                     {/* AI Generation Mini-tool */}
-                    <div className="bg-green-50 p-8 rounded-[2.5rem] border border-green-100 flex flex-col md:flex-row items-center gap-8">
+                    <div className="bg-green-50 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-green-100 flex flex-col md:flex-row items-center gap-6 md:gap-8">
                       <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-green-700 shadow-sm shrink-0">
                         <Sparkles className="w-8 h-8" />
                       </div>
@@ -632,57 +659,32 @@ const App: React.FC = () => {
                       <div className="flex w-full md:w-auto gap-3">
                         <input 
                           type="text"
-                          placeholder="Glacial lake with granite peaks..."
-                          className="flex-1 md:w-64 bg-white border border-green-200 px-6 py-4 rounded-xl outline-none focus:ring-4 focus:ring-green-700/5"
+                          placeholder="Glacial lake..."
+                          className="flex-1 md:w-64 bg-white border border-green-200 px-6 py-3 rounded-xl outline-none focus:ring-4 focus:ring-green-700/5 text-sm"
                           value={aiPrompt}
                           onChange={(e) => setAiPrompt(e.target.value)}
                         />
                         <button 
                           disabled={!aiPrompt || isGenerating}
                           onClick={handleAiGenerate}
-                          className="bg-green-800 text-white px-6 py-4 rounded-xl font-bold disabled:opacity-50"
+                          className="bg-green-800 text-white px-6 py-3 rounded-xl font-bold disabled:opacity-50 text-sm"
                         >
-                          {isGenerating ? <Loader2 className="animate-spin" /> : "Generate"}
+                          {isGenerating ? <Loader2 className="animate-spin w-4 h-4" /> : "Generate"}
                         </button>
                       </div>
                     </div>
 
-                    {/* Active Gallery Grid */}
-                    <div className="space-y-6">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-black uppercase tracking-[0.3em] text-stone-400">Current Fleet Assets</h4>
-                        <button onClick={() => copyConfig(gallery)} className="text-[10px] font-black uppercase text-stone-400 hover:text-stone-900 transition-all flex items-center gap-2">
-                          <Copy className="w-3 h-3" /> Export Gallery State
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {gallery.map((img, i) => (
-                          <div 
-                            key={i}
-                            draggable
-                            onDragStart={() => handleDragStart(i)}
-                            onDragOver={(e) => handleDragOver(e, i)}
-                            onDragLeave={handleDragLeave}
-                            onDrop={() => handleDrop(i)}
-                            className={`aspect-square rounded-3xl overflow-hidden bg-stone-100 relative group cursor-grab active:cursor-grabbing transition-all duration-300
-                              ${draggedIndex === i ? 'opacity-20 scale-90' : 'opacity-100'}
-                              ${dropTargetIndex === i ? 'ring-4 ring-green-600 ring-offset-4 ring-offset-white scale-105' : ''}`}
-                          >
-                            <img src={img.url} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-stone-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                              <button onClick={() => handleDeleteImage(i)} className="bg-red-500 text-white p-3 rounded-full hover:scale-110 transition-transform">
-                                <Trash2 className="w-5 h-5" />
-                              </button>
-                              <div className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white cursor-grab">
-                                <GripVertical className="w-5 h-5" />
-                              </div>
-                            </div>
-                            <div className="absolute bottom-4 left-4 right-4 bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/20">
-                              <p className="text-[10px] font-bold text-white truncate">{img.caption}</p>
-                            </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                      {gallery.map((img, i) => (
+                        <div key={i} className="aspect-square rounded-2xl md:rounded-3xl overflow-hidden bg-stone-100 relative group transition-all duration-300">
+                          <img src={img.url} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-stone-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                            <button onClick={() => handleDeleteImage(i)} className="bg-red-500 text-white p-3 rounded-full hover:scale-110 transition-transform">
+                              <Trash2 className="w-5 h-5" />
+                            </button>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -694,53 +696,26 @@ const App: React.FC = () => {
                       <h2 className="text-4xl font-black text-stone-900 mb-2">Fleet Bookings</h2>
                       <p className="text-stone-500 font-medium">Review and confirm upcoming backcountry expeditions.</p>
                     </header>
-
-                    <div className="bg-white rounded-[3rem] border border-stone-100 shadow-xl overflow-hidden">
-                      <table className="w-full text-left">
+                    <div className="bg-white rounded-[2rem] md:rounded-[3rem] border border-stone-100 shadow-xl overflow-x-auto">
+                      <table className="w-full text-left min-w-[600px]">
                         <thead className="bg-stone-50 border-b border-stone-100">
                           <tr>
                             <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Client</th>
                             <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Dates</th>
                             <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Llamas</th>
                             <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Status</th>
-                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400"></th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-stone-50">
                           {[
-                            { name: 'Sarah Miller', date: 'Aug 12 - 18', count: 4, status: 'Confirmed', email: 'sarah@example.com' },
-                            { name: 'Tom Hudson', date: 'Sep 05 - 12', count: 2, status: 'Pending', email: 'tom@hudson.co' },
-                            { name: 'Gravel Expeditions', date: 'Oct 01 - 10', count: 8, status: 'Clinic Required', email: 'ops@gravel.com' },
+                            { name: 'Sarah Miller', date: 'Aug 12 - 18', count: 4, status: 'Confirmed' },
+                            { name: 'Tom Hudson', date: 'Sep 05 - 12', count: 2, status: 'Pending' },
                           ].map((item, i) => (
-                            <tr key={i} className="hover:bg-stone-50/50 transition-colors group">
-                              <td className="px-8 py-8">
-                                <div className="flex items-center gap-4">
-                                  <div className="w-10 h-10 bg-stone-100 rounded-xl flex items-center justify-center text-stone-400 font-bold group-hover:bg-green-100 group-hover:text-green-700 transition-colors">
-                                    {item.name[0]}
-                                  </div>
-                                  <div>
-                                    <p className="font-bold text-stone-900 leading-none">{item.name}</p>
-                                    <p className="text-xs text-stone-400 mt-1">{item.email}</p>
-                                  </div>
-                                </div>
-                              </td>
+                            <tr key={i} className="hover:bg-stone-50/50 transition-colors">
+                              <td className="px-8 py-8 font-bold text-stone-900">{item.name}</td>
                               <td className="px-8 py-8 font-medium text-stone-600">{item.date}</td>
-                              <td className="px-8 py-8">
-                                <span className="bg-stone-100 px-3 py-1 rounded-lg text-xs font-black text-stone-600">
-                                  {item.count} Units
-                                </span>
-                              </td>
-                              <td className="px-8 py-8">
-                                <div className={`flex items-center gap-2 text-xs font-bold ${item.status === 'Confirmed' ? 'text-green-600' : item.status === 'Pending' ? 'text-amber-500' : 'text-blue-500'}`}>
-                                  <div className={`w-1.5 h-1.5 rounded-full ${item.status === 'Confirmed' ? 'bg-green-600' : item.status === 'Pending' ? 'bg-amber-500' : 'bg-blue-500'}`} />
-                                  {item.status}
-                                </div>
-                              </td>
-                              <td className="px-8 py-8 text-right">
-                                <button className="p-2 hover:bg-white rounded-lg text-stone-300 hover:text-stone-900 border border-transparent hover:border-stone-200 transition-all">
-                                  <ArrowUpRight className="w-5 h-5" />
-                                </button>
-                              </td>
+                              <td className="px-8 py-8"><span className="bg-stone-100 px-3 py-1 rounded-lg text-xs font-black text-stone-600">{item.count} Units</span></td>
+                              <td className="px-8 py-8"><span className="text-xs font-bold text-green-600">{item.status}</span></td>
                             </tr>
                           ))}
                         </tbody>
@@ -776,14 +751,37 @@ const App: React.FC = () => {
             </button>
           </div>
         </div>
+        {isMenuOpen && (
+          <div className="md:hidden bg-white border-b border-stone-200 p-6 space-y-4 shadow-xl text-left animate-in slide-in-from-top duration-300">
+            <NavLink href="#about" id="about">The Herd</NavLink>
+            <NavLink href="#benefits" id="benefits">Why Llamas?</NavLink>
+            <NavLink href="#gear" id="gear">Gear Guide</NavLink>
+            <NavLink href="#gallery" id="gallery">Gallery</NavLink>
+            <NavLink href="#reviews" id="reviews">Reviews</NavLink>
+            <NavLink href="#faq" id="faq">Guide FAQ</NavLink>
+            <a href="#booking" onClick={(e) => scrollToSection(e, 'booking')} className="block w-full text-center bg-green-800 text-white py-4 rounded-2xl font-bold">Book Your Trek</a>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
-      <section className="relative h-[95vh] flex items-center justify-center overflow-hidden text-left md:text-center">
+      <section className="relative h-[95vh] flex items-center justify-center overflow-hidden text-left md:text-center group">
         <div className="absolute inset-0 z-0">
           <img src={branding.heroImageUrl} alt="Montana Peaks" className="w-full h-full object-cover brightness-[0.4] scale-105" />
           <div className="absolute inset-0 bg-gradient-to-b from-stone-900/50 via-transparent to-stone-900/80"></div>
         </div>
+        
+        {/* Admin Overlay for Hero */}
+        {isAdmin && (
+           <button 
+            onClick={() => openAdminTab('branding')}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-green-600/80 backdrop-blur-lg text-white p-8 rounded-full border-4 border-white/20 shadow-2xl opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100"
+          >
+            <Camera className="w-12 h-12" />
+            <span className="block mt-2 font-black uppercase text-xs tracking-widest">Swap Hero</span>
+          </button>
+        )}
+
         <div className="relative z-10 max-w-5xl mx-auto px-4">
           <h1 className="text-6xl md:text-8xl font-bold text-white mb-8 leading-[1.1]">Elevate the Trek. <br /><span className="italic text-green-400 font-light">Unload the Journey.</span></h1>
           <p className="text-xl md:text-2xl text-stone-200 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">{slogan}</p>
@@ -799,10 +797,7 @@ const App: React.FC = () => {
         <div className="bg-green-900 text-white py-3 px-4 flex flex-wrap items-center justify-center gap-6 sticky top-20 z-40 shadow-xl border-b border-green-800 animate-in slide-in-from-top duration-500">
           <span className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-left"><Unlock className="w-3 h-3" /> Management Mode Active</span>
           <button 
-            onClick={() => {
-              setAdminTab('branding');
-              setShowDashboard(true);
-            }} 
+            onClick={() => openAdminTab('branding')} 
             className="flex items-center gap-2 bg-white text-stone-900 hover:bg-stone-100 px-4 py-1.5 rounded-full text-xs font-bold transition-all"
           >
             <LayoutDashboard className="w-3 h-3" /> Open Management Console
@@ -843,6 +838,9 @@ const App: React.FC = () => {
               <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-6 tracking-tight">Meet the Professionals</h2>
               <p className="text-stone-600 text-xl leading-relaxed">Our herd is meticulously trained for the variable conditions of the Northern Rockies.</p>
             </div>
+            {isAdmin && (
+              <button onClick={() => openAdminTab('fleet')} className="bg-stone-900 text-white px-8 py-4 rounded-full font-bold flex items-center gap-2 shadow-lg"><Edit3 className="w-4 h-4" /> Edit Fleet</button>
+            )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
             {llamas.map(llama => <LlamaCard key={llama.id} llama={llama} />)}
@@ -871,7 +869,7 @@ const App: React.FC = () => {
               </div>
             </div>
             {isAdmin && (
-              <button onClick={() => setShowDashboard(true)} className="bg-green-800 hover:bg-green-700 px-8 py-4 rounded-full font-bold shadow-xl flex items-center gap-2 transition-all active:scale-95">
+              <button onClick={() => openAdminTab('gallery')} className="bg-green-800 hover:bg-green-700 px-8 py-4 rounded-full font-bold shadow-xl flex items-center gap-2 transition-all active:scale-95">
                 <Settings className="w-5 h-5" /> Manage Assets
               </button>
             )}
@@ -933,8 +931,19 @@ const App: React.FC = () => {
                 </form>
                 {adviceResponse && <div className="p-8 bg-green-50 rounded-[2rem] border-2 border-green-100/50 animate-in slide-in-from-bottom-4"><p className="text-green-900 italic font-bold leading-relaxed">"{adviceResponse}"</p></div>}
               </div>
-              <div className="w-full md:w-2/5 aspect-[4/5] rounded-[3rem] overflow-hidden bg-stone-100 shadow-2xl">
+              
+              {/* Head Guide Photo Section */}
+              <div className="w-full md:w-2/5 aspect-[4/5] rounded-[3rem] overflow-hidden bg-stone-100 shadow-2xl relative group">
                 <img src={branding.guideImageUrl} className="w-full h-full object-cover" />
+                {isAdmin && (
+                  <button 
+                    onClick={() => openAdminTab('branding')}
+                    className="absolute inset-0 bg-stone-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white"
+                  >
+                    <Camera className="w-12 h-12 mb-2" />
+                    <span className="font-black text-xs uppercase tracking-widest">Update Photo</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
