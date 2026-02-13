@@ -30,7 +30,7 @@ import {
   LogIn,
   CheckCircle2,
   Copy,
-  Save
+  Files
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -55,7 +55,7 @@ const App: React.FC = () => {
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
-  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const [localPreviews, setLocalPreviews] = useState<string[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -63,7 +63,6 @@ const App: React.FC = () => {
     generateWelcomeSlogan().then(setSlogan);
   }, []);
 
-  // Persist gallery changes to localStorage
   useEffect(() => {
     localStorage.setItem('hbl_gallery', JSON.stringify(gallery));
   }, [gallery]);
@@ -77,11 +76,7 @@ const App: React.FC = () => {
       const elementRect = element.getBoundingClientRect().top;
       const elementPosition = elementRect - bodyRect;
       const offsetPosition = elementPosition - offset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     }
     setIsMenuOpen(false);
   };
@@ -126,26 +121,35 @@ const App: React.FC = () => {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && isAdmin) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLocalPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files && files.length > 0 && isAdmin) {
+      const readers = Array.from(files).map(file => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+      });
+      
+      Promise.all(readers).then(results => {
+        setLocalPreviews(prev => [...prev, ...results]);
+      });
     }
   };
 
   const handleConfirmUpload = async () => {
-    if (!localPreview || !isAdmin) return;
+    if (localPreviews.length === 0 || !isAdmin) return;
     setIsUploadingFile(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    const newImage: GalleryImage = {
-      url: localPreview,
+    // Simulate a slight delay for processing
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const newImages: GalleryImage[] = localPreviews.map(url => ({
+      url,
       caption: `Trail Log: ${new Date().toLocaleDateString()}`
-    };
-    setGallery([newImage, ...gallery]);
-    setLocalPreview(null);
+    }));
+
+    setGallery([...newImages, ...gallery]);
+    setLocalPreviews([]);
     setIsUploadingFile(false);
     setIsAddingImage(false);
   };
@@ -359,8 +363,8 @@ const App: React.FC = () => {
               </div>
             </div>
             {isAdmin && (
-              <button onClick={() => {setIsAddingImage(!isAddingImage); setLocalPreview(null);}} className="bg-green-800 hover:bg-green-700 px-8 py-4 rounded-full font-bold shadow-xl flex items-center gap-2">
-                {isAddingImage ? <X /> : <Plus />} {isAddingImage ? "Cancel" : "Add to Journal"}
+              <button onClick={() => {setIsAddingImage(!isAddingImage); setLocalPreviews([]);}} className="bg-green-800 hover:bg-green-700 px-8 py-4 rounded-full font-bold shadow-xl flex items-center gap-2">
+                {isAddingImage ? <X /> : <Plus />} {isAddingImage ? "Cancel" : "Update Photos"}
               </button>
             )}
           </div>
@@ -376,20 +380,30 @@ const App: React.FC = () => {
                   </button>
                 </div>
                 <div className="space-y-8 md:border-l md:border-white/10 md:pl-12">
-                  <div className="flex items-center gap-3"><Upload className="text-green-400 w-6 h-6" /><h3 className="text-2xl font-black">Local Upload</h3></div>
-                  <input type="file" className="hidden" ref={fileInputRef} accept="image/*" onChange={handleFileSelect} />
-                  {localPreview ? (
-                    <div className="relative aspect-video rounded-2xl overflow-hidden border border-white/10">
-                      <img src={localPreview} alt="Preview" className="w-full h-full object-cover" />
-                      <button onClick={() => setLocalPreview(null)} className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity font-bold">Remove</button>
+                  <div className="flex items-center justify-between"><div className="flex items-center gap-3"><Upload className="text-green-400 w-6 h-6" /><h3 className="text-2xl font-black">Batch Upload</h3></div>{localPreviews.length > 0 && <button onClick={() => setLocalPreviews([])} className="text-xs text-red-400 font-bold underline">Clear All</button>}</div>
+                  <input type="file" className="hidden" ref={fileInputRef} accept="image/*" multiple onChange={handleFileSelect} />
+                  
+                  {localPreviews.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                        {localPreviews.map((preview, idx) => (
+                          <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-white/10 bg-stone-900">
+                            <img src={preview} alt="Staged" className="w-full h-full object-cover" />
+                            <button onClick={() => setLocalPreviews(prev => prev.filter((_, i) => i !== idx))} className="absolute top-1 right-1 bg-black/60 rounded-full p-1"><X className="w-3 h-3" /></button>
+                          </div>
+                        ))}
+                        <button onClick={() => fileInputRef.current?.click()} className="aspect-square border-2 border-dashed border-white/10 rounded-lg flex items-center justify-center hover:bg-white/5"><Plus className="w-5 h-5 text-stone-600" /></button>
+                      </div>
+                      <p className="text-xs text-stone-500 font-bold flex items-center gap-2"><Files className="w-3 h-3" /> {localPreviews.length} files staged for upload</p>
                     </div>
                   ) : (
-                    <div onClick={() => fileInputRef.current?.click()} className="h-40 border-2 border-dashed border-white/20 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-white/5">
-                      <Plus className="text-stone-600" /><span className="text-stone-500 font-bold">Choose a file...</span>
+                    <div onClick={() => fileInputRef.current?.click()} className="h-40 border-2 border-dashed border-white/20 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 group">
+                      <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Plus className="text-stone-600" /></div>
+                      <span className="text-stone-500 font-bold">Choose multiple files...</span>
                     </div>
                   )}
-                  <button disabled={!localPreview || isUploadingFile} onClick={handleConfirmUpload} className="w-full bg-green-800 py-4 rounded-2xl font-bold flex items-center justify-center gap-3">
-                    {isUploadingFile ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} {isUploadingFile ? "Uploading..." : "Confirm & Upload"}
+                  <button disabled={localPreviews.length === 0 || isUploadingFile} onClick={handleConfirmUpload} className="w-full bg-green-800 py-4 rounded-2xl font-bold flex items-center justify-center gap-3">
+                    {isUploadingFile ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} {isUploadingFile ? "Processing Batch..." : "Confirm & Upload to Site"}
                   </button>
                 </div>
               </div>
@@ -400,7 +414,7 @@ const App: React.FC = () => {
             {gallery.map((img, i) => (
               <div key={img.url + i} draggable={isAdmin} onDragStart={() => handleDragStart(i)} onDragOver={handleDragOver} onDrop={() => handleDrop(i)} className={`relative group overflow-hidden rounded-[2rem] break-inside-avoid shadow-2xl bg-stone-900/50 min-h-[200px] transition-all duration-300 ${isAdmin ? 'cursor-grab active:cursor-grabbing' : ''}`}>
                 <img src={img.url} alt={img.caption} loading="lazy" className="w-full h-auto object-cover transition-transform group-hover:scale-110" />
-                {isAdmin && <button onClick={() => handleDeleteImage(i)} className="absolute top-6 right-6 z-20 w-10 h-10 bg-red-600/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"><Trash2 className="w-5 h-5" /></button>}
+                {isAdmin && <button onClick={() => handleDeleteImage(i)} className="absolute top-6 right-6 z-20 w-10 h-10 bg-red-600/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg"><Trash2 className="w-5 h-5" /></button>}
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-transparent opacity-0 group-hover:opacity-100 transition-all flex items-end p-8">
                   <div className="flex justify-between w-full">
                     <div><p className="text-lg font-bold text-white">{img.caption}</p><p className="text-[10px] text-green-400 font-bold uppercase tracking-widest flex items-center gap-2"><MapPin className="w-3 h-3" /> Helena, MT</p></div>
