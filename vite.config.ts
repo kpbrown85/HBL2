@@ -5,13 +5,17 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     target: 'esnext',
-    minify: 'esbuild'
+    minify: 'esbuild',
+    chunkSizeWarningLimit: 1000
   },
   server: {
     port: 3000
   },
   define: {
-    // Inject the API key as a literal string in the bundled code
+    // Robust shim for process and process.env
+    'process.env': {
+      API_KEY: JSON.stringify(process.env.API_KEY || '')
+    },
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY || '')
   }
 });
