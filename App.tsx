@@ -17,8 +17,6 @@ import {
   CalendarDays,
   Mountain,
   MapPin,
-  ExternalLink,
-  MessageSquareQuote,
   Backpack,
   Plus,
   Sparkles,
@@ -30,7 +28,9 @@ import {
   Unlock,
   Trash2,
   LogIn,
-  CheckCircle2
+  CheckCircle2,
+  Copy,
+  Save
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -44,9 +44,13 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
+  const [copySuccess, setCopySuccess] = useState(false);
 
   // Gallery Management
-  const [gallery, setGallery] = useState<GalleryImage[]>(GALLERY_IMAGES);
+  const [gallery, setGallery] = useState<GalleryImage[]>(() => {
+    const saved = localStorage.getItem('hbl_gallery');
+    return saved ? JSON.parse(saved) : GALLERY_IMAGES;
+  });
   const [isAddingImage, setIsAddingImage] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -58,6 +62,11 @@ const App: React.FC = () => {
   useEffect(() => {
     generateWelcomeSlogan().then(setSlogan);
   }, []);
+
+  // Persist gallery changes to localStorage
+  useEffect(() => {
+    localStorage.setItem('hbl_gallery', JSON.stringify(gallery));
+  }, [gallery]);
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
@@ -169,6 +178,21 @@ const App: React.FC = () => {
     setDraggedIndex(null);
   };
 
+  const copyGalleryConfig = () => {
+    const configString = JSON.stringify(gallery, null, 2);
+    navigator.clipboard.writeText(configString).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 3000);
+    });
+  };
+
+  const resetGallery = () => {
+    if (confirm("Reset gallery to original defaults? This will erase any images you've added.")) {
+      setGallery(GALLERY_IMAGES);
+      localStorage.removeItem('hbl_gallery');
+    }
+  };
+
   const NavLink = ({ href, id, children }: { href: string, id: string, children: React.ReactNode }) => (
     <a 
       href={href} 
@@ -265,6 +289,20 @@ const App: React.FC = () => {
         </div>
       </section>
 
+      {/* Admin Quick Bar */}
+      {isAdmin && (
+        <div className="bg-green-900 text-white py-3 px-4 flex flex-wrap items-center justify-center gap-6 sticky top-20 z-40 shadow-xl border-b border-green-800">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2"><Unlock className="w-3 h-3" /> Management Mode Active</span>
+          <button onClick={copyGalleryConfig} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full text-xs font-bold transition-all border border-white/20">
+            {copySuccess ? <CheckCircle2 className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+            {copySuccess ? "Config Copied!" : "Copy Gallery Code for GitHub"}
+          </button>
+          <button onClick={resetGallery} className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/40 px-4 py-1.5 rounded-full text-xs font-bold transition-all border border-red-500/20">
+            <Trash2 className="w-3 h-3" /> Reset to Defaults
+          </button>
+        </div>
+      )}
+
       <section id="benefits" className="py-32 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
@@ -318,7 +356,6 @@ const App: React.FC = () => {
               <h2 className="text-5xl md:text-7xl font-black mb-6 tracking-tight">Wilderness Journal</h2>
               <div className="flex items-center gap-4">
                 <p className="text-stone-400 text-xl max-w-xl">A glimpse into our most recent expedition routes.</p>
-                {isAdmin && <div className="hidden lg:flex items-center gap-2 bg-green-500/10 px-4 py-2 rounded-full border border-green-500/30 text-xs font-bold text-green-400"><Unlock className="w-3 h-3" /> Management Mode</div>}
               </div>
             </div>
             {isAdmin && (
@@ -379,7 +416,6 @@ const App: React.FC = () => {
       <section id="reviews" className="py-32 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 text-stone-500 mb-6 text-sm font-black uppercase tracking-[0.3em]"><MessageSquareQuote className="w-5 h-5 text-green-700" /> Trail Tales</div>
             <h2 className="text-5xl md:text-7xl font-black text-stone-900 mb-8">Voices from the Path</h2>
           </div>
           <Testimonials />
@@ -436,7 +472,9 @@ const App: React.FC = () => {
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center gap-3 mb-10"><Mountain className="text-green-800 w-10 h-10" /><span className="text-2xl font-black text-white">Helena Backcountry <span className="text-green-800">Llamas</span></span></div>
               <p className="max-w-md mb-12 text-lg">Pioneering backcountry exploration in Helena, Montana since 2018.</p>
-              <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)} className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isAdmin ? 'bg-green-800 text-white' : 'bg-stone-900'}`}>{isAdmin ? <Unlock /> : <Lock />}</button>
+              <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${isAdmin ? 'bg-green-800 text-white rotate-0' : 'bg-stone-900 rotate-12 hover:rotate-0'}`}>
+                {isAdmin ? <Unlock /> : <Lock />}
+              </button>
             </div>
           </div>
           <div className="flex flex-col md:flex-row justify-between items-center gap-8 font-bold text-xs uppercase tracking-widest">
