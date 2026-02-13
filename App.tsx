@@ -45,7 +45,8 @@ import {
   Monitor,
   Check,
   AlertTriangle,
-  Zap
+  Zap,
+  Type
 } from 'lucide-react';
 
 /**
@@ -86,7 +87,6 @@ const safeSave = (key: string, data: any) => {
   } catch (e) {
     console.error(`Storage failed for ${key}:`, e);
     if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-      // If we still hit this, the storage is truly full of other stuff
       alert("Storage Full: Your browser's memory is full. Please remove some photos or clear your browser cache.");
     }
   }
@@ -391,14 +391,14 @@ const App: React.FC = () => {
       {showAdminLogin && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-300">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-8 text-left">
               <h3 className="text-3xl font-black text-stone-900 leading-tight">Admin Login</h3>
               <button onClick={() => setShowAdminLogin(false)} className="p-2 hover:bg-stone-100 rounded-full">
                 <X />
               </button>
             </div>
             <form onSubmit={handleAdminLogin} className="space-y-6">
-              <div>
+              <div className="text-left">
                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Management Password</label>
                 <input 
                   type="password"
@@ -452,7 +452,7 @@ const App: React.FC = () => {
             
             {/* Identity/Branding Tab */}
             {adminTab === 'branding' && (
-              <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500 text-left">
                  <div className="flex justify-between items-end">
                     <div className="text-left">
                       <h3 className="text-4xl font-black text-stone-900 mb-2">Visual Identity</h3>
@@ -471,7 +471,9 @@ const App: React.FC = () => {
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                    {/* Left Column: Form Settings */}
                    <div className="space-y-10 text-left">
+                     {/* Text Brand Settings */}
                      <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-stone-200 space-y-8">
+                        <h4 className="text-sm font-black uppercase tracking-widest text-stone-900 flex items-center gap-2"><Type className="w-4 h-4 text-green-800" /> Typography & Copy</h4>
                         <div>
                           <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 text-left">Company Display Name</label>
                           <input 
@@ -492,11 +494,54 @@ const App: React.FC = () => {
                         </div>
                      </div>
 
+                     {/* Logo & Icon Mark Settings */}
                      <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-stone-200 space-y-8">
-                        <h4 className="text-sm font-black uppercase tracking-widest text-stone-900 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-green-800" /> Key Section Assets</h4>
+                        <h4 className="text-sm font-black uppercase tracking-widest text-stone-900 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-green-800" /> Brand Mark</h4>
+                        
+                        <div className="flex bg-stone-50 p-1.5 rounded-2xl border border-stone-100">
+                          <button 
+                            onClick={() => setBranding({...branding, logoType: 'icon'})}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs transition-all ${branding.logoType === 'icon' ? 'bg-white shadow-sm text-green-800' : 'text-stone-400 hover:text-stone-600'}`}
+                          >
+                            <Mountain className="w-4 h-4" /> Default Icon
+                          </button>
+                          <button 
+                            onClick={() => setBranding({...branding, logoType: 'image'})}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs transition-all ${branding.logoType === 'image' ? 'bg-white shadow-sm text-green-800' : 'text-stone-400 hover:text-stone-600'}`}
+                          >
+                            <ImageIcon className="w-4 h-4" /> Custom Image
+                          </button>
+                        </div>
+
+                        {branding.logoType === 'image' && (
+                          <div className="space-y-4 animate-in fade-in duration-300">
+                            <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest text-left">Upload Logo Asset</label>
+                            <button 
+                              onClick={() => logoInputRef.current?.click()}
+                              className="w-full flex items-center gap-6 p-6 bg-stone-50 rounded-2xl border-2 border-dashed border-stone-200 hover:border-green-800 group transition-all"
+                            >
+                              <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-inner overflow-hidden shrink-0">
+                                {branding.logoUrl ? (
+                                  <img src={branding.logoUrl} className="w-full h-full object-contain p-2" />
+                                ) : (
+                                  <Upload className="w-6 h-6 text-stone-300" />
+                                )}
+                              </div>
+                              <div className="text-left">
+                                <p className="font-black text-xs text-stone-900 uppercase">Change Logo Image</p>
+                                <p className="text-[10px] text-stone-400 font-bold">Transparent PNG recommended</p>
+                              </div>
+                            </button>
+                            <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'logo')} />
+                          </div>
+                        )}
+                     </div>
+
+                     <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-stone-200 space-y-8">
+                        <h4 className="text-sm font-black uppercase tracking-widest text-stone-900 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-green-800" /> Hero & Staff Assets</h4>
                         <div className="grid grid-cols-2 gap-6">
                            <div className="space-y-3">
-                              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest text-left block">Main Hero Background</label>
+                              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest text-left block">Hero Backdrop</label>
                               <button onClick={() => heroInputRef.current?.click()} className="w-full aspect-square bg-stone-100 rounded-2xl overflow-hidden border-2 border-dashed border-stone-200 group relative">
                                 {branding?.heroImageUrl ? <img src={branding.heroImageUrl} className="w-full h-full object-cover" /> : <Camera className="w-6 h-6 text-stone-300" />}
                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-black uppercase">
@@ -506,7 +551,7 @@ const App: React.FC = () => {
                               <input type="file" ref={heroInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'hero')} />
                            </div>
                            <div className="space-y-3">
-                              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest text-left block">Guide Profile Photo</label>
+                              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest text-left block">Guide Portrait</label>
                               <button onClick={() => guideInputRef.current?.click()} className="w-full aspect-square bg-stone-100 rounded-2xl overflow-hidden border-2 border-dashed border-stone-200 group relative">
                                 {branding?.guideImageUrl ? <img src={branding.guideImageUrl} className="w-full h-full object-cover" /> : <Camera className="w-6 h-6 text-stone-300" />}
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-black uppercase">
@@ -841,7 +886,7 @@ const App: React.FC = () => {
       )}
 
       {/* Content Sections */}
-      <section id="benefits" className="py-32 bg-white relative">
+      <section id="benefits" className="py-32 bg-white relative text-left">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-6 tracking-tight">Built for the Backcountry</h2>
@@ -863,7 +908,7 @@ const App: React.FC = () => {
       </section>
 
       <section id="about" className="py-32 bg-stone-100/50 backdrop-blur-sm relative overflow-hidden text-left">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-left">
           <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
             <div className="max-w-2xl">
               <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-6 tracking-tight">Meet the Professionals</h2>
@@ -891,12 +936,12 @@ const App: React.FC = () => {
       </section>
 
       <section id="gallery" className="py-32 bg-stone-950 text-white relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-left">
           <div className="flex flex-col md:flex-row items-center justify-between mb-20 gap-8 text-left">
             <div>
-              <h2 className="text-5xl md:text-7xl font-black mb-6 tracking-tight">Wilderness Journal</h2>
+              <h2 className="text-5xl md:text-7xl font-black mb-6 tracking-tight text-left">Wilderness Journal</h2>
               <div className="flex items-center gap-4">
-                <p className="text-stone-400 text-xl max-w-xl font-medium">A glimpse into our most recent expedition routes.</p>
+                <p className="text-stone-400 text-xl max-w-xl font-medium text-left">A glimpse into our most recent expedition routes.</p>
               </div>
             </div>
             {isAdmin && (
@@ -937,7 +982,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      <section id="reviews" className="py-32 bg-white">
+      <section id="reviews" className="py-32 bg-white text-center">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-20">
             <h2 className="text-5xl md:text-7xl font-black text-stone-900 mb-8 tracking-tight">Voices from the Path</h2>
@@ -946,14 +991,14 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      <section className="py-32 bg-green-50/50">
+      <section className="py-32 bg-green-50/50 text-left">
         <div className="max-w-6xl mx-auto px-4">
           <div className="bg-white p-12 md:p-20 rounded-[4rem] shadow-2xl relative overflow-hidden text-left">
             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-700 to-green-900"></div>
             <div className="flex flex-col md:flex-row gap-16 items-center">
-              <div className="flex-1">
+              <div className="flex-1 text-left">
                 <div className="inline-flex items-center gap-2 text-green-800 bg-green-100 px-5 py-2 rounded-full text-xs font-black uppercase tracking-[0.2em] mb-8"><MessageCircle className="w-4 h-4" /> Herd Wisdom</div>
-                <h2 className="text-5xl font-black text-stone-900 mb-8 tracking-tight">Ask Our Head Guide</h2>
+                <h2 className="text-5xl font-black text-stone-900 mb-8 tracking-tight text-left">Ask Our Head Guide</h2>
                 <form onSubmit={handleAdviceSubmit} className="relative mb-8 group">
                   <input type="text" placeholder="e.g. Best weight distribution?" className="w-full bg-stone-50 border-2 border-stone-100 px-8 py-6 rounded-[2rem] outline-none focus:border-green-300 transition-all font-black" value={adviceQuery} onChange={(e) => setAdviceQuery(e.target.value)} />
                   <button disabled={isAdviceLoading} className="absolute right-3 top-3 bottom-3 bg-green-800 text-white px-10 rounded-[1.5rem] font-black active:scale-95 disabled:opacity-50">
@@ -981,9 +1026,9 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      <section id="faq" className="py-32 bg-white">
+      <section id="faq" className="py-32 bg-white text-center">
         <div className="max-w-5xl mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-20 tracking-tight">Frequently Asked</h2>
+          <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-20 tracking-tight text-center">Frequently Asked</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
             {FAQS.map((faq, i) => (
               <div key={i} className="bg-stone-50 rounded-[2.5rem] p-10 border border-stone-100 hover:border-green-100 transition-colors group">
@@ -995,28 +1040,28 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      <section id="booking" className="py-32 bg-stone-50 relative overflow-hidden">
+      <section id="booking" className="py-32 bg-stone-50 relative overflow-hidden text-center">
         <div className="max-w-5xl mx-auto px-4 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 text-stone-500 mb-6 text-sm font-black uppercase tracking-[0.3em]"><CalendarDays className="w-5 h-5" /> Mission Control</div>
-          <h2 className="text-5xl md:text-7xl font-black text-stone-900 mb-20 tracking-tight">Ready to Gear Up?</h2>
+          <h2 className="text-5xl md:text-7xl font-black text-stone-900 mb-20 tracking-tight text-center">Ready to Gear Up?</h2>
           <BookingForm />
         </div>
       </section>
 
       <footer className="bg-stone-950 text-stone-500 py-32 relative text-left">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-20 border-b border-stone-800 pb-20 mb-20">
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-3 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-20 border-b border-stone-800 pb-20 mb-20 text-left">
+            <div className="col-span-1 md:col-span-2 text-left">
+              <div className="flex items-center gap-3 mb-10 text-left">
                 <Logo light />
               </div>
-              <p className="max-w-md mb-12 text-lg font-medium">Pioneering backcountry exploration in Helena, Montana since 2018.</p>
+              <p className="max-w-md mb-12 text-lg font-medium text-left">Pioneering backcountry exploration in Helena, Montana since 2018.</p>
               <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${isAdmin ? 'bg-green-800 text-white rotate-0' : 'bg-stone-900 rotate-12 hover:rotate-0 shadow-lg shadow-black'}`}>
                 {isAdmin ? <Unlock /> : <Lock />}
               </button>
             </div>
           </div>
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8 font-black text-xs uppercase tracking-widest">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 font-black text-xs uppercase tracking-widest text-left">
             <p>© {new Date().getFullYear()} {branding?.siteName || defaultBranding.siteName}.</p>
             <div className="flex gap-8">
                <a href="#" className="hover:text-white transition-colors">Safety Protocols</a>
