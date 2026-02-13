@@ -74,7 +74,11 @@ const App: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [localPreviews, setLocalPreviews] = useState<string[]>([]);
+  
+  // Reordering state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -195,21 +199,30 @@ const App: React.FC = () => {
     }
   };
 
+  // Drag and Drop Logic for Reordering
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDropTargetIndex(index);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDropTargetIndex(null);
   };
 
   const handleDrop = (index: number) => {
     if (draggedIndex === null || !isAdmin) return;
-    const items = Array.from(gallery);
+    const items = [...gallery];
     const [reorderedItem] = items.splice(draggedIndex, 1);
     items.splice(index, 0, reorderedItem);
     setGallery(items);
     setDraggedIndex(null);
+    setDropTargetIndex(null);
   };
 
   const copyConfig = (data: any) => {
@@ -243,27 +256,34 @@ const App: React.FC = () => {
     </a>
   );
 
-  const Logo = ({ light = false }: { light?: boolean }) => (
-    <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-      {branding.logoType === 'icon' ? (
-        <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg`}>
-          <Mountain className="w-6 h-6" />
-        </div>
-      ) : (
-        <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-stone-100 bg-white flex items-center justify-center">
-          {branding.logoUrl ? (
-            <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
-          ) : (
-            <ImageIcon className="text-stone-300 w-5 h-5" />
-          )}
-        </div>
-      )}
-      <span className={`text-xl font-bold tracking-tight ${light ? 'text-white' : 'text-stone-900'}`}>
-        {branding.siteName.replace(branding.accentName, "")}
-        <span className={`${light ? 'text-green-400' : 'text-green-800'} italic`}>{branding.accentName}</span>
-      </span>
-    </div>
-  );
+  const Logo = ({ light = false }: { light?: boolean }) => {
+    const siteTitle = branding.siteName;
+    const accent = branding.accentName;
+    const parts = siteTitle.split(accent);
+    
+    return (
+      <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+        {branding.logoType === 'icon' ? (
+          <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg`}>
+            <Mountain className="w-6 h-6" />
+          </div>
+        ) : (
+          <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-stone-100 bg-white flex items-center justify-center">
+            {branding.logoUrl ? (
+              <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+            ) : (
+              <ImageIcon className="text-stone-300 w-5 h-5" />
+            )}
+          </div>
+        )}
+        <span className={`text-xl font-bold tracking-tight ${light ? 'text-white' : 'text-stone-900'}`}>
+          {parts[0]}
+          {accent && <span className={`${light ? 'text-green-400' : 'text-green-800'} italic`}>{accent}</span>}
+          {parts[1]}
+        </span>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen">
@@ -300,14 +320,14 @@ const App: React.FC = () => {
       {/* Enhanced Branding Manager Modal */}
       {showBrandingModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
-          <div className="bg-white rounded-[3rem] p-10 md:p-14 max-w-3xl w-full shadow-2xl animate-in fade-in zoom-in slide-in-from-bottom-8 duration-500 overflow-y-auto max-h-[90vh] border border-white/20">
+          <div className="bg-white rounded-[3rem] p-10 md:p-14 max-w-3xl w-full shadow-2xl animate-in fade-in zoom-in slide-in-from-bottom-8 duration-500 overflow-y-auto max-h-[90vh] border border-stone-100">
             <div className="flex justify-between items-start mb-10">
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
-                  <Palette className="w-3 h-3" /> Identity Control
+                  <Palette className="w-3 h-3" /> Visual Identity
                 </div>
                 <h3 className="text-4xl font-black text-stone-900">Branding Manager</h3>
-                <p className="text-stone-500 font-medium">Customize how your company looks across the platform.</p>
+                <p className="text-stone-500 font-medium">Customize your brand presence across the entire site.</p>
               </div>
               <button onClick={() => setShowBrandingModal(false)} className="p-3 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-full transition-all">
                 <X />
@@ -315,13 +335,13 @@ const App: React.FC = () => {
             </div>
 
             <div className="space-y-12">
-              {/* Live Preview Area */}
+              {/* Live Preview Section */}
               <div className="relative group">
                 <div className="absolute -top-3 left-6 z-10 bg-white px-3 py-1 rounded-full border border-stone-100 shadow-sm flex items-center gap-2">
                   <Eye className="w-3 h-3 text-green-600" />
-                  <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Live Site Preview</span>
+                  <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Real-time Preview</span>
                 </div>
-                <div className="bg-stone-50 rounded-[2.5rem] p-8 border-2 border-dashed border-stone-200 flex items-center justify-center">
+                <div className="bg-stone-50 rounded-[2.5rem] p-10 border-2 border-dashed border-stone-200 flex items-center justify-center">
                    <div className="bg-white px-8 py-5 rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-100">
                      <Logo />
                    </div>
@@ -329,12 +349,12 @@ const App: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                {/* Text Settings */}
+                {/* Text Customization */}
                 <div className="space-y-8">
-                  <h4 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100 pb-3">Nomenclature</h4>
+                  <h4 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100 pb-3">Company Identity</h4>
                   <div className="space-y-6">
                     <div>
-                      <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Display Name</label>
+                      <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Primary Site Name</label>
                       <input 
                         type="text"
                         className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-700/5 focus:border-green-800 transition-all font-bold text-stone-900"
@@ -344,7 +364,7 @@ const App: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Accent Highlight Word</label>
+                      <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Accent Word (The Styled Word)</label>
                       <input 
                         type="text"
                         className="w-full bg-stone-50 border border-stone-200 px-6 py-4 rounded-2xl outline-none focus:ring-4 focus:ring-green-700/5 focus:border-green-800 transition-all font-bold text-green-700 italic"
@@ -352,50 +372,50 @@ const App: React.FC = () => {
                         value={branding.accentName}
                         onChange={(e) => setBranding({ ...branding, accentName: e.target.value })}
                       />
-                      <p className="mt-2 text-[10px] text-stone-400 font-medium italic">This word will appear with brand-specific styling in the header/footer.</p>
+                      <p className="mt-2 text-[10px] text-stone-400 font-medium italic">This word will automatically receive the brand highlight styling.</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Logo Settings */}
+                {/* Logo Customization */}
                 <div className="space-y-8">
-                  <h4 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100 pb-3">Logo Configuration</h4>
+                  <h4 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100 pb-3">Logo & Mark</h4>
                   <div className="space-y-6">
                     <div className="flex p-1 bg-stone-100 rounded-2xl gap-1">
                       <button 
                         onClick={() => setBranding({ ...branding, logoType: 'icon' })}
                         className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${branding.logoType === 'icon' ? 'bg-white text-stone-900 shadow-md' : 'text-stone-400 hover:text-stone-600'}`}
                       >
-                        <Mountain className="w-4 h-4" /> Default Icon
+                        <Mountain className="w-4 h-4" /> Preset Icon
                       </button>
                       <button 
                         onClick={() => setBranding({ ...branding, logoType: 'image' })}
                         className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${branding.logoType === 'image' ? 'bg-white text-stone-900 shadow-md' : 'text-stone-400 hover:text-stone-600'}`}
                       >
-                        <ImageIcon className="w-4 h-4" /> Custom Image
+                        <ImageIcon className="w-4 h-4" /> Upload Custom
                       </button>
                     </div>
 
                     {branding.logoType === 'image' && (
                       <div 
                         onClick={() => logoInputRef.current?.click()}
-                        className="relative h-40 border-2 border-dashed border-stone-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-stone-50 transition-all overflow-hidden group"
+                        className="relative h-44 border-2 border-dashed border-stone-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-stone-50 transition-all overflow-hidden group"
                       >
                         {branding.logoUrl ? (
                           <>
-                            <img src={branding.logoUrl} className="w-full h-full object-contain p-6" alt="Preview" />
+                            <img src={branding.logoUrl} className="w-full h-full object-contain p-6" alt="Logo Preview" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                               <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30 text-white text-xs font-bold flex items-center gap-2">
-                                  <RefreshCcw className="w-3 h-3" /> Swap Image
+                               <div className="bg-white/20 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/30 text-white text-xs font-bold flex items-center gap-2">
+                                  <RefreshCcw className="w-3 h-3" /> Change Logo
                                </div>
                             </div>
                           </>
                         ) : (
-                          <div className="text-center space-y-3">
-                            <div className="w-12 h-12 bg-stone-100 rounded-2xl flex items-center justify-center mx-auto text-stone-400 group-hover:scale-110 transition-transform">
+                          <div className="text-center space-y-4">
+                            <div className="w-14 h-14 bg-stone-100 rounded-2xl flex items-center justify-center mx-auto text-stone-400 group-hover:scale-110 transition-transform">
                               <Upload />
                             </div>
-                            <p className="text-xs font-bold text-stone-400 uppercase tracking-widest">Select Logo File</p>
+                            <p className="text-xs font-bold text-stone-400 uppercase tracking-widest">Click to browse files</p>
                           </div>
                         )}
                         <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
@@ -405,20 +425,20 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* Action Bar */}
+              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center gap-4 pt-10 border-t border-stone-100">
                 <button 
                   onClick={() => copyConfig(branding)} 
                   className="w-full sm:flex-1 bg-stone-900 text-white py-5 rounded-[1.5rem] font-bold flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl active:scale-95"
                 >
                   {copySuccess ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5" />}
-                  {copySuccess ? "Config Copied!" : "Export for Persistence"}
+                  {copySuccess ? "Config Copied" : "Export Branding JSON"}
                 </button>
                 <button 
                   onClick={resetBranding} 
                   className="w-full sm:w-auto px-10 bg-stone-100 text-stone-500 py-5 rounded-[1.5rem] font-bold hover:bg-stone-200 transition-all flex items-center justify-center gap-2"
                 >
-                  <RefreshCcw className="w-4 h-4" /> Reset Factory
+                  <RefreshCcw className="w-4 h-4" /> Reset Defaults
                 </button>
               </div>
             </div>
@@ -481,7 +501,7 @@ const App: React.FC = () => {
         <div className="bg-green-900 text-white py-3 px-4 flex flex-wrap items-center justify-center gap-6 sticky top-20 z-40 shadow-xl border-b border-green-800">
           <span className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2"><Unlock className="w-3 h-3" /> Management Mode Active</span>
           <button onClick={() => setShowBrandingModal(true)} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full text-xs font-bold transition-all border border-white/20">
-            <Settings className="w-3 h-3" /> Branding Settings
+            <Settings className="w-3 h-3" /> Branding Manager
           </button>
           <button onClick={() => copyConfig(gallery)} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full text-xs font-bold transition-all border border-white/20">
             {copySuccess ? <CheckCircle2 className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
@@ -493,7 +513,9 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Benefits Section */}
+      {/* Main Content Sections (Benefits, About, Gear, etc.) */}
+      {/* ... keeping sections as defined in constants ... */}
+      
       <section id="benefits" className="py-32 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
@@ -515,7 +537,6 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* The Herd Section */}
       <section id="about" className="py-32 bg-stone-100/50 backdrop-blur-sm relative overflow-hidden text-left">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
@@ -530,7 +551,6 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* Gear Section */}
       <section id="gear" className="py-32 bg-stone-50 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
@@ -542,7 +562,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* Gallery Section */}
+      {/* Gallery Section with Enhanced Reordering */}
       <section id="gallery" className="py-32 bg-stone-950 text-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between mb-20 gap-8 text-left">
@@ -553,9 +573,11 @@ const App: React.FC = () => {
               </div>
             </div>
             {isAdmin && (
-              <button onClick={() => {setIsAddingImage(!isAddingImage); setLocalPreviews([]);}} className="bg-green-800 hover:bg-green-700 px-8 py-4 rounded-full font-bold shadow-xl flex items-center gap-2 transition-all active:scale-95">
-                {isAddingImage ? <X /> : <Plus />} {isAddingImage ? "Cancel" : "Update Photos"}
-              </button>
+              <div className="flex gap-4">
+                <button onClick={() => {setIsAddingImage(!isAddingImage); setLocalPreviews([]);}} className="bg-green-800 hover:bg-green-700 px-8 py-4 rounded-full font-bold shadow-xl flex items-center gap-2 transition-all active:scale-95">
+                  {isAddingImage ? <X /> : <Plus />} {isAddingImage ? "Cancel" : "Update Photos"}
+                </button>
+              </div>
             )}
           </div>
 
@@ -598,16 +620,50 @@ const App: React.FC = () => {
               </div>
             </div>
           )}
+          
           <PhotoCarousel images={gallery} />
-          <div className="mt-16 columns-1 sm:columns-2 lg:columns-3 gap-8 space-y-8 text-left">
+
+          <div className="mt-20 flex items-center justify-between mb-10">
+            <h4 className="text-xs font-black uppercase tracking-[0.3em] text-stone-500 flex items-center gap-3">
+              {isAdmin && <GripVertical className="w-4 h-4 text-green-600" />} {isAdmin ? "Drag cards to reorder fleet gallery" : "Expedition Snapshots"}
+            </h4>
+          </div>
+
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-8 space-y-8 text-left">
             {gallery.map((img, i) => (
-              <div key={img.url + i} draggable={isAdmin} onDragStart={() => handleDragStart(i)} onDragOver={handleDragOver} onDrop={() => handleDrop(i)} className={`relative group overflow-hidden rounded-[2rem] break-inside-avoid shadow-2xl bg-stone-900/50 min-h-[200px] transition-all duration-300 ${isAdmin ? 'cursor-grab active:cursor-grabbing border-2 border-transparent hover:border-green-500' : ''}`}>
+              <div 
+                key={img.url + i} 
+                draggable={isAdmin} 
+                onDragStart={() => handleDragStart(i)} 
+                onDragOver={(e) => handleDragOver(e, i)} 
+                onDragLeave={handleDragLeave}
+                onDrop={() => handleDrop(i)} 
+                className={`relative group overflow-hidden rounded-[2rem] break-inside-avoid shadow-2xl bg-stone-900/50 min-h-[200px] transition-all duration-300 
+                  ${isAdmin ? 'cursor-grab active:cursor-grabbing' : ''} 
+                  ${draggedIndex === i ? 'opacity-40 grayscale blur-[2px] scale-95' : 'opacity-100'} 
+                  ${dropTargetIndex === i ? 'ring-4 ring-green-600 ring-offset-4 ring-offset-stone-950 scale-[1.02]' : 'ring-0'}`}
+              >
                 <img src={img.url} alt={img.caption} loading="lazy" className="w-full h-auto object-cover transition-transform group-hover:scale-110" />
-                {isAdmin && <button onClick={() => handleDeleteImage(i)} className="absolute top-6 right-6 z-20 w-10 h-10 bg-red-600/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-90"><Trash2 className="w-5 h-5" /></button>}
+                
+                {isAdmin && (
+                  <>
+                    <button onClick={() => handleDeleteImage(i)} className="absolute top-6 right-6 z-20 w-10 h-10 bg-red-600/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-90">
+                      <Trash2 className="w-5 h-5 text-white" />
+                    </button>
+                    <div className="absolute top-6 left-6 z-20 w-10 h-10 bg-green-800/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg pointer-events-none">
+                      <GripVertical className="w-5 h-5 text-white" />
+                    </div>
+                  </>
+                )}
+
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-transparent opacity-0 group-hover:opacity-100 transition-all flex items-end p-8">
-                  <div className="flex justify-between w-full">
-                    <div><p className="text-lg font-bold text-white">{img.caption}</p><p className="text-[10px] text-green-400 font-bold uppercase tracking-widest flex items-center gap-2"><MapPin className="w-3 h-3" /> Helena, MT</p></div>
-                    {isAdmin && <GripVertical className="w-5 h-5 text-stone-500" />}
+                  <div className="flex justify-between w-full items-end">
+                    <div>
+                      <p className="text-lg font-bold text-white mb-2">{img.caption}</p>
+                      <p className="text-[10px] text-green-400 font-bold uppercase tracking-widest flex items-center gap-2">
+                        <MapPin className="w-3 h-3" /> Montana High Country
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -616,7 +672,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Other Sections (Reviews, FAQ, etc.) */}
       <section id="reviews" className="py-32 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-20">
@@ -626,7 +682,6 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* Guide AI Section */}
       <section className="py-32 bg-green-50/50">
         <div className="max-w-6xl mx-auto px-4">
           <div className="bg-white p-12 md:p-20 rounded-[4rem] shadow-2xl relative overflow-hidden text-left">
@@ -649,7 +704,6 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* FAQ Section */}
       <section id="faq" className="py-32 bg-white">
         <div className="max-w-5xl mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-20">Frequently Asked</h2>
@@ -664,7 +718,6 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* Booking Form Section */}
       <section id="booking" className="py-32 bg-stone-50 relative overflow-hidden">
         <div className="max-w-5xl mx-auto px-4 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 text-stone-500 mb-6 text-sm font-black uppercase tracking-[0.3em]"><CalendarDays className="w-5 h-5" /> Mission Control</div>
@@ -673,7 +726,6 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-stone-950 text-stone-500 py-32 relative text-left">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-20 border-b border-stone-800 pb-20 mb-20">
