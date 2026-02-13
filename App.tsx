@@ -44,8 +44,40 @@ import {
   Home,
   Monitor,
   Check,
-  AlertTriangle
+  AlertTriangle,
+  Zap
 } from 'lucide-react';
+
+/**
+ * UTILITY: Automatic Image Compression
+ * Downscales images and converts to JPEG to fit within localStorage limits
+ */
+const compressImage = (base64Str: string, maxWidth = 1200, quality = 0.7): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = base64Str;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error("Canvas context failed"));
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      // Force JPEG to significantly reduce string size compared to PNG
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject;
+  });
+};
 
 // Safety wrapper for localStorage to prevent site crashes on quota errors
 const safeSave = (key: string, data: any) => {
@@ -54,7 +86,8 @@ const safeSave = (key: string, data: any) => {
   } catch (e) {
     console.error(`Storage failed for ${key}:`, e);
     if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-      alert("Error: Image is too large to save! Try a smaller photo or a lower resolution.");
+      // If we still hit this, the storage is truly full of other stuff
+      alert("Storage Full: Your browser's memory is full. Please remove some photos or clear your browser cache.");
     }
   }
 };
@@ -65,6 +98,7 @@ const App: React.FC = () => {
   const [adviceQuery, setAdviceQuery] = useState("");
   const [adviceResponse, setAdviceResponse] = useState("");
   const [isAdviceLoading, setIsAdviceLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Admin State
   const [isAdmin, setIsAdmin] = useState(false);
@@ -88,7 +122,7 @@ const App: React.FC = () => {
     try {
       const saved = localStorage.getItem('hbl_branding');
       const parsed = saved ? JSON.parse(saved) : null;
-      return parsed || defaultBranding;
+      return { ...defaultBranding, ...parsed };
     } catch {
       return defaultBranding;
     }
@@ -99,7 +133,7 @@ const App: React.FC = () => {
     try {
       const saved = localStorage.getItem('hbl_llamas');
       const parsed = saved ? JSON.parse(saved) : null;
-      return Array.isArray(parsed) ? parsed : LLAMAS;
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : LLAMAS;
     } catch {
       return LLAMAS;
     }
@@ -110,7 +144,7 @@ const App: React.FC = () => {
     try {
       const saved = localStorage.getItem('hbl_gallery');
       const parsed = saved ? JSON.parse(saved) : null;
-      return Array.isArray(parsed) ? parsed : GALLERY_IMAGES;
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : GALLERY_IMAGES;
     } catch {
       return GALLERY_IMAGES;
     }
@@ -134,9 +168,9 @@ const App: React.FC = () => {
     });
   }, []);
 
-  // Use the safety wrapper for all persistence effects
+  // Sync state to local storage safely
   useEffect(() => {
-    safeSave('hbl_gallery', gallery);
+    if (gallery.length > 0) safeSave('hbl_gallery', gallery);
   }, [gallery]);
 
   useEffect(() => {
@@ -145,7 +179,7 @@ const App: React.FC = () => {
   }, [branding]);
 
   useEffect(() => {
-    safeSave('hbl_llamas', llamas);
+    if (llamas.length > 0) safeSave('hbl_llamas', llamas);
   }, [llamas]);
 
   const openAdminTab = (tab: typeof adminTab) => {
@@ -215,64 +249,67 @@ const App: React.FC = () => {
     }
   };
 
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>, target: 'logo' | 'hero' | 'guide' | 'llama') => {
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>, target: 'logo' | 'hero' | 'guide' | 'llama') => {
     const file = e.target.files?.[0];
     if (file && isAdmin) {
-      // Basic size check (approx 2MB for safe base64 encoding in localStorage)
-      if (file.size > 2 * 1024 * 1024) {
-        if (!confirm("This photo is quite large. Large photos can sometimes cause the site to run slowly. Proceed?")) return;
-      }
-
+      setIsProcessing(true);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        if (target === 'logo') setBranding({ ...branding, logoUrl: result, logoType: 'image' });
-        if (target === 'hero') setBranding({ ...branding, heroImageUrl: result });
-        if (target === 'guide') setBranding({ ...branding, guideImageUrl: result });
-        if (target === 'llama' && activeLlamaEdit) {
-          setLlamas(llamas.map(l => l.id === activeLlamaEdit ? { ...l, imageUrl: result } : l));
+      reader.onloadend = async () => {
+        try {
+          const rawResult = reader.result as string;
+          // COMPRESS BEFORE SAVING TO STATE
+          const compressed = await compressImage(rawResult);
+          
+          if (target === 'logo') setBranding(prev => ({ ...prev, logoUrl: compressed, logoType: 'image' }));
+          if (target === 'hero') setBranding(prev => ({ ...prev, heroImageUrl: compressed }));
+          if (target === 'guide') setBranding(prev => ({ ...prev, guideImageUrl: compressed }));
+          if (target === 'llama' && activeLlamaEdit) {
+            setLlamas(prev => prev.map(l => l.id === activeLlamaEdit ? { ...l, imageUrl: compressed } : l));
+          }
+        } catch (err) {
+          alert("Could not process image. Please try another format.");
+        } finally {
+          setIsProcessing(false);
         }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0 && isAdmin) {
-      const readers = Array.from(files).map(file => {
-        return new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-      });
-      
-      Promise.all(readers).then(results => {
+      setIsProcessing(true);
+      try {
+        const results: string[] = [];
+        for (const file of Array.from(files)) {
+          const dataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          const compressed = await compressImage(dataUrl);
+          results.push(compressed);
+        }
         setLocalPreviews(prev => [...prev, ...results]);
-      });
+      } catch (err) {
+        alert("Some images could not be optimized.");
+      } finally {
+        setIsProcessing(false);
+      }
     }
   };
 
   const handleConfirmUpload = async () => {
     if (localPreviews.length === 0 || !isAdmin) return;
     setIsUploadingFile(true);
-    // Artificially delay slightly for UX feel
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 300));
     const newImages: GalleryImage[] = localPreviews.map(url => ({
       url,
-      caption: `Bulk Upload ${new Date().toLocaleDateString()}`
+      caption: `Expedition Photo ${new Date().toLocaleDateString()}`
     }));
     
-    // Check if adding these will likely exceed quota
-    const totalEstimate = JSON.stringify([...newImages, ...gallery]).length;
-    if (totalEstimate > 4 * 1024 * 1024) {
-      alert("You are trying to upload too many high-resolution photos at once. Try uploading fewer images.");
-      setIsUploadingFile(false);
-      return;
-    }
-
-    setGallery([...newImages, ...gallery]);
+    setGallery(prev => [...newImages, ...prev]);
     setLocalPreviews([]);
     setIsUploadingFile(false);
   };
@@ -286,25 +323,16 @@ const App: React.FC = () => {
     }
   };
 
-  const copyConfig = (data: any) => {
-    const configString = JSON.stringify(data, null, 2);
-    navigator.clipboard.writeText(configString).then(() => {
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 3000);
-    });
-  };
-
-  const resetBranding = () => {
-    if (confirm("Restore original brand identity?")) {
-      setBranding(defaultBranding);
+  const clearAllData = () => {
+    if (confirm("DANGER: This will delete all customized branding, fleet updates, and uploaded gallery images. Restore factory defaults?")) {
+      localStorage.clear();
+      window.location.reload();
     }
   };
 
   const Logo = ({ light = false }: { light?: boolean }) => {
     const siteTitle = branding?.siteName || defaultBranding.siteName;
     const accent = branding?.accentName || defaultBranding.accentName;
-    
-    // Safe splitting
     const parts = siteTitle.split(accent);
     
     return (
@@ -343,6 +371,22 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen">
+      {/* Universal Processing Loader */}
+      {isProcessing && (
+        <div className="fixed inset-0 z-[200] bg-stone-900/40 backdrop-blur-md flex items-center justify-center">
+          <div className="bg-white px-10 py-12 rounded-[3rem] shadow-2xl flex flex-col items-center gap-6 animate-in zoom-in duration-300">
+             <div className="w-16 h-16 bg-green-800 text-white rounded-2xl flex items-center justify-center shadow-lg animate-bounce">
+                <Zap className="w-8 h-8" />
+             </div>
+             <div className="text-center">
+               <h3 className="text-2xl font-black text-stone-900">Optimizing Asset</h3>
+               <p className="text-stone-500 font-bold uppercase text-[10px] tracking-widest mt-1">Compressing image for peak performance...</p>
+             </div>
+             <Loader2 className="w-8 h-8 text-green-800 animate-spin" />
+          </div>
+        </div>
+      )}
+
       {/* Admin Login Modal */}
       {showAdminLogin && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
@@ -375,7 +419,7 @@ const App: React.FC = () => {
 
       {/* COMPREHENSIVE ADMIN DASHBOARD OVERLAY */}
       {showDashboard && isAdmin && (
-        <div className="fixed inset-0 z-[100] bg-stone-100 flex flex-col animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] bg-stone-100 flex flex-col animate-in fade-in duration-300 overflow-hidden">
           
           {/* Top Persistent Dashboard Header */}
           <header className="bg-white border-b border-stone-200 px-4 md:px-12 py-6 flex items-center justify-between shrink-0 z-20">
@@ -414,9 +458,14 @@ const App: React.FC = () => {
                       <h3 className="text-4xl font-black text-stone-900 mb-2">Visual Identity</h3>
                       <p className="text-stone-500 font-medium">Customize your brand name, logos, and key section imagery.</p>
                     </div>
-                    <button onClick={resetBranding} className="text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-red-500 flex items-center gap-2 mb-2 transition-colors">
-                      <RefreshCcw className="w-3 h-3" /> Reset Defaults
-                    </button>
+                    <div className="flex gap-4 mb-2">
+                       <button onClick={clearAllData} className="text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-600 flex items-center gap-2 transition-colors">
+                          <Trash2 className="w-3 h-3" /> Clear All Local Cache
+                       </button>
+                       <button onClick={() => setBranding(defaultBranding)} className="text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-stone-600 flex items-center gap-2 transition-colors border-l border-stone-200 pl-4">
+                          <RefreshCcw className="w-3 h-3" /> Reset Branding
+                       </button>
+                    </div>
                  </div>
 
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -483,12 +532,12 @@ const App: React.FC = () => {
                         <div className="pt-8 border-t border-white/10 space-y-4 text-left">
                            <h5 className="font-bold text-lg">Visual Status</h5>
                            <div className="flex flex-wrap gap-2">
-                              <div className="bg-green-500/20 text-green-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-2"><Check className="w-3 h-3" /> Brand Synced</div>
-                              <div className="bg-white/10 text-white/60 px-4 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-2"><Monitor className="w-3 h-3" /> Responsive Ready</div>
+                              <div className="bg-green-500/20 text-green-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-2"><Check className="w-3 h-3" /> Auto-Optimized</div>
+                              <div className="bg-white/10 text-white/60 px-4 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-2"><Monitor className="w-3 h-3" /> Responsive</div>
                            </div>
-                           <div className="mt-4 p-4 bg-amber-900/20 border border-amber-900/30 rounded-2xl flex items-start gap-3">
-                             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                             <p className="text-[10px] text-amber-200 leading-relaxed font-medium">To prevent app crashes, please use photos under 2MB. Your browser has a storage limit of 5MB total.</p>
+                           <div className="mt-4 p-4 bg-green-900/20 border border-green-900/30 rounded-2xl flex items-start gap-3">
+                             <Zap className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
+                             <p className="text-[10px] text-green-200 leading-relaxed font-medium">Auto-compression is active. All uploads are automatically resized and converted to high-efficiency JPEGs to ensure your site stays lightning fast and stable.</p>
                            </div>
                         </div>
                      </div>
@@ -611,32 +660,6 @@ const App: React.FC = () => {
                   </div>
                 </header>
 
-                {/* AI Generator In-Situ */}
-                <div className="bg-green-800 text-white p-10 rounded-[3rem] shadow-2xl shadow-green-900/20 flex flex-col lg:flex-row items-center gap-10">
-                   <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center shrink-0">
-                      <Sparkles className="w-10 h-10 text-green-400" />
-                   </div>
-                   <div className="flex-1 space-y-2 text-center lg:text-left">
-                      <h4 className="text-2xl font-black">Generate AI Backdrops</h4>
-                      <p className="text-green-100 font-medium">Need more scenery? Let Gemini create a custom Montana landscape.</p>
-                   </div>
-                   <div className="flex w-full lg:w-auto gap-4">
-                      <input 
-                        className="flex-1 lg:w-72 bg-white/10 border border-white/20 px-6 py-4 rounded-2xl outline-none placeholder:text-white/30 font-black"
-                        placeholder="Glacial peaks at sunrise..."
-                        value={aiPrompt}
-                        onChange={(e) => setAiPrompt(e.target.value)}
-                      />
-                      <button 
-                        disabled={isGenerating || !aiPrompt}
-                        onClick={handleAiGenerate}
-                        className="bg-white text-green-900 px-8 py-4 rounded-2xl font-black disabled:opacity-50 hover:bg-green-50 transition-all"
-                      >
-                        {isGenerating ? <Loader2 className="animate-spin" /> : "Generate"}
-                      </button>
-                   </div>
-                </div>
-
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {gallery.map((img, i) => (
                     <div key={i} className="aspect-square rounded-[2rem] overflow-hidden bg-white shadow-sm border border-stone-200 relative group transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl">
@@ -652,7 +675,7 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* Bookings Tab (Mock) */}
+            {/* Bookings Tab */}
             {adminTab === 'bookings' && (
               <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500">
                  <header className="border-b border-stone-200 pb-10 text-left">
@@ -668,7 +691,7 @@ const App: React.FC = () => {
                           <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Unit Count</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-stone-100">
+                      <tbody className="divide-y divide-stone-100 text-left">
                          <tr className="hover:bg-stone-50 transition-colors">
                             <td className="px-8 py-8 font-black text-stone-900">Sarah Miller</td>
                             <td className="px-8 py-8 font-medium text-stone-500">Aug 12 - 18</td>
@@ -686,11 +709,11 @@ const App: React.FC = () => {
             )}
           </main>
 
-          {/* Staging Bar (Floating at bottom if images pending) */}
+          {/* Staging Bar */}
           {localPreviews.length > 0 && (
             <div className="fixed bottom-24 sm:bottom-12 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl bg-stone-900 text-white p-6 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex items-center justify-between z-50 animate-in slide-in-from-bottom-10">
                <div className="flex items-center gap-4 text-left">
-                  <div className="flex -space-x-4">
+                  <div className="flex -space-x-4 shrink-0">
                      {localPreviews.slice(0, 3).map((p, i) => (
                         <div key={i} className="w-10 h-10 rounded-full border-2 border-stone-900 overflow-hidden bg-stone-700">
                            <img src={p} className="w-full h-full object-cover" />
@@ -703,8 +726,8 @@ const App: React.FC = () => {
                      )}
                   </div>
                   <div>
-                    <h4 className="text-sm font-black tracking-tight">{localPreviews.length} images pending</h4>
-                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Awaiting cloud synchronization</p>
+                    <h4 className="text-sm font-black tracking-tight">{localPreviews.length} images ready</h4>
+                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Compressed & Optimized</p>
                   </div>
                </div>
                <div className="flex gap-3">
@@ -821,18 +844,18 @@ const App: React.FC = () => {
       <section id="benefits" className="py-32 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-6">Built for the Backcountry</h2>
+            <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-6 tracking-tight">Built for the Backcountry</h2>
             <div className="w-24 h-2 bg-green-800 mx-auto rounded-full mb-8"></div>
             <p className="text-stone-500 max-w-2xl mx-auto text-xl leading-relaxed">Llamas possess a unique physiological advantage that makes them the gold standard for high-altitude trekking and hunting.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {BENEFITS.map((benefit, idx) => (
               <div key={idx} className="p-10 rounded-[2.5rem] bg-stone-50 border border-stone-100 hover:shadow-2xl transition-all group hover:-translate-y-2 text-left">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-8 group-hover:bg-green-800 transition-all duration-500">
+                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-8 group-hover:bg-green-800 transition-all duration-500">
                   <div className="group-hover:text-white transition-colors duration-500">{benefit.icon}</div>
                 </div>
                 <h3 className="text-2xl font-black text-stone-900 mb-4">{benefit.title}</h3>
-                <p className="text-stone-600 leading-relaxed text-lg">{benefit.description}</p>
+                <p className="text-stone-600 leading-relaxed text-lg font-medium">{benefit.description}</p>
               </div>
             ))}
           </div>
@@ -844,7 +867,7 @@ const App: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
             <div className="max-w-2xl">
               <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-6 tracking-tight">Meet the Professionals</h2>
-              <p className="text-stone-600 text-xl leading-relaxed">Our herd is meticulously trained for the variable conditions of the Northern Rockies.</p>
+              <p className="text-stone-600 text-xl leading-relaxed font-medium">Our herd is meticulously trained for the variable conditions of the Northern Rockies.</p>
             </div>
             {isAdmin && (
               <button onClick={() => openAdminTab('fleet')} className="bg-stone-900 text-white px-8 py-4 rounded-full font-black text-xs uppercase flex items-center gap-2 shadow-lg active:scale-95"><Edit3 className="w-4 h-4" /> Edit Fleet</button>
@@ -873,7 +896,7 @@ const App: React.FC = () => {
             <div>
               <h2 className="text-5xl md:text-7xl font-black mb-6 tracking-tight">Wilderness Journal</h2>
               <div className="flex items-center gap-4">
-                <p className="text-stone-400 text-xl max-w-xl">A glimpse into our most recent expedition routes.</p>
+                <p className="text-stone-400 text-xl max-w-xl font-medium">A glimpse into our most recent expedition routes.</p>
               </div>
             </div>
             {isAdmin && (
@@ -917,7 +940,7 @@ const App: React.FC = () => {
       <section id="reviews" className="py-32 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-7xl font-black text-stone-900 mb-8">Voices from the Path</h2>
+            <h2 className="text-5xl md:text-7xl font-black text-stone-900 mb-8 tracking-tight">Voices from the Path</h2>
           </div>
           <Testimonials />
         </div>
@@ -930,7 +953,7 @@ const App: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-16 items-center">
               <div className="flex-1">
                 <div className="inline-flex items-center gap-2 text-green-800 bg-green-100 px-5 py-2 rounded-full text-xs font-black uppercase tracking-[0.2em] mb-8"><MessageCircle className="w-4 h-4" /> Herd Wisdom</div>
-                <h2 className="text-5xl font-black text-stone-900 mb-8">Ask Our Head Guide</h2>
+                <h2 className="text-5xl font-black text-stone-900 mb-8 tracking-tight">Ask Our Head Guide</h2>
                 <form onSubmit={handleAdviceSubmit} className="relative mb-8 group">
                   <input type="text" placeholder="e.g. Best weight distribution?" className="w-full bg-stone-50 border-2 border-stone-100 px-8 py-6 rounded-[2rem] outline-none focus:border-green-300 transition-all font-black" value={adviceQuery} onChange={(e) => setAdviceQuery(e.target.value)} />
                   <button disabled={isAdviceLoading} className="absolute right-3 top-3 bottom-3 bg-green-800 text-white px-10 rounded-[1.5rem] font-black active:scale-95 disabled:opacity-50">
@@ -941,7 +964,7 @@ const App: React.FC = () => {
               </div>
               
               {/* Head Guide Photo Section */}
-              <div className="w-full md:w-2/5 aspect-[4/5] rounded-[3rem] overflow-hidden bg-stone-100 shadow-2xl relative group">
+              <div className="w-full md:w-2/5 aspect-[4/5] rounded-[3rem] overflow-hidden bg-stone-100 shadow-2xl relative group shrink-0">
                 <img src={branding?.guideImageUrl || defaultBranding.guideImageUrl} className="w-full h-full object-cover" />
                 {isAdmin && (
                   <button 
@@ -960,11 +983,11 @@ const App: React.FC = () => {
 
       <section id="faq" className="py-32 bg-white">
         <div className="max-w-5xl mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-20">Frequently Asked</h2>
+          <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-20 tracking-tight">Frequently Asked</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
             {FAQS.map((faq, i) => (
               <div key={i} className="bg-stone-50 rounded-[2.5rem] p-10 border border-stone-100 hover:border-green-100 transition-colors group">
-                <h3 className="text-2xl font-black text-stone-900 mb-6 flex items-start gap-4 transition-colors group-hover:text-green-800"><span className="w-8 h-8 rounded-full bg-green-800 text-white flex-shrink-0 flex items-center justify-center text-xs">?</span>{faq.question}</h3>
+                <h3 className="text-2xl font-black text-stone-900 mb-6 flex items-start gap-4 transition-colors group-hover:text-green-800 leading-tight"><span className="w-8 h-8 rounded-full bg-green-800 text-white flex-shrink-0 flex items-center justify-center text-xs">?</span>{faq.question}</h3>
                 <p className="text-stone-600 pl-12 leading-relaxed font-medium">{faq.answer}</p>
               </div>
             ))}
@@ -975,7 +998,7 @@ const App: React.FC = () => {
       <section id="booking" className="py-32 bg-stone-50 relative overflow-hidden">
         <div className="max-w-5xl mx-auto px-4 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 text-stone-500 mb-6 text-sm font-black uppercase tracking-[0.3em]"><CalendarDays className="w-5 h-5" /> Mission Control</div>
-          <h2 className="text-5xl md:text-7xl font-black text-stone-900 mb-20">Ready to Gear Up?</h2>
+          <h2 className="text-5xl md:text-7xl font-black text-stone-900 mb-20 tracking-tight">Ready to Gear Up?</h2>
           <BookingForm />
         </div>
       </section>
