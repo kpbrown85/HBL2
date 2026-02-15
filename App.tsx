@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { LLAMAS, GALLERY_IMAGES, FAQS, BENEFITS } from './constants';
 import { LlamaCard } from './components/LlamaCard';
 import { BookingForm } from './components/BookingForm';
@@ -33,10 +33,11 @@ import {
   Mail,
   Save,
   Trash,
-  LayoutDashboard,
   LogOut,
   Edit3
 } from 'lucide-react';
+
+// --- Utilities ---
 
 const compressImage = (base64Str: string, maxWidth = 1200, quality = 0.7): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -69,6 +70,8 @@ const safeSave = (key: string, data: any) => {
   }
 };
 
+// --- Sub-Components (Moved outside App to prevent re-creation) ---
+
 interface Branding {
   siteName: string;
   accentName: string;
@@ -100,16 +103,19 @@ const Logo = ({ branding, defaultBranding, light = false, onClick }: { branding:
 };
 
 const App: React.FC = () => {
+  // --- UI State ---
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [slogan, setSlogan] = useState("Helena’s premier mountain-trained pack string.");
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // --- Auth & Admin State ---
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [adminTab, setAdminTab] = useState<'branding' | 'gallery' | 'bookings' | 'fleet'>('branding');
   const [passwordInput, setPasswordInput] = useState("");
-  const [bookings, setBookings] = useState<BookingData[]>([]);
 
+  // --- CMS Data State ---
   const defaultBranding: Branding = {
     siteName: "Helena Backcountry Llamas",
     accentName: "Llamas",
@@ -134,10 +140,14 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : GALLERY_IMAGES;
   });
 
+  const [bookings, setBookings] = useState<BookingData[]>([]);
   const [editingLlama, setEditingLlama] = useState<Llama | null>(null);
+
+  // --- Refs ---
   const galleryFileInputRef = useRef<HTMLInputElement>(null);
   const llamaPhotoInputRef = useRef<HTMLInputElement>(null);
 
+  // --- Effects ---
   useEffect(() => {
     generateWelcomeSlogan().then(val => { if (val) setSlogan(val); });
     const loadBookings = () => {
@@ -152,12 +162,17 @@ const App: React.FC = () => {
   useEffect(() => { safeSave('hbl_branding', branding); document.title = branding.siteName; }, [branding]);
   useEffect(() => { safeSave('hbl_llamas', llamas); }, [llamas]);
 
+  // --- Handlers ---
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordInput === "llama123") {
-      setIsAdmin(true); setShowAdminLogin(false); setPasswordInput("");
+      setIsAdmin(true); 
+      setShowAdminLogin(false); 
+      setPasswordInput("");
       setShowDashboard(true);
-    } else { alert("Access Denied."); }
+    } else { 
+      alert("Access Denied."); 
+    }
   };
 
   const handleBookingAction = (id: string, action: 'delete' | 'confirm') => {
@@ -166,7 +181,7 @@ const App: React.FC = () => {
       if (!confirm("Delete this expedition lead?")) return;
       updated = updated.filter(b => b.id !== id);
     } else if (action === 'confirm') {
-      updated = updated.map(b => b.id === id ? { ...b, status: 'confirmed', isRead: true } : b);
+      updated = updated.map(b => b.id === id ? { ...b, status: 'confirmed' as const, isRead: true } : b);
     }
     setBookings(updated);
     localStorage.setItem('hbl_bookings', JSON.stringify(updated));
@@ -205,19 +220,24 @@ const App: React.FC = () => {
     const files = e.target.files;
     if (!files) return;
     setIsProcessing(true);
-    const newImages: GalleryImage[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const reader = new FileReader();
-      const p = new Promise<string>((resolve) => {
-        reader.onload = (ev) => resolve(ev.target?.result as string);
-        reader.readAsDataURL(files[i]);
-      });
-      const raw = await p;
-      const optimized = await compressImage(raw);
-      newImages.push({ url: optimized, caption: "Expedition Moment" });
+    try {
+      const newImages: GalleryImage[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const reader = new FileReader();
+        const p = new Promise<string>((resolve) => {
+          reader.onload = (ev) => resolve(ev.target?.result as string);
+          reader.readAsDataURL(files[i]);
+        });
+        const raw = await p;
+        const optimized = await compressImage(raw);
+        newImages.push({ url: optimized, caption: "Expedition Moment" });
+      }
+      setGallery(prev => [...newImages, ...prev]);
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setIsProcessing(false);
     }
-    setGallery(prev => [...newImages, ...prev]);
-    setIsProcessing(false);
   };
 
   const moveGalleryItem = (index: number, direction: 'up' | 'down') => {
@@ -230,22 +250,34 @@ const App: React.FC = () => {
 
   const unreadCount = bookings.filter(b => !b.isRead).length;
 
-  const NavItem = ({ id, label, icon: Icon }: { id: typeof adminTab, label: string, icon: any }) => (
-    <button 
-      onClick={() => { setAdminTab(id); setEditingLlama(null); }}
-      className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${adminTab === id ? 'bg-stone-900 text-white shadow-xl' : 'text-stone-400 hover:bg-stone-100 hover:text-stone-900'}`}
-    >
-      <Icon size={18} />
-      <span className="hidden lg:inline">{label}</span>
-      {id === 'bookings' && unreadCount > 0 && (
-        <span className="bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-lg">{unreadCount}</span>
-      )}
-    </button>
+  // --- Render Helpers ---
+
+  const renderDashboardTabs = () => (
+    <nav className="flex items-center gap-2 bg-stone-50 p-1.5 rounded-3xl border border-stone-100">
+      {[
+        { id: 'branding' as const, label: 'Identity', icon: Palette },
+        { id: 'fleet' as const, label: 'The Herd', icon: Users },
+        { id: 'gallery' as const, label: 'Journal', icon: ImageIcon },
+        { id: 'bookings' as const, label: 'Logistics', icon: ClipboardList }
+      ].map(tab => (
+        <button 
+          key={tab.id}
+          onClick={() => { setAdminTab(tab.id); setEditingLlama(null); }}
+          className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${adminTab === tab.id ? 'bg-stone-900 text-white shadow-xl' : 'text-stone-400 hover:bg-stone-100 hover:text-stone-900'}`}
+        >
+          <tab.icon size={18} />
+          <span className="hidden lg:inline">{tab.label}</span>
+          {tab.id === 'bookings' && unreadCount > 0 && (
+            <span className="bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-lg">{unreadCount}</span>
+          )}
+        </button>
+      ))}
+    </nav>
   );
 
   return (
     <div className="min-h-screen text-left">
-      {/* CMS Login */}
+      {/* 1. Admin Login Modal */}
       {showAdminLogin && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-stone-950/95 backdrop-blur-xl p-4">
           <div className="bg-white rounded-[4rem] p-12 max-w-md w-full shadow-2xl animate-in zoom-in duration-500">
@@ -272,19 +304,12 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* DASHBOARD OVERLAY */}
+      {/* 2. Admin Dashboard View */}
       {showDashboard && isAdmin && (
         <div className="fixed inset-0 z-[100] bg-white flex flex-col animate-in fade-in overflow-hidden">
           <header className="bg-white border-b px-8 md:px-16 py-4 flex items-center justify-between shrink-0">
             <Logo branding={branding} defaultBranding={defaultBranding} onClick={() => setShowDashboard(false)} />
-            
-            <nav className="flex items-center gap-2 bg-stone-50 p-1.5 rounded-3xl border border-stone-100">
-              <NavItem id="branding" label="Identity" icon={Palette} />
-              <NavItem id="fleet" label="The Herd" icon={Users} />
-              <NavItem id="gallery" label="Journal" icon={ImageIcon} />
-              <NavItem id="bookings" label="Logistics" icon={ClipboardList} />
-            </nav>
-
+            {renderDashboardTabs()}
             <div className="flex gap-4">
               <button onClick={() => setShowDashboard(false)} className="hidden md:flex items-center gap-3 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] text-stone-500 hover:bg-stone-100 transition-all border border-stone-100">
                 <Home size={16} /> View Site
@@ -297,7 +322,6 @@ const App: React.FC = () => {
 
           <main className="flex-1 bg-stone-50/30 overflow-y-auto">
             <div className="max-w-7xl mx-auto p-12 md:p-20">
-              {/* BRANDING */}
               {adminTab === 'branding' && (
                 <div className="max-w-4xl space-y-12 animate-in slide-in-from-bottom-8">
                   <header><h2 className="text-4xl font-black tracking-tight mb-2">Presence & Branding</h2><p className="text-stone-400 font-bold uppercase tracking-widest text-xs">Manage your storefront identity</p></header>
@@ -312,7 +336,6 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* FLEET */}
               {adminTab === 'fleet' && (
                 <div className="space-y-12 animate-in slide-in-from-bottom-8">
                   <header className="flex justify-between items-end">
@@ -369,7 +392,6 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* JOURNAL */}
               {adminTab === 'gallery' && (
                 <div className="space-y-12 animate-in slide-in-from-bottom-8">
                   <header className="flex justify-between items-end">
@@ -402,7 +424,6 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* LOGS */}
               {adminTab === 'bookings' && (
                 <div className="space-y-12 animate-in slide-in-from-bottom-8">
                   <header><h2 className="text-4xl font-black tracking-tight mb-2">Expedition Logs</h2><p className="text-stone-400 font-bold uppercase tracking-widest text-xs">Customer leads & bookings</p></header>
@@ -434,7 +455,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* PUBLIC SITE */}
+      {/* 3. Public Site View */}
       {!showDashboard && (
         <>
           <nav className="fixed w-full z-50 bg-white/90 backdrop-blur-2xl border-b h-20 flex items-center">
@@ -452,10 +473,13 @@ const App: React.FC = () => {
             </div>
           </nav>
 
-          {/* MOBILE OVERLAY */}
-          <div className={`fixed inset-0 z-[60] bg-stone-950 transition-all duration-700 md:hidden ${isMenuOpen ? 'translate-y-0' : '-translate-y-full'}`}>
+          {/* Mobile Navigation */}
+          <div className={`fixed inset-0 z-[60] bg-stone-950 transition-all duration-700 md:hidden ${isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
             <div className="p-10 flex flex-col h-full">
-              <div className="flex justify-between items-center mb-16"><Logo branding={branding} defaultBranding={defaultBranding} light /><button onClick={() => setIsMenuOpen(false)} className="text-white p-4 bg-white/10 rounded-full"><X size={28} /></button></div>
+              <div className="flex justify-between items-center mb-16">
+                <Logo branding={branding} defaultBranding={defaultBranding} light />
+                <button onClick={() => setIsMenuOpen(false)} className="text-white p-4 bg-white/10 rounded-full"><X size={28} /></button>
+              </div>
               <nav className="flex flex-col gap-10 text-left">
                 {['Benefits', 'About', 'Gear', 'Gallery', 'FAQ'].map((link) => (
                   <a key={link} href={`#${link.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-6xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase">{link}</a>
@@ -477,9 +501,7 @@ const App: React.FC = () => {
           </section>
 
           <section id="benefits" className="py-40 bg-white"><div className="max-w-7xl mx-auto px-4"><h2 className="text-6xl font-black mb-24 text-center tracking-tighter">Wilderness Intelligence</h2><div className="grid grid-cols-1 md:grid-cols-4 gap-10">{BENEFITS.map((b,i)=><div key={i} className="p-12 bg-stone-50 rounded-[3rem] border border-stone-100 hover:border-green-200 hover:bg-white transition-all group hover:shadow-2xl duration-500"><div className="mb-10 group-hover:scale-110 transition-transform duration-500">{b.icon}</div><h3 className="text-2xl font-black mb-4 tracking-tight">{b.title}</h3><p className="text-stone-500 font-medium leading-relaxed">{b.description}</p></div>)}</div></div></section>
-          
           <section id="about" className="py-40 bg-stone-100"><div className="max-w-7xl mx-auto px-4"><h2 className="text-6xl font-black mb-24 text-center tracking-tighter">The Heritage String</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">{llamas.map(l=><LlamaCard key={l.id} llama={l} />)}</div></div></section>
-          
           <section id="gear" className="py-40 bg-white"><div className="max-w-7xl mx-auto px-4"><h2 className="text-6xl font-black mb-24 text-center tracking-tighter">Expedition Kit</h2><GearSection /></div></section>
           
           <section id="gallery" className="py-40 bg-stone-950 text-white">
@@ -505,7 +527,10 @@ const App: React.FC = () => {
             <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-16">
               <Logo branding={branding} defaultBranding={defaultBranding} light />
               <div className="flex items-center gap-8">
-                <button onClick={() => isAdmin ? setShowDashboard(true) : setShowAdminLogin(true)} className="w-16 h-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center transition-all hover:bg-white/10 text-white shadow-2xl group">
+                <button 
+                  onClick={() => isAdmin ? setShowDashboard(true) : setShowAdminLogin(true)} 
+                  className="w-16 h-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center transition-all hover:bg-white/10 text-white shadow-2xl group"
+                >
                   {isAdmin ? <Settings size={28} className="group-hover:rotate-90 transition-transform duration-500" /> : <Lock size={28} />}
                 </button>
                 {isAdmin && <span className="text-[10px] font-black uppercase text-green-500 tracking-[0.3em] animate-pulse">Session Active</span>}
@@ -516,7 +541,7 @@ const App: React.FC = () => {
         </>
       )}
 
-      {/* Global Processing Loader */}
+      {/* 4. Global Loaders */}
       {isProcessing && (
         <div className="fixed inset-0 z-[300] bg-stone-950/80 backdrop-blur-3xl flex items-center justify-center">
           <div className="bg-white px-12 py-16 rounded-[4rem] shadow-2xl flex flex-col items-center gap-8 animate-in zoom-in duration-500">
