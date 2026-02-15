@@ -93,7 +93,7 @@ export const BookingForm: React.FC = () => {
               <Calculator className="w-4 h-4" /> Request Summary
             </h4>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12 text-left">
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-stone-400">
@@ -194,7 +194,7 @@ export const BookingForm: React.FC = () => {
           </div>
           <div className="space-y-6">
             <div>
-              <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Full Name</label>
+              <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">Full Name</label>
               <input 
                 required
                 type="text" 
@@ -206,7 +206,7 @@ export const BookingForm: React.FC = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Email Address</label>
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">Email Address</label>
                 <input 
                   required
                   type="email" 
@@ -217,7 +217,7 @@ export const BookingForm: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Phone Number</label>
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">Phone Number</label>
                 <input 
                   required
                   type="tel" 
@@ -241,7 +241,7 @@ export const BookingForm: React.FC = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Start Date</label>
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">Start Date</label>
                 <input 
                   required
                   type="date" 
@@ -251,7 +251,7 @@ export const BookingForm: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">End Date</label>
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">End Date</label>
                 <input 
                   required
                   type="date" 
@@ -262,7 +262,7 @@ export const BookingForm: React.FC = () => {
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Number of Llamas (Min 2)</label>
+              <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">Number of Llamas (Min 2)</label>
               <div className="flex items-center gap-4">
                 <input 
                   type="range"
@@ -282,27 +282,32 @@ export const BookingForm: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12 bg-stone-50 p-8 rounded-[2rem] border border-stone-100">
-        <div className="space-y-6">
-          <label className="flex items-start gap-4 cursor-pointer group bg-white p-4 rounded-2xl border border-stone-100 hover:border-green-200 transition-all shadow-sm">
-            <div className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${formData.trailerNeeded ? 'bg-green-700 border-green-700 shadow-lg shadow-green-900/20' : 'bg-stone-50 border-stone-200'}`}>
-              {formData.trailerNeeded && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-            </div>
-            <input 
-              type="checkbox" 
-              className="hidden"
-              checked={formData.trailerNeeded}
-              onChange={(e) => setFormData({...formData, trailerNeeded: e.target.checked})}
-            />
-            <div className="flex flex-col">
+        <div className="space-y-4">
+          {/* Trailer Rental Toggle Switch */}
+          <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-stone-100 hover:border-green-200 transition-all shadow-sm">
+            <div className="flex flex-col text-left">
               <span className="font-bold text-stone-900 flex items-center gap-2">
-                <Truck className="w-4 h-4 text-green-700" /> Trailer Rental ($25/day)
+                <Truck className="w-4 h-4 text-green-700" /> Trailer Rental
               </span>
-              <span className="text-xs text-stone-500 mt-1 leading-relaxed">Secure transport for your fleet to the trailhead.</span>
+              <span className="text-xs text-stone-500 mt-1 leading-relaxed">
+                ${PRICING.trailerDaily}/day transport service
+              </span>
             </div>
-          </label>
+            <button 
+              type="button"
+              onClick={() => setFormData({ ...formData, trailerNeeded: !formData.trailerNeeded })}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.trailerNeeded ? 'bg-green-700' : 'bg-stone-200'}`}
+              aria-pressed={formData.trailerNeeded}
+            >
+              <span className="sr-only">Enable trailer rental</span>
+              <span 
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.trailerNeeded ? 'translate-x-5' : 'translate-x-0'}`}
+              />
+            </button>
+          </div>
 
-          <label className="flex items-start gap-4 cursor-pointer group bg-white p-4 rounded-2xl border border-stone-100 hover:border-green-200 transition-all shadow-sm">
-            <div className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${formData.isFirstTimer ? 'bg-green-700 border-green-700 shadow-lg shadow-green-900/20' : 'bg-stone-50 border-stone-200'}`}>
+          <label className="flex items-start gap-4 cursor-pointer group bg-white p-6 rounded-2xl border border-stone-100 hover:border-green-200 transition-all shadow-sm">
+            <div className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${formData.isFirstTimer ? 'bg-green-700 border-green-700 shadow-lg shadow-green-900/20' : 'bg-stone-50 border-stone-200'}`}>
               {formData.isFirstTimer && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
             </div>
             <input 
@@ -311,9 +316,9 @@ export const BookingForm: React.FC = () => {
               checked={formData.isFirstTimer}
               onChange={(e) => setFormData({...formData, isFirstTimer: e.target.checked})}
             />
-            <div className="flex flex-col">
+            <div className="flex flex-col text-left">
               <span className="font-bold text-stone-900 flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-green-700" /> Llama Clinic ($75)
+                <GraduationCap className="w-4 h-4 text-green-700" /> Llama Clinic (${PRICING.clinicFee})
               </span>
               <span className="text-xs text-stone-500 mt-1 leading-relaxed">Mandatory orientation for first-time backcountry packers.</span>
             </div>
@@ -333,7 +338,7 @@ export const BookingForm: React.FC = () => {
           <div className="text-5xl font-black text-stone-900 relative z-10">
             ${estimate.toLocaleString()}
           </div>
-          <p className="text-[10px] text-stone-400 mt-4 uppercase tracking-widest relative z-10">
+          <p className="text-[10px] text-stone-400 mt-4 uppercase tracking-widest relative z-10 text-left">
             *Excludes damage deposit & trail supplies.
           </p>
         </div>

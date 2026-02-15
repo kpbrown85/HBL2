@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 export interface Llama {
   id: string;
   name: string;

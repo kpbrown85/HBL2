@@ -92,6 +92,68 @@ const safeSave = (key: string, data: any) => {
   }
 };
 
+// Helper components moved outside to resolve type inference issues with children
+interface Branding {
+  siteName: string;
+  accentName: string;
+  logoType: 'icon' | 'image';
+  logoUrl: string;
+  heroImageUrl: string;
+  guideImageUrl: string;
+}
+
+const Logo = ({ branding, defaultBranding, light = false, onClick }: { branding: Branding, defaultBranding: Branding, light?: boolean, onClick: () => void }) => {
+  const siteTitle = (branding?.siteName || defaultBranding.siteName).toString();
+  const accent = (branding?.accentName || defaultBranding.accentName).toString();
+  const regex = new RegExp(`(${accent})`, 'gi');
+  const parts = siteTitle.split(regex);
+  
+  return (
+    <div className="flex items-center gap-3 cursor-pointer" onClick={onClick}>
+      {branding?.logoType === 'icon' ? (
+        <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg shrink-0`}>
+          <Mountain className="w-6 h-6" />
+        </div>
+      ) : (
+        <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-stone-100 bg-white flex items-center justify-center shrink-0">
+          {branding?.logoUrl ? (
+            <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+          ) : (
+            <ImageIcon className="text-stone-300 w-5 h-5" />
+          )}
+        </div>
+      )}
+      <span className={`text-xl font-black tracking-tight ${light ? 'text-white' : 'text-stone-900'}`}>
+        {parts.map((part, i) => (
+          part.toLowerCase() === accent.toLowerCase() 
+            ? <span key={i} className={`${light ? 'text-green-400' : 'text-green-800'} italic`}>{part}</span>
+            : <span key={i}>{part}</span>
+        ))}
+      </span>
+    </div>
+  );
+};
+
+const AdminTabButton = ({ id, currentTab, label, icon: Icon, onClick }: { id: string, currentTab: string, label: string, icon: any, onClick: () => void }) => (
+  <button 
+    onClick={onClick}
+    className={`flex items-center gap-2 px-6 py-3 rounded-full font-black text-sm transition-all ${currentTab === id ? 'bg-stone-900 text-white shadow-lg' : 'text-stone-400 hover:bg-stone-100 hover:text-stone-900'}`}
+  >
+    <Icon className="w-4 h-4" />
+    {label}
+  </button>
+);
+
+const NavLink: React.FC<{ href: string; id: string; children: React.ReactNode; onClick: (e: React.MouseEvent<HTMLAnchorElement>, id: string) => void }> = ({ href, id, children, onClick }) => (
+  <a 
+    href={href} 
+    onClick={(e) => onClick(e, id)} 
+    className="text-sm font-black text-stone-600 hover:text-green-800 transition-colors uppercase tracking-widest block md:inline"
+  >
+    {children}
+  </a>
+);
+
 const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [slogan, setSlogan] = useState("Helena’s premier mountain-trained pack string.");
@@ -106,19 +168,19 @@ const App: React.FC = () => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [adminTab, setAdminTab] = useState<'branding' | 'gallery' | 'bookings' | 'fleet'>('branding');
   const [passwordInput, setPasswordInput] = useState("");
-  const [copySuccess, setCopySuccess] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   // Branding State - Robust Initialization
-  const defaultBranding = {
+  const defaultBranding: Branding = {
     siteName: "Helena Backcountry Llamas",
     accentName: "Llamas",
-    logoType: 'icon' as 'icon' | 'image',
+    logoType: 'icon',
     logoUrl: "",
     heroImageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=90&w=2400",
     guideImageUrl: "https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=800"
   };
 
-  const [branding, setBranding] = useState(() => {
+  const [branding, setBranding] = useState<Branding>(() => {
     try {
       const saved = localStorage.getItem('hbl_branding');
       const parsed = saved ? JSON.parse(saved) : null;
@@ -150,8 +212,6 @@ const App: React.FC = () => {
     }
   });
   
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [localPreviews, setLocalPreviews] = useState<string[]>([]);
   
@@ -182,35 +242,6 @@ const App: React.FC = () => {
     if (llamas.length > 0) safeSave('hbl_llamas', llamas);
   }, [llamas]);
 
-  const openAdminTab = (tab: typeof adminTab) => {
-    setAdminTab(tab);
-    setShowDashboard(true);
-  };
-
-  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    e.preventDefault();
-    const element = document.getElementById(id);
-    if (element) {
-      const offset = 80;
-      const bodyRect = document.body.getBoundingClientRect().top;
-      const elementRect = element.getBoundingClientRect().top;
-      const elementPosition = elementRect - bodyRect;
-      const offsetPosition = elementPosition - offset;
-      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-    }
-    setIsMenuOpen(false);
-  };
-
-  const NavLink = ({ href, id, children }: { href: string; id: string; children: React.ReactNode }) => (
-    <a 
-      href={href} 
-      onClick={(e) => scrollToSection(e, id)} 
-      className="text-sm font-black text-stone-600 hover:text-green-800 transition-colors uppercase tracking-widest block md:inline"
-    >
-      {children}
-    </a>
-  );
-
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordInput === "llama123") {
@@ -231,33 +262,15 @@ const App: React.FC = () => {
     setIsAdviceLoading(false);
   };
 
-  const handleAiGenerate = async () => {
-    if (!aiPrompt || !isAdmin) return;
-    setIsGenerating(true);
-    try {
-      const imageUrl = await generateBackdrop(aiPrompt);
-      const newImage: GalleryImage = {
-        url: imageUrl,
-        caption: `AI Generated: ${aiPrompt}`
-      };
-      setGallery([newImage, ...gallery]);
-      setAiPrompt("");
-    } catch (error) {
-      alert("Failed to generate image. Please try again.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>, target: 'logo' | 'hero' | 'guide' | 'llama') => {
     const file = e.target.files?.[0];
-    if (file && isAdmin) {
+    // Ensure file is treated as a Blob for safety
+    if (file && (file instanceof Blob) && isAdmin) {
       setIsProcessing(true);
       const reader = new FileReader();
       reader.onloadend = async () => {
         try {
           const rawResult = reader.result as string;
-          // COMPRESS BEFORE SAVING TO STATE
           const compressed = await compressImage(rawResult);
           
           if (target === 'logo') setBranding(prev => ({ ...prev, logoUrl: compressed, logoType: 'image' }));
@@ -282,7 +295,9 @@ const App: React.FC = () => {
       setIsProcessing(true);
       try {
         const results: string[] = [];
-        for (const file of Array.from(files)) {
+        // Ensure files are handled as a known list of Files/Blobs
+        const fileList = Array.from(files) as File[];
+        for (const file of fileList) {
           const dataUrl = await new Promise<string>((resolve) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result as string);
@@ -330,52 +345,44 @@ const App: React.FC = () => {
     }
   };
 
-  const Logo = ({ light = false }: { light?: boolean }) => {
-    const siteTitle = (branding?.siteName || defaultBranding.siteName).toString();
-    const accent = (branding?.accentName || defaultBranding.accentName).toString();
-    
-    // Improved regex-based split to handle case sensitivity and multiple matches
-    const regex = new RegExp(`(${accent})`, 'gi');
-    const parts = siteTitle.split(regex);
-    
-    return (
-      <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-        {branding?.logoType === 'icon' ? (
-          <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg shrink-0`}>
-            <Mountain className="w-6 h-6" />
-          </div>
-        ) : (
-          <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-stone-100 bg-white flex items-center justify-center shrink-0">
-            {branding?.logoUrl ? (
-              <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
-            ) : (
-              <ImageIcon className="text-stone-300 w-5 h-5" />
-            )}
-          </div>
-        )}
-        <span className={`text-xl font-black tracking-tight ${light ? 'text-white' : 'text-stone-900'}`}>
-          {parts.map((part, i) => (
-            part.toLowerCase() === accent.toLowerCase() 
-              ? <span key={i} className={`${light ? 'text-green-400' : 'text-green-800'} italic`}>{part}</span>
-              : <span key={i}>{part}</span>
-          ))}
-        </span>
-      </div>
-    );
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
   };
 
-  const AdminTabButton = ({ id, label, icon: Icon }: { id: typeof adminTab, label: string, icon: any }) => (
-    <button 
-      onClick={() => setAdminTab(id)}
-      className={`flex items-center gap-2 px-6 py-3 rounded-full font-black text-sm transition-all ${adminTab === id ? 'bg-stone-900 text-white shadow-lg' : 'text-stone-400 hover:bg-stone-100 hover:text-stone-900'}`}
-    >
-      <Icon className="w-4 h-4" />
-      {label}
-    </button>
-  );
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    
+    const items = [...gallery];
+    const item = items[draggedIndex];
+    items.splice(draggedIndex, 1);
+    items.splice(index, 0, item);
+    
+    setDraggedIndex(index);
+    setGallery(items);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      const offset = 80;
+      const bodyRect = document.body.getBoundingClientRect().top;
+      const elementRect = element.getBoundingClientRect().top;
+      const elementPosition = elementRect - bodyRect;
+      const offsetPosition = elementPosition - offset;
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+    }
+    setIsMenuOpen(false);
+  };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen text-left">
       {/* Universal Processing Loader */}
       {isProcessing && (
         <div className="fixed inset-0 z-[200] bg-stone-900/40 backdrop-blur-md flex items-center justify-center">
@@ -384,8 +391,8 @@ const App: React.FC = () => {
                 <Zap className="w-8 h-8" />
              </div>
              <div className="text-center">
-               <h3 className="text-2xl font-black text-stone-900">Optimizing Asset</h3>
-               <p className="text-stone-500 font-bold uppercase text-[10px] tracking-widest mt-1">Compressing image for peak performance...</p>
+               <h3 className="text-2xl font-black text-stone-900">Processing Asset</h3>
+               <p className="text-stone-500 font-bold uppercase text-[10px] tracking-widest mt-1 text-center">Optimizing image for peak performance...</p>
              </div>
              <Loader2 className="w-8 h-8 text-green-800 animate-spin" />
           </div>
@@ -404,7 +411,7 @@ const App: React.FC = () => {
             </div>
             <form onSubmit={handleAdminLogin} className="space-y-6">
               <div className="text-left">
-                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Management Password</label>
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 text-left">Management Password</label>
                 <input 
                   type="password"
                   placeholder="Enter 'llama123' for demo"
@@ -438,10 +445,10 @@ const App: React.FC = () => {
 
             {/* Desktop Navigation Tabs */}
             <nav className="hidden lg:flex items-center gap-2 bg-stone-50 p-1.5 rounded-full border border-stone-200">
-              <AdminTabButton id="branding" label="Identity" icon={Palette} />
-              <AdminTabButton id="fleet" label="Herd" icon={Users} />
-              <AdminTabButton id="gallery" label="Gallery" icon={ImageIcon} />
-              <AdminTabButton id="bookings" label="Bookings" icon={ClipboardList} />
+              <AdminTabButton id="branding" currentTab={adminTab} label="Identity" icon={Palette} onClick={() => setAdminTab('branding')} />
+              <AdminTabButton id="fleet" currentTab={adminTab} label="Herd" icon={Users} onClick={() => setAdminTab('fleet')} />
+              <AdminTabButton id="gallery" currentTab={adminTab} label="Gallery" icon={ImageIcon} onClick={() => setAdminTab('gallery')} />
+              <AdminTabButton id="bookings" currentTab={adminTab} label="Bookings" icon={ClipboardList} onClick={() => setAdminTab('bookings')} />
             </nav>
 
             <button 
@@ -460,8 +467,8 @@ const App: React.FC = () => {
               <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500 text-left">
                  <div className="flex justify-between items-end">
                     <div className="text-left">
-                      <h3 className="text-4xl font-black text-stone-900 mb-2">Visual Identity</h3>
-                      <p className="text-stone-500 font-medium">Customize your brand name, logos, and key section imagery.</p>
+                      <h3 className="text-4xl font-black text-stone-900 mb-2 text-left">Visual Identity</h3>
+                      <p className="text-stone-500 font-medium text-left">Customize your brand name, logos, and key section imagery.</p>
                     </div>
                     <div className="flex gap-4 mb-2">
                        <button onClick={clearAllData} className="text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-600 flex items-center gap-2 transition-colors">
@@ -474,11 +481,9 @@ const App: React.FC = () => {
                  </div>
 
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                   {/* Left Column: Form Settings */}
                    <div className="space-y-10 text-left">
-                     {/* Text Brand Settings */}
                      <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-stone-200 space-y-8">
-                        <h4 className="text-sm font-black uppercase tracking-widest text-stone-900 flex items-center gap-2"><Type className="w-4 h-4 text-green-800" /> Typography & Copy</h4>
+                        <h4 className="text-sm font-black uppercase tracking-widest text-stone-900 flex items-center gap-2 text-left"><Type className="w-4 h-4 text-green-800" /> Typography & Copy</h4>
                         <div>
                           <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 text-left">Company Display Name</label>
                           <input 
@@ -499,10 +504,8 @@ const App: React.FC = () => {
                         </div>
                      </div>
 
-                     {/* Logo & Icon Mark Settings */}
                      <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-stone-200 space-y-8">
-                        <h4 className="text-sm font-black uppercase tracking-widest text-stone-900 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-green-800" /> Brand Mark</h4>
-                        
+                        <h4 className="text-sm font-black uppercase tracking-widest text-stone-900 flex items-center gap-2 text-left"><ImageIcon className="w-4 h-4 text-green-800" /> Brand Mark</h4>
                         <div className="flex bg-stone-50 p-1.5 rounded-2xl border border-stone-100">
                           <button 
                             onClick={() => setBranding({...branding, logoType: 'icon'})}
@@ -533,62 +536,24 @@ const App: React.FC = () => {
                                 )}
                               </div>
                               <div className="text-left">
-                                <p className="font-black text-xs text-stone-900 uppercase">Change Logo Image</p>
-                                <p className="text-[10px] text-stone-400 font-bold">Transparent PNG recommended</p>
+                                <p className="font-black text-xs text-stone-900 uppercase text-left">Change Logo Image</p>
+                                <p className="text-[10px] text-stone-400 font-bold text-left">Transparent PNG recommended</p>
                               </div>
                             </button>
                             <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'logo')} />
                           </div>
                         )}
                      </div>
-
-                     <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-stone-200 space-y-8">
-                        <h4 className="text-sm font-black uppercase tracking-widest text-stone-900 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-green-800" /> Hero & Staff Assets</h4>
-                        <div className="grid grid-cols-2 gap-6">
-                           <div className="space-y-3">
-                              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest text-left block">Hero Backdrop</label>
-                              <button onClick={() => heroInputRef.current?.click()} className="w-full aspect-square bg-stone-100 rounded-2xl overflow-hidden border-2 border-dashed border-stone-200 group relative">
-                                {branding?.heroImageUrl ? <img src={branding.heroImageUrl} className="w-full h-full object-cover" /> : <Camera className="w-6 h-6 text-stone-300" />}
-                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-black uppercase">
-                                  <Upload className="w-5 h-5 mb-1" /> Swap Image
-                                </div>
-                              </button>
-                              <input type="file" ref={heroInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'hero')} />
-                           </div>
-                           <div className="space-y-3">
-                              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest text-left block">Guide Portrait</label>
-                              <button onClick={() => guideInputRef.current?.click()} className="w-full aspect-square bg-stone-100 rounded-2xl overflow-hidden border-2 border-dashed border-stone-200 group relative">
-                                {branding?.guideImageUrl ? <img src={branding.guideImageUrl} className="w-full h-full object-cover" /> : <Camera className="w-6 h-6 text-stone-300" />}
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-black uppercase">
-                                  <Upload className="w-5 h-5 mb-1" /> Swap Image
-                                </div>
-                              </button>
-                              <input type="file" ref={guideInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'guide')} />
-                           </div>
-                        </div>
-                     </div>
                    </div>
 
-                   {/* Right Column: Live Preview Card */}
                    <div className="space-y-12">
                      <div className="bg-stone-900 p-12 rounded-[3.5rem] shadow-2xl text-white space-y-8 sticky top-0">
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-500">Live Header Preview</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-500 text-left">Live Header Preview</p>
                         <div className="p-8 border border-white/5 rounded-[2rem] bg-white/5 flex justify-center">
-                          <Logo light />
+                          <Logo branding={branding} defaultBranding={defaultBranding} light onClick={() => {}} />
                         </div>
                         <div className="p-8 border border-black/5 rounded-[2rem] bg-white flex justify-center">
-                          <Logo />
-                        </div>
-                        <div className="pt-8 border-t border-white/10 space-y-4 text-left">
-                           <h5 className="font-bold text-lg">Visual Status</h5>
-                           <div className="flex flex-wrap gap-2">
-                              <div className="bg-green-500/20 text-green-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-2"><Check className="w-3 h-3" /> Auto-Optimized</div>
-                              <div className="bg-white/10 text-white/60 px-4 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-2"><Monitor className="w-3 h-3" /> Responsive</div>
-                           </div>
-                           <div className="mt-4 p-4 bg-green-900/20 border border-green-900/30 rounded-2xl flex items-start gap-3">
-                             <Zap className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
-                             <p className="text-[10px] text-green-200 leading-relaxed font-medium">Auto-compression is active. All uploads are automatically resized and converted to high-efficiency JPEGs to ensure your site stays lightning fast and stable.</p>
-                           </div>
+                          <Logo branding={branding} defaultBranding={defaultBranding} onClick={() => {}} />
                         </div>
                      </div>
                    </div>
@@ -596,13 +561,59 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* Herd/Fleet Tab */}
-            {adminTab === 'fleet' && (
-              <div className="max-w-6xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500">
-                <header className="flex justify-between items-end border-b border-stone-200 pb-10">
+            {/* Gallery Tab with Drag and Drop */}
+            {adminTab === 'gallery' && (
+              <div className="max-w-6xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500 text-left">
+                <header className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-stone-200 pb-10 gap-6">
                   <div className="text-left">
-                    <h2 className="text-4xl font-black text-stone-900 mb-2">Herd Profiles</h2>
-                    <p className="text-stone-500 font-medium">Individual stats and biographies for your packing fleet.</p>
+                    <h2 className="text-4xl font-black text-stone-900 mb-2 text-left">Expedition Journal</h2>
+                    <p className="text-stone-500 font-medium text-left">Drag and drop images to reorder. Changes persist automatically.</p>
+                  </div>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-stone-900 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-2 shadow-xl hover:bg-stone-800 shrink-0"
+                    >
+                      <Upload className="w-5 h-5" /> Upload Photos
+                    </button>
+                    <input type="file" ref={fileInputRef} className="hidden" multiple accept="image/*" onChange={handleFileSelect} />
+                  </div>
+                </header>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {gallery.map((img, i) => (
+                    <div 
+                      key={img.url + i} 
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, i)}
+                      onDragOver={(e) => handleDragOver(e, i)}
+                      onDragEnd={handleDragEnd}
+                      className={`aspect-square rounded-[2rem] overflow-hidden bg-white shadow-sm border-2 relative group transition-all duration-300 cursor-grab active:cursor-grabbing ${draggedIndex === i ? 'opacity-30 scale-95 border-green-500 border-dashed' : 'border-stone-100 hover:-translate-y-2 hover:shadow-2xl'}`}
+                    >
+                       <img src={img.url} className="w-full h-full object-cover pointer-events-none" />
+                       <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                         <GripVertical className="w-4 h-4" />
+                       </div>
+                       <div className="absolute inset-0 bg-stone-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDeleteImage(i); }} 
+                            className="bg-red-500 text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform pointer-events-auto"
+                          >
+                             <Trash2 className="w-6 h-6" />
+                          </button>
+                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {adminTab === 'fleet' && (
+              <div className="max-w-6xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500 text-left">
+                <header className="flex justify-between items-end border-b border-stone-200 pb-10 text-left">
+                  <div className="text-left">
+                    <h2 className="text-4xl font-black text-stone-900 mb-2 text-left">Herd Profiles</h2>
+                    <p className="text-stone-500 font-medium text-left">Individual stats and biographies for your packing fleet.</p>
                   </div>
                   <button 
                     onClick={() => {
@@ -623,7 +634,7 @@ const App: React.FC = () => {
                   </button>
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
                   {llamas.map((llama) => (
                     <div key={llama.id} className="bg-white border border-stone-200 rounded-[3rem] p-8 space-y-6 shadow-sm group hover:shadow-xl transition-all text-left">
                       <div className="w-full aspect-[4/3] rounded-[2rem] overflow-hidden bg-stone-100 relative shadow-inner">
@@ -636,13 +647,13 @@ const App: React.FC = () => {
                           className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white"
                         >
                           <Camera className="w-10 h-10 mb-2" />
-                          <span className="font-black text-[10px] uppercase tracking-widest">Swap Portrait</span>
+                          <span className="font-black text-[10px] uppercase tracking-widest text-center">Swap Portrait</span>
                         </button>
                       </div>
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center gap-4">
+                        <div className="flex justify-between items-center gap-4 text-left">
                            <input 
-                             className="text-2xl font-black text-stone-900 w-full outline-none bg-transparent focus:bg-stone-50 px-2 rounded-lg"
+                             className="text-2xl font-black text-stone-900 w-full outline-none bg-transparent focus:bg-stone-50 px-2 rounded-lg text-left"
                              value={llama.name}
                              onChange={(e) => setLlamas(llamas.map(l => l.id === llama.id ? {...l, name: e.target.value} : l))}
                            />
@@ -650,7 +661,7 @@ const App: React.FC = () => {
                               <Trash2 className="w-5 h-5" />
                            </button>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 text-left">
                            <div>
                               <label className="block text-[10px] font-black uppercase text-stone-400 mb-2 text-left">Primary Role</label>
                               <select 
@@ -678,7 +689,7 @@ const App: React.FC = () => {
                            </div>
                         </div>
                         <textarea 
-                           className="w-full h-24 bg-stone-50 border border-stone-100 p-4 rounded-xl text-xs font-medium resize-none outline-none focus:bg-white focus:ring-2 focus:ring-green-800/10"
+                           className="w-full h-24 bg-stone-50 border border-stone-100 p-4 rounded-xl text-xs font-medium resize-none outline-none focus:bg-white focus:ring-2 focus:ring-green-800/10 text-left"
                            placeholder="Llama personality..."
                            value={llama.personality}
                            onChange={(e) => setLlamas(llamas.map(l => l.id === llama.id ? {...l, personality: e.target.value} : l))}
@@ -691,66 +702,26 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* Gallery Tab */}
-            {adminTab === 'gallery' && (
-              <div className="max-w-6xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500">
-                <header className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-stone-200 pb-10 gap-6">
-                  <div className="text-left">
-                    <h2 className="text-4xl font-black text-stone-900 mb-2">Expedition Journal</h2>
-                    <p className="text-stone-500 font-medium">Manage the photo gallery shown to prospective trekkers.</p>
-                  </div>
-                  <div className="flex gap-4">
-                    <button 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="bg-stone-900 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-2 shadow-xl hover:bg-stone-800 shrink-0"
-                    >
-                      <Upload className="w-5 h-5" /> Upload Photos
-                    </button>
-                    <input type="file" ref={fileInputRef} className="hidden" multiple accept="image/*" onChange={handleFileSelect} />
-                  </div>
-                </header>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {gallery.map((img, i) => (
-                    <div key={i} className="aspect-square rounded-[2rem] overflow-hidden bg-white shadow-sm border border-stone-200 relative group transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl">
-                       <img src={img.url} className="w-full h-full object-cover" />
-                       <div className="absolute inset-0 bg-stone-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <button onClick={() => handleDeleteImage(i)} className="bg-red-500 text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform">
-                             <Trash2 className="w-6 h-6" />
-                          </button>
-                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Bookings Tab */}
             {adminTab === 'bookings' && (
-              <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500 text-left">
                  <header className="border-b border-stone-200 pb-10 text-left">
-                    <h2 className="text-4xl font-black text-stone-900 mb-2">Fleet Logistics</h2>
-                    <p className="text-stone-500 font-medium">Monitoring the current deployment of the backcountry herd.</p>
+                    <h2 className="text-4xl font-black text-stone-900 mb-2 text-left">Fleet Logistics</h2>
+                    <p className="text-stone-500 font-medium text-left">Monitoring the current deployment of the backcountry herd.</p>
                  </header>
-                 <div className="bg-white rounded-[3rem] border border-stone-200 shadow-xl overflow-hidden">
+                 <div className="bg-white rounded-[3rem] border border-stone-200 shadow-xl overflow-hidden text-left">
                     <table className="w-full text-left">
-                      <thead className="bg-stone-100/50">
+                      <thead className="bg-stone-100/50 text-left">
                         <tr>
-                          <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Explorer</th>
-                          <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Window</th>
-                          <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400">Unit Count</th>
+                          <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400 text-left">Explorer</th>
+                          <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400 text-left">Window</th>
+                          <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-stone-400 text-left">Unit Count</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-stone-100 text-left">
                          <tr className="hover:bg-stone-50 transition-colors">
-                            <td className="px-8 py-8 font-black text-stone-900">Sarah Miller</td>
-                            <td className="px-8 py-8 font-medium text-stone-500">Aug 12 - 18</td>
-                            <td className="px-8 py-8"><span className="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">4 Units</span></td>
-                         </tr>
-                         <tr className="hover:bg-stone-50 transition-colors">
-                            <td className="px-8 py-8 font-black text-stone-900">Tom Hudson</td>
-                            <td className="px-8 py-8 font-medium text-stone-500">Sep 05 - 12</td>
-                            <td className="px-8 py-8"><span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">2 Units</span></td>
+                            <td className="px-8 py-8 font-black text-stone-900 text-left">Sarah Miller</td>
+                            <td className="px-8 py-8 font-medium text-stone-500 text-left">Aug 12 - 18</td>
+                            <td className="px-8 py-8 text-left"><span className="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">4 Units</span></td>
                          </tr>
                       </tbody>
                     </table>
@@ -769,27 +740,22 @@ const App: React.FC = () => {
                            <img src={p} className="w-full h-full object-cover" />
                         </div>
                      ))}
-                     {localPreviews.length > 3 && (
-                        <div className="w-10 h-10 rounded-full border-2 border-stone-900 bg-stone-700 flex items-center justify-center text-[10px] font-black">
-                           +{localPreviews.length - 3}
-                        </div>
-                     )}
                   </div>
-                  <div>
-                    <h4 className="text-sm font-black tracking-tight">{localPreviews.length} images ready</h4>
-                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Compressed & Optimized</p>
+                  <div className="text-left">
+                    <h4 className="text-sm font-black tracking-tight text-left">{localPreviews.length} images ready</h4>
+                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest text-left">Optimized & Staged</p>
                   </div>
                </div>
                <div className="flex gap-3">
                   <button onClick={() => setLocalPreviews([])} className="px-4 py-2 text-stone-400 font-black text-xs uppercase hover:text-white transition-colors">Discard</button>
                   <button onClick={handleConfirmUpload} className="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-black text-xs uppercase shadow-lg transition-all active:scale-95">
-                    {isUploadingFile ? <Loader2 className="animate-spin w-4 h-4" /> : "Save to Fleet"}
+                    {isUploadingFile ? <Loader2 className="animate-spin w-4 h-4" /> : "Save Changes"}
                   </button>
                </div>
             </div>
           )}
 
-          {/* Mobile Bottom Navigation Bar */}
+          {/* Mobile Admin Nav */}
           <nav className="lg:hidden bg-white border-t border-stone-200 px-6 py-4 flex items-center justify-around shrink-0 z-20">
              <button onClick={() => setAdminTab('branding')} className={`flex flex-col items-center gap-1 ${adminTab === 'branding' ? 'text-green-800' : 'text-stone-300'}`}>
                 <Palette className="w-6 h-6" />
@@ -803,26 +769,20 @@ const App: React.FC = () => {
                 <ImageIcon className="w-6 h-6" />
                 <span className="text-[9px] font-black uppercase tracking-widest">Gallery</span>
              </button>
-             <button onClick={() => setAdminTab('bookings')} className={`flex flex-col items-center gap-1 ${adminTab === 'bookings' ? 'text-green-800' : 'text-stone-300'}`}>
-                <ClipboardList className="w-6 h-6" />
-                <span className="text-[9px] font-black uppercase tracking-widest">Trips</span>
-             </button>
           </nav>
         </div>
       )}
 
-      {/* Standard Website UI */}
-      <nav className="fixed w-full z-50 bg-white/90 backdrop-blur-lg border-b border-stone-200">
+      {/* Website Navigation */}
+      <nav className="fixed w-full z-50 bg-white/90 backdrop-blur-lg border-b border-stone-200 text-left">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center">
-            <Logo />
+            <Logo branding={branding} defaultBranding={defaultBranding} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
             <div className="hidden md:flex items-center gap-8 text-left">
-              <NavLink href="#about" id="about">The Herd</NavLink>
-              <NavLink href="#benefits" id="benefits">Why Llamas?</NavLink>
-              <NavLink href="#gear" id="gear">Gear Guide</NavLink>
-              <NavLink href="#gallery" id="gallery">Gallery</NavLink>
-              <NavLink href="#reviews" id="reviews">Reviews</NavLink>
-              <NavLink href="#faq" id="faq">Guide FAQ</NavLink>
+              <NavLink href="#about" id="about" onClick={scrollToSection}>The Herd</NavLink>
+              <NavLink href="#benefits" id="benefits" onClick={scrollToSection}>Why Llamas?</NavLink>
+              <NavLink href="#gear" id="gear" onClick={scrollToSection}>Gear Guide</NavLink>
+              <NavLink href="#gallery" id="gallery" onClick={scrollToSection}>Gallery</NavLink>
               <a href="#booking" onClick={(e) => scrollToSection(e, 'booking')} className="bg-green-800 text-white px-7 py-3 rounded-full font-black hover:bg-green-900 transition-all flex items-center gap-2 shadow-lg shadow-green-800/30 active:scale-95">
                 Book Your Trek <ChevronRight className="w-4 h-4" />
               </a>
@@ -834,245 +794,96 @@ const App: React.FC = () => {
         </div>
         {isMenuOpen && (
           <div className="md:hidden bg-white border-b border-stone-200 p-6 space-y-4 shadow-xl text-left animate-in slide-in-from-top duration-300">
-            <NavLink href="#about" id="about">The Herd</NavLink>
-            <NavLink href="#benefits" id="benefits">Why Llamas?</NavLink>
-            <NavLink href="#gear" id="gear">Gear Guide</NavLink>
-            <NavLink href="#gallery" id="gallery">Gallery</NavLink>
-            <NavLink href="#reviews" id="reviews">Reviews</NavLink>
-            <NavLink href="#faq" id="faq">Guide FAQ</NavLink>
+            <NavLink href="#about" id="about" onClick={scrollToSection}>The Herd</NavLink>
+            <NavLink href="#benefits" id="benefits" onClick={scrollToSection}>Why Llamas?</NavLink>
+            <NavLink href="#gear" id="gear" onClick={scrollToSection}>Gear Guide</NavLink>
+            <NavLink href="#gallery" id="gallery" onClick={scrollToSection}>Gallery</NavLink>
             <a href="#booking" onClick={(e) => scrollToSection(e, 'booking')} className="block w-full text-center bg-green-800 text-white py-4 rounded-2xl font-black">Book Your Trek</a>
           </div>
         )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative h-[95vh] flex items-center justify-center overflow-hidden text-left md:text-center group">
-        <div className="absolute inset-0 z-0">
-          <img src={branding?.heroImageUrl || defaultBranding.heroImageUrl} alt="Montana Peaks" className="w-full h-full object-cover brightness-[0.4] scale-105" />
-          <div className="absolute inset-0 bg-gradient-to-b from-stone-900/50 via-transparent to-stone-900/80"></div>
+      {/* Website Sections */}
+      <section className="relative h-[95vh] flex items-center justify-center overflow-hidden text-center group text-left">
+        <div className="absolute inset-0 z-0 text-left">
+          <img src={branding?.heroImageUrl || defaultBranding.heroImageUrl} alt="Montana Peaks" className="w-full h-full object-cover brightness-[0.4] scale-105 text-left" />
+          <div className="absolute inset-0 bg-gradient-to-b from-stone-900/50 via-transparent to-stone-900/80 text-left"></div>
         </div>
-        
-        {/* Management Quick Edit */}
-        {isAdmin && (
-           <button 
-            onClick={() => openAdminTab('branding')}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-green-800/80 backdrop-blur-xl text-white p-8 rounded-full border-4 border-white/20 shadow-2xl opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 flex flex-col items-center"
-          >
-            <Camera className="w-12 h-12 mb-2" />
-            <span className="font-black uppercase text-[10px] tracking-widest">Edit Backdrop</span>
-          </button>
-        )}
-
-        <div className="relative z-10 max-w-5xl mx-auto px-4">
-          <h1 className="text-6xl md:text-8xl font-black text-white mb-8 leading-[1.1]">Elevate the Trek. <br /><span className="italic text-green-400 font-light">Unload the Journey.</span></h1>
-          <p className="text-xl md:text-2xl text-stone-200 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">{slogan}</p>
+        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
+          <h1 className="text-6xl md:text-8xl font-black text-white mb-8 leading-[1.1] text-center">Elevate the Trek. <br /><span className="italic text-green-400 font-light">Unload the Journey.</span></h1>
+          <p className="text-xl md:text-2xl text-stone-200 mb-12 max-w-3xl mx-auto leading-relaxed font-medium text-center">{slogan}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <a href="#booking" onClick={(e) => scrollToSection(e, 'booking')} className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-12 py-5 rounded-full text-lg font-black transition-all shadow-2xl shadow-green-900/40 active:scale-95">Plan Your Adventure</a>
-            <a href="#about" onClick={(e) => scrollToSection(e, 'about')} className="w-full sm:w-auto bg-white/10 backdrop-blur-md border border-white/30 hover:bg-white/20 text-white px-12 py-5 rounded-full text-lg font-black transition-all">Meet the Crew</a>
+            <a href="#booking" onClick={(e) => scrollToSection(e, 'booking')} className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-12 py-5 rounded-full text-lg font-black transition-all shadow-2xl shadow-green-900/40 active:scale-95 text-center">Plan Your Adventure</a>
+            <a href="#about" onClick={(e) => scrollToSection(e, 'about')} className="w-full sm:w-auto bg-white/10 backdrop-blur-md border border-white/30 hover:bg-white/20 text-white px-12 py-5 rounded-full text-lg font-black transition-all text-center">Meet the Crew</a>
           </div>
         </div>
       </section>
 
-      {/* Management Quick Access Bar */}
-      {isAdmin && (
-        <div className="bg-stone-900 text-white py-3 px-4 flex flex-wrap items-center justify-center gap-6 sticky top-20 z-40 shadow-2xl border-b border-white/10 animate-in slide-in-from-top duration-500">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-left"><Unlock className="w-3 h-3 text-green-400" /> Management Mode Active</span>
-          <button 
-            onClick={() => setShowDashboard(true)} 
-            className="flex items-center gap-2 bg-white text-stone-900 hover:bg-stone-100 px-4 py-1.5 rounded-full text-xs font-black transition-all"
-          >
-            <LayoutDashboard className="w-3 h-3" /> Open Dashboard
-          </button>
-          <div className="h-4 w-px bg-white/20" />
-          <button onClick={() => setIsAdmin(false)} className="text-[10px] font-black uppercase text-white/60 hover:text-white transition-all">
-            Exit Admin
-          </button>
-        </div>
-      )}
-
-      {/* Content Sections */}
-      <section id="benefits" className="py-32 bg-white relative text-left">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="benefits" className="py-32 bg-white text-left">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left">
           <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-6 tracking-tight">Built for the Backcountry</h2>
+            <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-6 tracking-tight text-center">Built for the Backcountry</h2>
             <div className="w-24 h-2 bg-green-800 mx-auto rounded-full mb-8"></div>
-            <p className="text-stone-500 max-w-2xl mx-auto text-xl leading-relaxed">Llamas possess a unique physiological advantage that makes them the gold standard for high-altitude trekking and hunting.</p>
+            <p className="text-stone-500 max-w-2xl mx-auto text-xl leading-relaxed text-center">Llamas possess a unique physiological advantage that makes them the gold standard for high-altitude trekking and hunting.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-left">
             {BENEFITS.map((benefit, idx) => (
               <div key={idx} className="p-10 rounded-[2.5rem] bg-stone-50 border border-stone-100 hover:shadow-2xl transition-all group hover:-translate-y-2 text-left">
                 <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-8 group-hover:bg-green-800 transition-all duration-500">
                   <div className="group-hover:text-white transition-colors duration-500">{benefit.icon}</div>
                 </div>
-                <h3 className="text-2xl font-black text-stone-900 mb-4">{benefit.title}</h3>
-                <p className="text-stone-600 leading-relaxed text-lg font-medium">{benefit.description}</p>
+                <h3 className="text-2xl font-black text-stone-900 mb-4 text-left">{benefit.title}</h3>
+                <p className="text-stone-600 leading-relaxed text-lg font-medium text-left">{benefit.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="about" className="py-32 bg-stone-100/50 backdrop-blur-sm relative overflow-hidden text-left">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-left">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
-            <div className="max-w-2xl">
-              <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-6 tracking-tight">Meet the Professionals</h2>
-              <p className="text-stone-600 text-xl leading-relaxed font-medium">Our herd is meticulously trained for the variable conditions of the Northern Rockies.</p>
+      <section id="about" className="py-32 bg-stone-100/50 backdrop-blur-sm text-left">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8 text-left">
+            <div className="max-w-2xl text-left">
+              <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-6 tracking-tight text-left">Meet the Professionals</h2>
+              <p className="text-stone-600 text-xl leading-relaxed font-medium text-left">Our herd is meticulously trained for the variable conditions of the Northern Rockies.</p>
             </div>
-            {isAdmin && (
-              <button onClick={() => openAdminTab('fleet')} className="bg-stone-900 text-white px-8 py-4 rounded-full font-black text-xs uppercase flex items-center gap-2 shadow-lg active:scale-95"><Edit3 className="w-4 h-4" /> Edit Fleet</button>
-            )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 text-left">
             {llamas.map(llama => <LlamaCard key={llama.id} llama={llama} />)}
           </div>
         </div>
       </section>
 
-      <section id="gear" className="py-32 bg-stone-50 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 text-stone-500 mb-6 text-sm font-black uppercase tracking-[0.3em]"><Backpack className="w-5 h-5 text-green-700" /> Pro Kit Guide</div>
-            <h2 className="text-5xl md:text-7xl font-black text-stone-900 mb-8 tracking-tight">Essential Gear</h2>
-            <p className="text-stone-600 max-w-2xl mx-auto text-xl leading-relaxed font-medium">We provide the llama and the saddle system. Here's what else you'll need.</p>
-          </div>
-          <GearSection />
-        </div>
-      </section>
-
-      <section id="gallery" className="py-32 bg-stone-950 text-white relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-left">
-          <div className="flex flex-col md:flex-row items-center justify-between mb-20 gap-8 text-left">
-            <div>
-              <h2 className="text-5xl md:text-7xl font-black mb-6 tracking-tight text-left">Wilderness Journal</h2>
-              <div className="flex items-center gap-4">
-                <p className="text-stone-400 text-xl max-w-xl font-medium text-left">A glimpse into our most recent expedition routes.</p>
-              </div>
-            </div>
-            {isAdmin && (
-              <button onClick={() => openAdminTab('gallery')} className="bg-green-800 hover:bg-green-700 px-8 py-4 rounded-full font-black text-xs uppercase shadow-xl flex items-center gap-2 transition-all active:scale-95">
-                <Settings className="w-5 h-5" /> Manage Assets
-              </button>
-            )}
-          </div>
-          
+      <section id="gallery" className="py-32 bg-stone-950 text-white text-left">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left">
+          <h2 className="text-5xl md:text-7xl font-black mb-16 tracking-tight text-center">Wilderness Journal</h2>
           <PhotoCarousel images={gallery} />
-
-          <div className="mt-20 flex items-center justify-between mb-10 text-left">
-            <h4 className="text-xs font-black uppercase tracking-[0.3em] text-stone-500 flex items-center gap-3">
-              Expedition Snapshots
-            </h4>
-          </div>
-
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-8 space-y-8 text-left">
-            {gallery.map((img, i) => (
-              <div 
-                key={img.url + i} 
-                className="relative group overflow-hidden rounded-[2rem] break-inside-avoid shadow-2xl bg-stone-900/50 min-h-[200px] transition-all duration-300"
-              >
-                <img src={img.url} alt={img.caption} loading="lazy" className="w-full h-auto object-cover transition-transform group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-transparent opacity-0 group-hover:opacity-100 transition-all flex items-end p-8">
-                  <div className="flex justify-between w-full items-end">
-                    <div className="text-left">
-                      <p className="text-lg font-black text-white mb-2">{img.caption}</p>
-                      <p className="text-[10px] text-green-400 font-black uppercase tracking-widest flex items-center gap-2">
-                        <MapPin className="w-3 h-3" /> Montana High Country
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
-      <section id="reviews" className="py-32 bg-white text-center">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-7xl font-black text-stone-900 mb-8 tracking-tight">Voices from the Path</h2>
-          </div>
-          <Testimonials />
-        </div>
-      </section>
-
-      <section className="py-32 bg-green-50/50 text-left">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="bg-white p-12 md:p-20 rounded-[4rem] shadow-2xl relative overflow-hidden text-left">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-700 to-green-900"></div>
-            <div className="flex flex-col md:flex-row gap-16 items-center">
-              <div className="flex-1 text-left">
-                <div className="inline-flex items-center gap-2 text-green-800 bg-green-100 px-5 py-2 rounded-full text-xs font-black uppercase tracking-[0.2em] mb-8"><MessageCircle className="w-4 h-4" /> Herd Wisdom</div>
-                <h2 className="text-5xl font-black text-stone-900 mb-8 tracking-tight text-left">Ask Our Head Guide</h2>
-                <form onSubmit={handleAdviceSubmit} className="relative mb-8 group">
-                  <input type="text" placeholder="e.g. Best weight distribution?" className="w-full bg-stone-50 border-2 border-stone-100 px-8 py-6 rounded-[2rem] outline-none focus:border-green-300 transition-all font-black" value={adviceQuery} onChange={(e) => setAdviceQuery(e.target.value)} />
-                  <button disabled={isAdviceLoading} className="absolute right-3 top-3 bottom-3 bg-green-800 text-white px-10 rounded-[1.5rem] font-black active:scale-95 disabled:opacity-50">
-                    {isAdviceLoading ? <Loader2 className="animate-spin" /> : <ArrowRight />}
-                  </button>
-                </form>
-                {adviceResponse && <div className="p-8 bg-green-50 rounded-[2rem] border-2 border-green-100/50 animate-in slide-in-from-bottom-4"><p className="text-green-900 italic font-black leading-relaxed">"{adviceResponse}"</p></div>}
-              </div>
-              
-              {/* Head Guide Photo Section */}
-              <div className="w-full md:w-2/5 aspect-[4/5] rounded-[3rem] overflow-hidden bg-stone-100 shadow-2xl relative group shrink-0">
-                <img src={branding?.guideImageUrl || defaultBranding.guideImageUrl} className="w-full h-full object-cover" />
-                {isAdmin && (
-                  <button 
-                    onClick={() => openAdminTab('branding')}
-                    className="absolute inset-0 bg-stone-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white p-4"
-                  >
-                    <Camera className="w-12 h-12 mb-2" />
-                    <span className="font-black text-[10px] uppercase tracking-widest text-center">Swap Profile Photo</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="faq" className="py-32 bg-white text-center">
+      <section id="booking" className="py-32 bg-white text-center">
         <div className="max-w-5xl mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-6xl font-black text-stone-900 mb-20 tracking-tight text-center">Frequently Asked</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-            {FAQS.map((faq, i) => (
-              <div key={i} className="bg-stone-50 rounded-[2.5rem] p-10 border border-stone-100 hover:border-green-100 transition-colors group">
-                <h3 className="text-2xl font-black text-stone-900 mb-6 flex items-start gap-4 transition-colors group-hover:text-green-800 leading-tight"><span className="w-8 h-8 rounded-full bg-green-800 text-white flex-shrink-0 flex items-center justify-center text-xs">?</span>{faq.question}</h3>
-                <p className="text-stone-600 pl-12 leading-relaxed font-medium">{faq.answer}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="booking" className="py-32 bg-stone-50 relative overflow-hidden text-center">
-        <div className="max-w-5xl mx-auto px-4 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 text-stone-500 mb-6 text-sm font-black uppercase tracking-[0.3em]"><CalendarDays className="w-5 h-5" /> Mission Control</div>
-          <h2 className="text-5xl md:text-7xl font-black text-stone-900 mb-20 tracking-tight text-center">Ready to Gear Up?</h2>
+          <h2 className="text-5xl md:text-7xl font-black text-stone-900 mb-20 tracking-tight text-center">Mission Control</h2>
           <BookingForm />
         </div>
       </section>
 
-      <footer className="bg-stone-950 text-stone-500 py-32 relative text-left">
+      <footer className="bg-stone-950 text-stone-500 py-24 text-left">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-20 border-b border-stone-800 pb-20 mb-20 text-left">
-            <div className="col-span-1 md:col-span-2 text-left">
-              <div className="flex items-center gap-3 mb-10 text-left">
-                <Logo light />
-              </div>
-              <p className="max-w-md mb-12 text-lg font-medium text-left">Pioneering backcountry exploration in Helena, Montana since 2018.</p>
-              <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${isAdmin ? 'bg-green-800 text-white rotate-0' : 'bg-stone-900 rotate-12 hover:rotate-0 shadow-lg shadow-black'}`}>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-12 text-left">
+            <Logo branding={branding} defaultBranding={defaultBranding} light onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
+            <div className="flex items-center gap-4 text-left">
+              <button 
+                onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)} 
+                className="w-12 h-12 rounded-2xl bg-stone-900 flex items-center justify-center hover:bg-stone-800 transition-all text-left"
+              >
                 {isAdmin ? <Unlock /> : <Lock />}
               </button>
+              {isAdmin && (
+                <button onClick={() => setShowDashboard(true)} className="bg-white text-stone-900 px-6 py-3 rounded-xl font-black text-xs uppercase text-left">Open CMS</button>
+              )}
             </div>
-          </div>
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8 font-black text-xs uppercase tracking-widest text-left">
-            <p>© {new Date().getFullYear()} {branding?.siteName || defaultBranding.siteName}.</p>
-            <div className="flex gap-8">
-               <a href="#" className="hover:text-white transition-colors">Safety Protocols</a>
-               <a href="#" className="hover:text-white transition-colors">Privacy</a>
-               <a href="#" className="hover:text-white transition-colors">Terms</a>
-            </div>
+            <p className="font-black text-[10px] uppercase tracking-widest text-left">© {new Date().getFullYear()} {branding?.siteName || defaultBranding.siteName}.</p>
           </div>
         </div>
       </footer>
