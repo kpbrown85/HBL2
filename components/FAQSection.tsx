@@ -13,7 +13,9 @@ import {
   ShieldCheck,
   Truck,
   Users,
-  Backpack
+  Backpack,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react';
 import { getLlamaAdvice } from '../services/geminiService';
 
@@ -28,6 +30,7 @@ export const FAQSection: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | 'All'>('All');
+  const [feedback, setFeedback] = useState<Record<number, 'up' | 'down'>>({});
   
   // AI Guide State
   const [aiQuery, setAiQuery] = useState('');
@@ -63,10 +66,21 @@ export const FAQSection: React.FC = () => {
     setIsAiLoading(false);
   };
 
+  const handleFeedback = (index: number, type: 'up' | 'down') => {
+    setFeedback(prev => ({ ...prev, [index]: type }));
+  };
+
   return (
     <div className="space-y-12">
+      {/* Header Info */}
+      <div className="text-center max-w-2xl mx-auto mb-16">
+        <p className="text-green-800 font-black text-xs uppercase tracking-[0.3em] mb-4">Field Intelligence</p>
+        <h2 className="text-5xl font-black text-stone-900 mb-6">Trail Manual & FAQ</h2>
+        <p className="text-stone-500 font-medium">Everything you need to know about packing with the herd in the Montana high country.</p>
+      </div>
+
       {/* Search & Categories Bar */}
-      <div className="flex flex-col md:flex-row gap-6 items-center bg-white p-6 rounded-[2.5rem] shadow-xl border border-stone-100">
+      <div className="flex flex-col lg:flex-row gap-6 items-center bg-white p-6 rounded-[2.5rem] shadow-xl border border-stone-100">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-300 w-5 h-5" />
           <input 
@@ -85,7 +99,7 @@ export const FAQSection: React.FC = () => {
               onClick={() => setActiveCategory(cat)}
               className={`px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
                 activeCategory === cat 
-                  ? 'bg-green-800 text-white shadow-lg' 
+                  ? 'bg-green-800 text-white shadow-lg shadow-green-900/20' 
                   : 'bg-stone-50 text-stone-400 hover:bg-stone-100 hover:text-stone-600'
               }`}
             >
@@ -102,6 +116,8 @@ export const FAQSection: React.FC = () => {
             filteredFaqs.map((faq, index) => {
               const isOpen = openIndex === index;
               const Icon = CATEGORY_ICONS[faq.category] || HelpCircle;
+              const userFeedback = feedback[index];
+              
               return (
                 <div 
                   key={index} 
@@ -138,21 +154,39 @@ export const FAQSection: React.FC = () => {
                   
                   <div 
                     className={`transition-all duration-300 ease-in-out ${
-                      isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
+                      isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
                     }`}
                   >
-                    <div className="px-8 pb-8 pl-16 md:pl-24 text-stone-600 font-medium leading-relaxed">
-                       <p className="bg-stone-50 p-6 rounded-2xl border border-stone-100 relative">
+                    <div className="px-8 pb-8 pl-16 md:pl-24 space-y-6">
+                       <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100 relative text-stone-600 font-medium leading-relaxed">
                         <MessageCircle className="absolute -left-2 top-4 w-4 h-4 text-stone-100 fill-stone-100" />
                         {faq.answer}
-                      </p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-4 border-t border-stone-50">
+                        <span className="text-[10px] font-black text-stone-300 uppercase tracking-widest">Was this helpful?</span>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleFeedback(index, 'up'); }}
+                            className={`p-2 rounded-lg transition-all ${userFeedback === 'up' ? 'bg-green-100 text-green-700' : 'bg-stone-50 text-stone-400 hover:text-green-700'}`}
+                          >
+                            <ThumbsUp size={14} />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleFeedback(index, 'down'); }}
+                            className={`p-2 rounded-lg transition-all ${userFeedback === 'down' ? 'bg-red-50 text-red-700' : 'bg-stone-50 text-stone-400 hover:text-red-700'}`}
+                          >
+                            <ThumbsDown size={14} />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               );
             })
           ) : (
-            <div className="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-stone-100 flex flex-col items-center">
+            <div className="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-stone-100 flex flex-col items-center animate-in fade-in zoom-in">
                <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center text-stone-200 mb-6"><Search size={32}/></div>
                <h3 className="text-xl font-black text-stone-400">No results found for "{searchQuery}"</h3>
                <p className="text-stone-300 text-sm mt-2">Try adjusting your filters or search terms.</p>
@@ -162,7 +196,7 @@ export const FAQSection: React.FC = () => {
 
         {/* AI Guide Column */}
         <div className="space-y-6">
-          <div className="bg-stone-900 rounded-[3rem] p-10 text-white relative overflow-hidden shadow-2xl">
+          <div className="bg-stone-900 rounded-[3rem] p-10 text-white relative overflow-hidden shadow-2xl ring-1 ring-white/10">
             <div className="absolute top-0 right-0 p-8 opacity-5">
               <Sparkles className="w-32 h-32" />
             </div>
@@ -174,29 +208,29 @@ export const FAQSection: React.FC = () => {
               </div>
               
               <p className="text-stone-400 text-sm font-medium leading-relaxed mb-8">
-                Got a specific question about your upcoming Montana adventure? Our AI outfitter is trained on backcountry logistics and llama behavior.
+                Ask a specific question about your trip. Our AI outfitter is trained on Montana backcountry logistics.
               </p>
 
               <form onSubmit={handleAiSubmit} className="space-y-4">
                 <textarea 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 font-medium text-sm text-white placeholder:text-stone-600 outline-none focus:border-green-500/50 focus:bg-white/10 transition-all h-32 resize-none"
-                  placeholder="e.g. Can llamas cross the Blackfoot River in June?"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 font-medium text-sm text-white placeholder:text-stone-600 outline-none focus:border-green-500/50 focus:bg-white/10 transition-all h-32 resize-none shadow-inner"
+                  placeholder="e.g. Can llamas cross the Blackfoot River in early June?"
                   value={aiQuery}
                   onChange={(e) => setAiQuery(e.target.value)}
                 />
                 <button 
                   disabled={isAiLoading || !aiQuery.trim()}
-                  className="w-full bg-green-500 text-stone-900 py-4 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="w-full bg-green-500 text-stone-900 py-4 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-95"
                 >
-                  {isAiLoading ? <Loader2 className="animate-spin" /> : <><Sparkles size={14}/> Ask the Guide</>}
+                  {isAiLoading ? <Loader2 className="animate-spin" /> : <><Sparkles size={14}/> Query the Guide</>}
                 </button>
               </form>
 
               {aiResponse && (
-                <div className="mt-8 p-6 bg-white/5 rounded-2xl border border-white/10 animate-in fade-in slide-in-from-top-4">
+                <div className="mt-8 p-6 bg-white/5 rounded-2xl border border-white/10 animate-in fade-in slide-in-from-top-4 backdrop-blur-sm">
                   <div className="flex justify-between items-start mb-4">
-                    <span className="text-[9px] font-black uppercase text-green-500 tracking-[0.2em]">Response</span>
-                    <button onClick={() => setAiResponse(null)} className="text-white/20 hover:text-white"><X size={14}/></button>
+                    <span className="text-[9px] font-black uppercase text-green-500 tracking-[0.2em]">Intel Response</span>
+                    <button onClick={() => setAiResponse(null)} className="text-white/20 hover:text-white transition-colors"><X size={14}/></button>
                   </div>
                   <p className="text-sm font-medium leading-relaxed italic text-stone-200">"{aiResponse}"</p>
                 </div>
@@ -204,10 +238,10 @@ export const FAQSection: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white p-8 rounded-[3rem] border border-stone-100 shadow-sm text-center">
-            <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest mb-4">Prefer a human?</p>
+          <div className="bg-stone-100 p-8 rounded-[3rem] border border-stone-200 shadow-sm text-center">
+            <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest mb-4">Need personalized help?</p>
             <a href="mailto:kevin.paul.brown@gmail.com" className="group flex items-center justify-center gap-2 text-stone-900 font-black text-sm hover:text-green-800 transition-colors">
-              Call the Outfitter <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              Contact the Outfitter <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </a>
           </div>
         </div>
