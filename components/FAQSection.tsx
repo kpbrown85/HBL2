@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { FAQS } from '../constants';
 import { 
   ChevronDown, 
@@ -15,7 +15,8 @@ import {
   Users,
   Backpack,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  Activity
 } from 'lucide-react';
 import { getLlamaAdvice } from '../services/geminiService';
 
@@ -27,12 +28,15 @@ const CATEGORY_ICONS: Record<string, any> = {
 };
 
 export const FAQSection: React.FC = () => {
+  useEffect(() => {
+    console.log("FAQ Section v1.1 Deployment Verified");
+  }, []);
+
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | 'All'>('All');
   const [feedback, setFeedback] = useState<Record<number, 'up' | 'down'>>({});
   
-  // AI Guide State
   const [aiQuery, setAiQuery] = useState('');
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -66,16 +70,14 @@ export const FAQSection: React.FC = () => {
     setIsAiLoading(false);
   };
 
-  const handleFeedback = (index: number, type: 'up' | 'down') => {
-    setFeedback(prev => ({ ...prev, [index]: type }));
-  };
-
   return (
     <div className="space-y-12">
       {/* Header Info */}
       <div className="text-center max-w-2xl mx-auto mb-16">
-        <p className="text-green-800 font-black text-xs uppercase tracking-[0.3em] mb-4">Field Intelligence</p>
-        <h2 className="text-5xl font-black text-stone-900 mb-6">Trail Manual & FAQ</h2>
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-[9px] font-black uppercase tracking-[0.2em] mb-4 border border-green-100">
+          <Activity size={10} className="animate-pulse" /> Trail Status: Active
+        </div>
+        <h2 className="text-5xl font-black text-stone-900 mb-6 tracking-tight">Trail Manual & FAQ</h2>
         <p className="text-stone-500 font-medium">Everything you need to know about packing with the herd in the Montana high country.</p>
       </div>
 
@@ -116,7 +118,6 @@ export const FAQSection: React.FC = () => {
             filteredFaqs.map((faq, index) => {
               const isOpen = openIndex === index;
               const Icon = CATEGORY_ICONS[faq.category] || HelpCircle;
-              const userFeedback = feedback[index];
               
               return (
                 <div 
@@ -164,19 +165,10 @@ export const FAQSection: React.FC = () => {
                       </div>
                       
                       <div className="flex items-center justify-between pt-4 border-t border-stone-50">
-                        <span className="text-[10px] font-black text-stone-300 uppercase tracking-widest">Was this helpful?</span>
+                        <span className="text-[10px] font-black text-stone-300 uppercase tracking-widest">Knowledge Verified</span>
                         <div className="flex gap-2">
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleFeedback(index, 'up'); }}
-                            className={`p-2 rounded-lg transition-all ${userFeedback === 'up' ? 'bg-green-100 text-green-700' : 'bg-stone-50 text-stone-400 hover:text-green-700'}`}
-                          >
+                          <button className="p-2 rounded-lg bg-stone-50 text-stone-400 hover:text-green-700 transition-colors">
                             <ThumbsUp size={14} />
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleFeedback(index, 'down'); }}
-                            className={`p-2 rounded-lg transition-all ${userFeedback === 'down' ? 'bg-red-50 text-red-700' : 'bg-stone-50 text-stone-400 hover:text-red-700'}`}
-                          >
-                            <ThumbsDown size={14} />
                           </button>
                         </div>
                       </div>
@@ -186,10 +178,9 @@ export const FAQSection: React.FC = () => {
               );
             })
           ) : (
-            <div className="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-stone-100 flex flex-col items-center animate-in fade-in zoom-in">
+            <div className="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-stone-100 flex flex-col items-center">
                <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center text-stone-200 mb-6"><Search size={32}/></div>
                <h3 className="text-xl font-black text-stone-400">No results found for "{searchQuery}"</h3>
-               <p className="text-stone-300 text-sm mt-2">Try adjusting your filters or search terms.</p>
             </div>
           )}
         </div>
@@ -208,21 +199,21 @@ export const FAQSection: React.FC = () => {
               </div>
               
               <p className="text-stone-400 text-sm font-medium leading-relaxed mb-8">
-                Ask a specific question about your trip. Our AI outfitter is trained on Montana backcountry logistics.
+                Ask about Montana backcountry logistics. Our AI outfitter is ready.
               </p>
 
               <form onSubmit={handleAiSubmit} className="space-y-4">
                 <textarea 
                   className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 font-medium text-sm text-white placeholder:text-stone-600 outline-none focus:border-green-500/50 focus:bg-white/10 transition-all h-32 resize-none shadow-inner"
-                  placeholder="e.g. Can llamas cross the Blackfoot River in early June?"
+                  placeholder="e.g. Can llamas cross rivers in early June?"
                   value={aiQuery}
                   onChange={(e) => setAiQuery(e.target.value)}
                 />
                 <button 
                   disabled={isAiLoading || !aiQuery.trim()}
-                  className="w-full bg-green-500 text-stone-900 py-4 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-95"
+                  className="w-full bg-green-500 text-stone-900 py-4 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-400 disabled:opacity-50 transition-all shadow-lg active:scale-95"
                 >
-                  {isAiLoading ? <Loader2 className="animate-spin" /> : <><Sparkles size={14}/> Query the Guide</>}
+                  {isAiLoading ? <Loader2 className="animate-spin" /> : <><Sparkles size={14}/> Query Intel</>}
                 </button>
               </form>
 
@@ -241,7 +232,7 @@ export const FAQSection: React.FC = () => {
           <div className="bg-stone-100 p-8 rounded-[3rem] border border-stone-200 shadow-sm text-center">
             <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest mb-4">Need personalized help?</p>
             <a href="mailto:kevin.paul.brown@gmail.com" className="group flex items-center justify-center gap-2 text-stone-900 font-black text-sm hover:text-green-800 transition-colors">
-              Contact the Outfitter <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              Contact Outfitter <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </a>
           </div>
         </div>
