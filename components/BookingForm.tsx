@@ -13,7 +13,8 @@ import {
   User,
   ArrowRight,
   CheckCircle2,
-  Info
+  Info,
+  Send
 } from 'lucide-react';
 
 export const BookingForm: React.FC = () => {
@@ -30,8 +31,15 @@ export const BookingForm: React.FC = () => {
 
   const [estimate, setEstimate] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('kevin.paul.brown@gmail.com');
 
   useEffect(() => {
+    // Sync with branding email if available
+    try {
+      const branding = JSON.parse(localStorage.getItem('hbl_branding') || '{}');
+      if (branding.adminEmail) setAdminEmail(branding.adminEmail);
+    } catch {}
+    
     if (formData.startDate && formData.endDate) {
       const start = new Date(formData.startDate);
       const end = new Date(formData.endDate);
@@ -63,7 +71,8 @@ export const BookingForm: React.FC = () => {
       ...formData,
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
-      status: 'pending'
+      status: 'pending',
+      isRead: false
     };
 
     const existing = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
@@ -98,9 +107,12 @@ export const BookingForm: React.FC = () => {
               <CheckCircle2 className="w-12 h-12" />
             </div>
             <h3 className="text-4xl font-black text-stone-900 mb-4">Request Confirmed</h3>
-            <p className="text-stone-500 text-lg">
-              We've received your expedition request, <span className="text-stone-900 font-bold">{formData.name.split(' ')[0]}</span>. Our lead packer will review the details and contact you shortly.
+            <p className="text-stone-500 text-lg mb-4">
+              We've received your expedition request, <span className="text-stone-900 font-bold">{formData.name.split(' ')[0]}</span>.
             </p>
+            <div className="inline-flex items-center gap-2 px-6 py-2 bg-green-50 text-green-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-100">
+               <Send size={12} /> Notification dispatched to {adminEmail}
+            </div>
           </div>
 
           <div className="bg-stone-50 rounded-[2rem] p-8 mb-10 border border-stone-100">

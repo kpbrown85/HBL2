@@ -22,12 +22,14 @@ export interface BookingData {
   trailerNeeded: boolean;
   isFirstTimer: boolean;
   timestamp: number;
-  status: 'pending' | 'confirmed';
+  status: 'pending' | 'confirmed' | 'canceled';
+  isRead?: boolean;
 }
 
 export interface FAQItem {
   question: string;
   answer: string;
+  category: 'Herd' | 'Logistics' | 'Equipment' | 'Safety';
 }
 
 export interface GalleryImage {

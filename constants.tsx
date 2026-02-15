@@ -69,19 +69,43 @@ export const GALLERY_IMAGES: GalleryImage[] = [
 export const FAQS: FAQItem[] = [
   {
     question: "How much weight can a llama carry?",
-    answer: "A healthy, fit llama can comfortably carry about 20-25% of its body weight. For our herd, this typically ranges from 60 to 90 pounds of gear plus the pack system."
+    answer: "A healthy, fit llama can comfortably carry about 20-25% of its body weight. For our herd, this typically ranges from 60 to 90 pounds of gear plus the pack system.",
+    category: "Logistics"
   },
   {
     question: "Do llamas spit?",
-    answer: "Llamas mostly spit at other llamas to establish hierarchy or over food. It is very rare for them to spit at humans unless they are severely mishandled or threatened. Our llamas are highly socialized."
+    answer: "Llamas mostly spit at other llamas to establish hierarchy or over food. It is very rare for them to spit at humans unless they are severely mishandled or threatened. Our llamas are highly socialized.",
+    category: "Herd"
   },
   {
     question: "What do llamas eat in the backcountry?",
-    answer: "They are grazers and browsers, much like deer or elk. They can survive on native grasses, shrubs, and weeds. However, for longer trips, we provide specialized llama pellets to supplement their diet."
+    answer: "They are grazers and browsers, much like deer or elk. They can survive on native grasses, shrubs, and weeds. However, for longer trips, we provide specialized llama pellets to supplement their diet.",
+    category: "Herd"
   },
   {
     question: "Why do I need a minimum of two llamas?",
-    answer: "Llamas are herd animals and feel extremely stressed when alone. Two is the absolute minimum for their mental health and safety during a trek."
+    answer: "Llamas are herd animals and feel extremely stressed when alone. Two is the absolute minimum for their mental health and safety during a trek.",
+    category: "Herd"
+  },
+  {
+    question: "What equipment do I need to bring?",
+    answer: "You are responsible for your personal camping gear (tents, sleeping bags, stoves, food). We provide the pack saddles, panniers, and scales for the llamas.",
+    category: "Equipment"
+  },
+  {
+    question: "Are llamas afraid of bears?",
+    answer: "Llamas are actually excellent alert animals. They have keen eyesight and will often 'alarm call' (a distinct whistling sound) when they spot a predator long before humans notice. This provides an extra layer of safety for your camp.",
+    category: "Safety"
+  },
+  {
+    question: "Do I need special training to lead a llama?",
+    answer: "First-timers are required to take our 1-hour 'Llama Packing Clinic' ($75). We cover leading, saddling, balanced loading, and picket staking to ensure a successful trip.",
+    category: "Logistics"
+  },
+  {
+    question: "How many miles can they hike in a day?",
+    answer: "Depending on terrain and vertical gain, a typical llama trek covers 5 to 10 miles per day. They are slower than a human with a light pack but much more efficient than a horse.",
+    category: "Logistics"
   }
 ];
 
