@@ -328,7 +328,7 @@ const App: React.FC = () => {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
                         <div className="space-y-8">
-                          <div className="aspect-[4/5] bg-stone-50 rounded-[3rem] overflow-hidden relative group border-4 border-stone-50 shadow-inner">
+                          <div className="aspect-[4/5] bg-stone-50 rounded-[3rem] overflow-hidden relative group border-4 border-stone-100 shadow-inner">
                             <img src={editingLlama.imageUrl} className="w-full h-full object-cover" />
                             <button onClick={() => llamaPhotoInputRef.current?.click()} className="absolute inset-0 bg-stone-900/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white font-black text-[10px] uppercase tracking-widest transition-all"><ImageIcon className="mb-2" size={32} /> Update Asset</button>
                           </div>
@@ -339,14 +339,14 @@ const App: React.FC = () => {
                         </div>
                         <div className="space-y-8">
                           <div className="grid grid-cols-2 gap-6">
-                            <div><label className="label-style">Name</label><input className="input-style" value={editingLlama.name} onChange={(e) => setEditingLlama({...editingLlama, name: e.target.value})} /></div>
-                            <div><label className="label-style">Specialty</label><select className="input-style" value={editingLlama.specialty} onChange={(e) => setEditingLlama({...editingLlama, specialty: e.target.value as any})}><option>Backpacking</option><option>Hunting</option><option>Lead Llama</option><option>Gentle Soul</option></select></div>
+                            <div><label className="block text-[10px] font-black uppercase text-stone-400 mb-2 tracking-widest">Name</label><input className="w-full bg-stone-50 border p-5 rounded-2xl font-bold outline-none focus:bg-white focus:border-green-800 transition-all" value={editingLlama.name} onChange={(e) => setEditingLlama({...editingLlama, name: e.target.value})} /></div>
+                            <div><label className="block text-[10px] font-black uppercase text-stone-400 mb-2 tracking-widest">Specialty</label><select className="w-full bg-stone-50 border p-5 rounded-2xl font-bold outline-none focus:bg-white focus:border-green-800 transition-all" value={editingLlama.specialty} onChange={(e) => setEditingLlama({...editingLlama, specialty: e.target.value as any})}><option>Backpacking</option><option>Hunting</option><option>Lead Llama</option><option>Gentle Soul</option></select></div>
                           </div>
                           <div className="grid grid-cols-2 gap-6">
-                            <div><label className="label-style">Age</label><input type="number" className="input-style" value={editingLlama.age} onChange={(e) => setEditingLlama({...editingLlama, age: parseInt(e.target.value)})}/></div>
-                            <div><label className="label-style">Max Load (lbs)</label><input type="number" className="input-style" value={editingLlama.maxLoad} onChange={(e) => setEditingLlama({...editingLlama, maxLoad: parseInt(e.target.value)})}/></div>
+                            <div><label className="block text-[10px] font-black uppercase text-stone-400 mb-2 tracking-widest">Age</label><input type="number" className="w-full bg-stone-50 border p-5 rounded-2xl font-bold outline-none focus:bg-white focus:border-green-800 transition-all" value={editingLlama.age} onChange={(e) => setEditingLlama({...editingLlama, age: parseInt(e.target.value)})}/></div>
+                            <div><label className="block text-[10px] font-black uppercase text-stone-400 mb-2 tracking-widest">Max Load (lbs)</label><input type="number" className="w-full bg-stone-50 border p-5 rounded-2xl font-bold outline-none focus:bg-white focus:border-green-800 transition-all" value={editingLlama.maxLoad} onChange={(e) => setEditingLlama({...editingLlama, maxLoad: parseInt(e.target.value)})}/></div>
                           </div>
-                          <div><label className="label-style">Personality</label><textarea className="input-style h-40 resize-none leading-relaxed" value={editingLlama.personality} onChange={(e) => setEditingLlama({...editingLlama, personality: e.target.value})} /></div>
+                          <div><label className="block text-[10px] font-black uppercase text-stone-400 mb-2 tracking-widest">Personality</label><textarea className="w-full bg-stone-50 border p-5 rounded-2xl font-bold outline-none focus:bg-white focus:border-green-800 transition-all h-40 resize-none leading-relaxed" value={editingLlama.personality} onChange={(e) => setEditingLlama({...editingLlama, personality: e.target.value})} /></div>
                           <button onClick={() => handleLlamaAction('save')} className="w-full bg-green-800 text-white py-6 rounded-3xl font-black text-xl shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3"><Save /> Save Llama</button>
                         </div>
                       </div>
@@ -516,13 +516,7 @@ const App: React.FC = () => {
         </>
       )}
 
-      {/* Global CSS */}
-      <style>{`
-        .label-style { @apply block text-[10px] font-black uppercase text-stone-400 mb-2 tracking-widest; }
-        .input-style { @apply w-full bg-stone-50 border p-5 rounded-2xl font-bold outline-none focus:bg-white focus:border-green-800 transition-all; }
-      `}</style>
-
-      {/* GLOBAL LOADER */}
+      {/* Global Processing Loader */}
       {isProcessing && (
         <div className="fixed inset-0 z-[300] bg-stone-950/80 backdrop-blur-3xl flex items-center justify-center">
           <div className="bg-white px-12 py-16 rounded-[4rem] shadow-2xl flex flex-col items-center gap-8 animate-in zoom-in duration-500">
