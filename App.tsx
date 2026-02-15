@@ -154,9 +154,6 @@ const NavLink: React.FC<{ href: string; id: string; children: React.ReactNode; o
 const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [slogan, setSlogan] = useState("Helena’s premier mountain-trained pack string.");
-  const [adviceQuery, setAdviceQuery] = useState("");
-  const [adviceResponse, setAdviceResponse] = useState("");
-  const [isAdviceLoading, setIsAdviceLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -208,6 +205,11 @@ const App: React.FC = () => {
     }
   });
 
+  const [editingLlama, setEditingLlama] = useState<Llama | null>(null);
+  const [activeLlamaEdit, setActiveLlamaEdit] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const llamaPhotoInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     generateWelcomeSlogan().then(val => { if (val) setSlogan(val); });
     const loadBookings = () => {
@@ -249,8 +251,56 @@ const App: React.FC = () => {
 
   const handleLlamaAction = (action: 'add' | 'edit' | 'delete' | 'save', llama?: Llama) => {
     if (!isAdmin) return;
-    if (action === 'add') { /* implementation */ }
-    // ... rest of implementation
+    if (action === 'add') {
+      const newLlama: Llama = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: 'New Llama',
+        age: 1,
+        personality: 'Quiet and observant.',
+        maxLoad: 50,
+        imageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=800',
+        specialty: 'Backpacking'
+      };
+      setEditingLlama(newLlama);
+      setActiveLlamaEdit(newLlama.id);
+    } else if (action === 'edit' && llama) {
+      setEditingLlama({ ...llama });
+      setActiveLlamaEdit(llama.id);
+    } else if (action === 'delete' && llama) {
+      if (confirm(`Remove ${llama.name} from herd?`)) {
+        setLlamas(prev => prev.filter(l => l.id !== llama.id));
+      }
+    } else if (action === 'save' && editingLlama) {
+      setLlamas(prev => {
+        const idx = prev.findIndex(l => l.id === editingLlama.id);
+        if (idx > -1) {
+          const updated = [...prev];
+          updated[idx] = editingLlama;
+          return updated;
+        }
+        return [...prev, editingLlama];
+      });
+      setEditingLlama(null);
+      setActiveLlamaEdit(null);
+    }
+  };
+
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>, target: 'llama' | 'branding') => {
+    const file = e.target.files?.[0];
+    if (file && isAdmin) {
+      setIsProcessing(true);
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const compressed = await compressImage(reader.result as string);
+        if (target === 'llama' && editingLlama) {
+          setEditingLlama({ ...editingLlama, imageUrl: compressed });
+        } else if (target === 'branding') {
+          // You could add logic here for branding assets if needed
+        }
+        setIsProcessing(false);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
@@ -270,7 +320,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen text-left">
-      {/* Mobile Navigation Overlay */}
+      {/* Mobile Navigation */}
       <div className={`fixed inset-0 z-[60] bg-stone-900 transition-all duration-500 md:hidden ${isMenuOpen ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="p-8 flex flex-col h-full">
           <div className="flex justify-between items-center mb-16">
@@ -314,7 +364,7 @@ const App: React.FC = () => {
           <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl animate-in fade-in zoom-in">
             <div className="flex justify-between items-center mb-8"><h3 className="text-3xl font-black">Admin Access</h3><button onClick={() => setShowAdminLogin(false)}><X /></button></div>
             <form onSubmit={handleAdminLogin} className="space-y-6">
-              <input type="password" placeholder="Enter Admin Password" className="w-full bg-stone-100 border p-4 rounded-2xl outline-none" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} autoFocus />
+              <input type="password" placeholder="Enter Admin Password" className="w-full bg-stone-100 border p-4 rounded-2xl outline-none font-bold" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} autoFocus />
               <button type="submit" className="w-full bg-green-800 text-white py-4 rounded-2xl font-black">Verify Identity</button>
             </form>
           </div>
@@ -342,15 +392,161 @@ const App: React.FC = () => {
           </header>
 
           <main className="flex-1 overflow-y-auto p-6 md:p-12 lg:p-20">
-             {/* Admin Panels would go here... */}
-             <div className="max-w-4xl mx-auto p-12 bg-white rounded-[3rem] text-center shadow-xl">
-                <h3 className="text-2xl font-black mb-4">Dashboard Active</h3>
-                <p className="text-stone-500">Select a tab above to manage your trail assets.</p>
-             </div>
+            {/* Branding Tab */}
+            {adminTab === 'branding' && (
+              <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4">
+                <h3 className="text-3xl font-black">Site Branding</h3>
+                <div className="bg-white p-10 rounded-[3rem] shadow-xl space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <label className="block text-xs font-black uppercase text-stone-400 mb-2">Site Name</label>
+                      <input className="w-full bg-stone-50 border p-4 rounded-xl font-bold" value={branding.siteName} onChange={(e) => setBranding({...branding, siteName: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black uppercase text-stone-400 mb-2">Admin Email</label>
+                      <input className="w-full bg-stone-50 border p-4 rounded-xl font-bold" value={branding.adminEmail} onChange={(e) => setBranding({...branding, adminEmail: e.target.value})} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black uppercase text-stone-400 mb-2">Accent Highlight (Italicized Word)</label>
+                    <input className="w-full bg-stone-50 border p-4 rounded-xl font-bold" value={branding.accentName} onChange={(e) => setBranding({...branding, accentName: e.target.value})} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Fleet Tab */}
+            {adminTab === 'fleet' && (
+              <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-3xl font-black">Fleet Management</h3>
+                  {!editingLlama && (
+                    <button onClick={() => handleLlamaAction('add')} className="bg-green-800 text-white px-6 py-3 rounded-xl font-black text-sm flex items-center gap-2">
+                      <Plus size={18} /> Add Llama
+                    </button>
+                  )}
+                </div>
+
+                {editingLlama ? (
+                  <div className="bg-white p-10 rounded-[3rem] shadow-xl space-y-8 animate-in zoom-in">
+                    <div className="flex items-center gap-4 mb-4">
+                      <button onClick={() => setEditingLlama(null)} className="p-2 bg-stone-100 rounded-full"><ChevronLeft /></button>
+                      <h4 className="text-2xl font-black">Edit {editingLlama.name}</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      <div className="space-y-4">
+                        <div className="aspect-square bg-stone-100 rounded-3xl overflow-hidden relative group">
+                          <img src={editingLlama.imageUrl} className="w-full h-full object-cover" />
+                          <button onClick={() => llamaPhotoInputRef.current?.click()} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-black text-xs uppercase transition-all">
+                            Change Photo
+                          </button>
+                        </div>
+                        <input type="file" ref={llamaPhotoInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageFileChange(e, 'llama')} />
+                      </div>
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-[10px] font-black uppercase text-stone-400 mb-1">Name</label>
+                          <input className="w-full bg-stone-50 p-4 rounded-xl font-bold" value={editingLlama.name} onChange={(e) => setEditingLlama({...editingLlama, name: e.target.value})} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-black uppercase text-stone-400 mb-1">Age</label>
+                            <input type="number" className="w-full bg-stone-50 p-4 rounded-xl font-bold" value={editingLlama.age} onChange={(e) => setEditingLlama({...editingLlama, age: parseInt(e.target.value) || 0})} />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black uppercase text-stone-400 mb-1">Max Load (lbs)</label>
+                            <input type="number" className="w-full bg-stone-50 p-4 rounded-xl font-bold" value={editingLlama.maxLoad} onChange={(e) => setEditingLlama({...editingLlama, maxLoad: parseInt(e.target.value) || 0})} />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black uppercase text-stone-400 mb-1">Personality</label>
+                          <textarea className="w-full bg-stone-50 p-4 rounded-xl font-bold h-24" value={editingLlama.personality} onChange={(e) => setEditingLlama({...editingLlama, personality: e.target.value})} />
+                        </div>
+                        <button onClick={() => handleLlamaAction('save')} className="w-full bg-green-800 text-white py-4 rounded-xl font-black">Save Llama Profile</button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {llamas.map(l => (
+                      <div key={l.id} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-stone-200">
+                        <img src={l.imageUrl} className="w-full h-32 object-cover rounded-2xl mb-4" />
+                        <h4 className="text-xl font-black">{l.name}</h4>
+                        <div className="flex gap-2 mt-4">
+                          <button onClick={() => handleLlamaAction('edit', l)} className="flex-1 bg-stone-100 p-2 rounded-lg text-stone-600 font-bold text-xs">Edit</button>
+                          <button onClick={() => handleLlamaAction('delete', l)} className="p-2 bg-red-50 text-red-500 rounded-lg"><Trash2 size={16}/></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Gallery Tab */}
+            {adminTab === 'gallery' && (
+              <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4">
+                <h3 className="text-3xl font-black">Gallery Engine</h3>
+                <div className="bg-white p-10 rounded-[3rem] shadow-xl">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {gallery.map((img, idx) => (
+                      <div key={idx} className="aspect-square bg-stone-100 rounded-2xl overflow-hidden relative group">
+                        <img src={img.url} className="w-full h-full object-cover" />
+                        <button onClick={() => {
+                          const updated = [...gallery];
+                          updated.splice(idx, 1);
+                          setGallery(updated);
+                        }} className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100">
+                          <X size={14}/>
+                        </button>
+                      </div>
+                    ))}
+                    <button className="aspect-square border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-stone-300 hover:text-green-800 hover:border-green-800 transition-all">
+                      <Plus size={32}/>
+                      <span className="text-[10px] font-black uppercase">Upload</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Bookings Tab */}
+            {adminTab === 'bookings' && (
+              <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4">
+                <h3 className="text-3xl font-black">Expedition Logs</h3>
+                {bookings.length === 0 ? (
+                  <div className="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed">
+                    <Clock className="w-16 h-16 text-stone-200 mx-auto mb-4" />
+                    <p className="text-stone-400 font-bold">No active leads found.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {bookings.map(b => (
+                      <div key={b.id} className="bg-white p-8 rounded-[2.5rem] border border-stone-200 shadow-sm flex items-center justify-between">
+                        <div className="flex items-center gap-6">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${b.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'}`}>
+                            {b.status === 'confirmed' ? <CheckCircle size={24}/> : <Clock size={24}/>}
+                          </div>
+                          <div>
+                            <h4 className="text-xl font-black">{b.name}</h4>
+                            <p className="text-stone-400 text-xs font-bold">{b.startDate} to {b.endDate} • {b.numLlamas} Llamas</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={() => handleBookingAction(b.id, 'confirm')} className="px-4 py-2 bg-green-800 text-white rounded-xl text-xs font-black uppercase">Confirm</button>
+                          <button onClick={() => handleBookingAction(b.id, 'delete')} className="p-3 bg-red-50 text-red-500 rounded-xl"><Trash2 size={18}/></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </main>
         </div>
       )}
 
+      {/* Main Landing Layout */}
       {!showDashboard && (
         <>
           <nav className="fixed w-full z-50 bg-white/90 backdrop-blur-lg border-b h-20 flex items-center">
@@ -414,7 +610,14 @@ const App: React.FC = () => {
                 <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)} className="w-12 h-12 rounded-xl bg-stone-900 flex items-center justify-center transition-all">
                   {isAdmin ? <Unlock /> : <Lock />}
                 </button>
-                {isAdmin && <button onClick={() => setShowDashboard(true)} className="bg-white text-stone-900 px-6 py-3 rounded-xl font-black text-xs uppercase">Open CMS</button>}
+                {isAdmin && (
+                  <button 
+                    onClick={() => { setShowDashboard(true); setAdminTab('bookings'); }} 
+                    className="bg-white text-stone-900 px-6 py-3 rounded-xl font-black text-xs uppercase"
+                  >
+                    Open CMS {unreadBookingsCount > 0 && `(${unreadBookingsCount})`}
+                  </button>
+                )}
               </div>
               <p className="text-[10px] font-black uppercase tracking-widest">© {new Date().getFullYear()} {branding.siteName}</p>
             </div>
