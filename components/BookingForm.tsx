@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { PRICING } from '../constants';
+import { BookingData } from '../types';
 import { 
   Calendar, 
   Users, 
   Truck, 
   GraduationCap, 
   Calculator, 
-  ShieldCheck, 
   Mail, 
   Phone, 
   User,
@@ -57,6 +57,21 @@ export const BookingForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Save to localStorage
+    const newBooking: BookingData = {
+      ...formData,
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: Date.now(),
+      status: 'pending'
+    };
+
+    const existing = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
+    localStorage.setItem('hbl_bookings', JSON.stringify([newBooking, ...existing]));
+    
+    // Notify app of new booking
+    window.dispatchEvent(new Event('hbl_new_booking'));
+    
     setIsSubmitted(true);
   };
 
@@ -157,9 +172,6 @@ export const BookingForm: React.FC = () => {
                   ${estimate.toLocaleString()}
                 </div>
               </div>
-              <p className="text-[10px] text-stone-400 italic max-w-[150px] text-right">
-                Includes all applicable backcountry discounts.
-              </p>
             </div>
           </div>
 
@@ -169,12 +181,6 @@ export const BookingForm: React.FC = () => {
               className="px-10 py-4 bg-stone-900 text-white rounded-2xl font-black hover:bg-stone-800 transition-all shadow-xl active:scale-95"
             >
               Send Another Request
-            </button>
-            <button 
-              onClick={() => window.print()}
-              className="px-10 py-4 bg-white border border-stone-200 text-stone-600 rounded-2xl font-black hover:bg-stone-50 transition-all active:scale-95"
-            >
-              Print Confirmation
             </button>
           </div>
         </div>
@@ -283,7 +289,6 @@ export const BookingForm: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12 bg-stone-50 p-8 rounded-[2rem] border border-stone-100">
         <div className="space-y-4">
-          {/* Trailer Rental Toggle Switch */}
           <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-stone-100 hover:border-green-200 transition-all shadow-sm">
             <div className="flex flex-col text-left">
               <span className="font-bold text-stone-900 flex items-center gap-2">
@@ -297,9 +302,7 @@ export const BookingForm: React.FC = () => {
               type="button"
               onClick={() => setFormData({ ...formData, trailerNeeded: !formData.trailerNeeded })}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.trailerNeeded ? 'bg-green-700' : 'bg-stone-200'}`}
-              aria-pressed={formData.trailerNeeded}
             >
-              <span className="sr-only">Enable trailer rental</span>
               <span 
                 className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.trailerNeeded ? 'translate-x-5' : 'translate-x-0'}`}
               />
@@ -320,27 +323,17 @@ export const BookingForm: React.FC = () => {
               <span className="font-bold text-stone-900 flex items-center gap-2">
                 <GraduationCap className="w-4 h-4 text-green-700" /> Llama Clinic (${PRICING.clinicFee})
               </span>
-              <span className="text-xs text-stone-500 mt-1 leading-relaxed">Mandatory orientation for first-time backcountry packers.</span>
             </div>
           </label>
         </div>
 
         <div className="bg-white p-8 rounded-[2rem] border border-stone-100 shadow-xl flex flex-col justify-center relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
-            <Calculator className="w-24 h-24" />
-          </div>
           <div className="flex justify-between items-center mb-2 relative z-10">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Estimated Total</span>
-            <div className="w-6 h-6 bg-green-50 rounded-full flex items-center justify-center">
-              <Info className="w-3 h-3 text-green-700" />
-            </div>
           </div>
           <div className="text-5xl font-black text-stone-900 relative z-10">
             ${estimate.toLocaleString()}
           </div>
-          <p className="text-[10px] text-stone-400 mt-4 uppercase tracking-widest relative z-10 text-left">
-            *Excludes damage deposit & trail supplies.
-          </p>
         </div>
       </div>
 

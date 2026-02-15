@@ -12,6 +12,7 @@ export interface Llama {
 }
 
 export interface BookingData {
+  id: string;
   name: string;
   email: string;
   phone: string;
@@ -20,6 +21,8 @@ export interface BookingData {
   numLlamas: number;
   trailerNeeded: boolean;
   isFirstTimer: boolean;
+  timestamp: number;
+  status: 'pending' | 'confirmed';
 }
 
 export interface FAQItem {
