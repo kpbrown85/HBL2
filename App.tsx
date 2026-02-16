@@ -193,6 +193,14 @@ const App: React.FC = () => {
     }
   };
 
+  const moveGallery = (idx: number, dir: 'up' | 'down') => {
+    const target = dir === 'up' ? idx - 1 : idx + 1;
+    if (target < 0 || target >= gallery.length) return;
+    const next = [...gallery];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    setGallery(next);
+  };
+
   const updateLogs = (id: string, action: 'confirm' | 'delete') => {
     const current = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
     let next;
@@ -204,15 +212,6 @@ const App: React.FC = () => {
     }
     localStorage.setItem('hbl_bookings', JSON.stringify(next));
     setBookings(next);
-  };
-
-  // Fix: Implemented moveGallery to allow reordering images in the admin dashboard
-  const moveGallery = (index: number, direction: 'up' | 'down') => {
-    const next = [...gallery];
-    const target = direction === 'up' ? index - 1 : index + 1;
-    if (target < 0 || target >= next.length) return;
-    [next[index], next[target]] = [next[target], next[index]];
-    setGallery(next);
   };
 
   const unreadCount = bookings.filter(b => !b.isRead).length;
