@@ -215,6 +215,16 @@ export const GEAR_ITEMS: GearItem[] = [
   }
 ];
 
+export const LLAMA_FACTS = [
+  "Llamas are extremely efficient water users, making them perfect for dry mountain ridges.",
+  "A llama's padded feet have a 'low-impact' footprint, similar to a human wearing a hiking boot.",
+  "Llamas were first domesticated by the Incas over 4,000 years ago as mountain pack animals.",
+  "Llamas possess highly sophisticated social intelligence and can recognize human facial expressions.",
+  "A llama's distinct 'alarm call' is a high-pitched whistling sound used to warn the herd of predators.",
+  "Llamas are naturally curious and often act as 'trail scouts' for their human companions.",
+  "Llamas are pseudo-ruminants, meaning they have a three-compartment stomach for efficient digestion."
+];
+
 export const PRICING = {
   dailyPerLlama: 65,
   minLlamas: 2,
