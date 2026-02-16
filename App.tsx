@@ -40,7 +40,7 @@ import {
   Camera
 } from 'lucide-react';
 
-// --- Types ---
+// --- Branding Type ---
 interface Branding {
   siteName: string;
   accentName: string;
@@ -69,7 +69,7 @@ const compressImage = (base64Str: string, maxWidth = 1200, quality = 0.7): Promi
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
-      if (!ctx) return reject(new Error("Canvas failed"));
+      if (!ctx) return reject(new Error("Canvas context failed"));
       ctx.drawImage(img, 0, 0, width, height);
       resolve(canvas.toDataURL('image/jpeg', quality));
     };
@@ -85,7 +85,7 @@ const Logo = ({ branding, light = false, onClick }: { branding: Branding, light?
   const parts = (branding.siteName || "Helena Backcountry Llamas").split(regex);
   return (
     <div className="flex items-center gap-3 cursor-pointer select-none" onClick={onClick}>
-      <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg shrink-0`}>
+      <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg shrink-0 transition-transform active:scale-90`}>
         <Mountain className="w-6 h-6" />
       </div>
       <span className={`text-xl font-black tracking-tight ${light ? 'text-white' : 'text-stone-900'}`}>
@@ -164,12 +164,16 @@ const App: React.FC = () => {
   // --- Persistence & Lifecycle ---
   useEffect(() => {
     generateWelcomeSlogan().then(val => { if (val) setSlogan(val); });
-    const loadLogs = () => setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
+    const loadLogs = () => {
+      const logs = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
+      setBookings(logs);
+    };
     loadLogs();
     window.addEventListener('hbl_new_booking', loadLogs);
     return () => window.removeEventListener('hbl_new_booking', loadLogs);
   }, []);
 
+  // Sync to local storage on every state change
   useEffect(() => { 
     localStorage.setItem('hbl_branding', JSON.stringify(branding)); 
     document.title = branding.siteName; 
@@ -191,7 +195,10 @@ const App: React.FC = () => {
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordInput === "llama123") {
-      setIsAdmin(true); setShowAdminLogin(false); setPasswordInput(""); setShowDashboard(true);
+      setIsAdmin(true); 
+      setShowAdminLogin(false); 
+      setPasswordInput(""); 
+      setShowDashboard(true);
     } else {
       alert("Unauthorized Access Key");
     }
@@ -306,7 +313,7 @@ const App: React.FC = () => {
             <div className="max-w-7xl mx-auto">
               {adminTab === 'branding' && (
                 <div className="max-w-4xl space-y-16 animate-in slide-in-from-bottom-8">
-                  <header><h2 className="text-5xl font-black tracking-tighter">Presence & Identity</h2><p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">Manage the foundational DNA of Helena Backcountry Llamas</p></header>
+                  <header><h2 className="text-5xl font-black tracking-tighter text-stone-900">Presence & Identity</h2><p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">Manage the foundational DNA of {branding.siteName}</p></header>
                   <div className="bg-white p-12 rounded-[4rem] shadow-2xl border border-stone-100 space-y-12">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                       <div className="space-y-3"><label className="label-cms">Business Name</label><input className="input-cms" value={branding.siteName} onChange={e => setBranding({...branding, siteName: e.target.value})} /></div>
@@ -321,14 +328,14 @@ const App: React.FC = () => {
               {adminTab === 'fleet' && (
                 <div className="space-y-16 animate-in slide-in-from-bottom-8">
                    <header className="flex justify-between items-end">
-                    <div><h2 className="text-5xl font-black tracking-tighter">The Heritage Herd</h2><p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">Manage active pack animal deployments</p></div>
-                    {!editingLlama && <button onClick={() => setEditingLlama({ id: Date.now().toString(), name: 'New Recruit', age: 4, personality: 'Steady and observant mountain partner.', maxLoad: 75, imageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=800', specialty: 'Backpacking' })} className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all"><Plus size={20}/> New Asset</button>}
+                    <div><h2 className="text-5xl font-black tracking-tighter text-stone-900">The Heritage Herd</h2><p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">Manage active pack animal deployments</p></div>
+                    {!editingLlama && <button onClick={() => setEditingLlama({ id: Date.now().toString(), name: 'New Recruit', age: 4, personality: 'Steady and observant mountain partner.', maxLoad: 75, imageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=800', specialty: 'Backpacking' })} className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"><Plus size={20}/> New Recruit</button>}
                   </header>
                   {editingLlama ? (
                     <div className="bg-white p-16 rounded-[5rem] shadow-2xl border border-stone-100 animate-in zoom-in duration-500">
                        <div className="flex items-center gap-6 mb-16">
                          <button onClick={() => setEditingLlama(null)} className="p-5 bg-stone-50 rounded-full hover:bg-stone-100 transition-colors"><ChevronLeft size={24}/></button>
-                         <h4 className="text-4xl font-black">Editor: {editingLlama.name}</h4>
+                         <h4 className="text-4xl font-black text-stone-900">Editor: {editingLlama.name}</h4>
                        </div>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
                           <div className="space-y-8">
@@ -337,7 +344,7 @@ const App: React.FC = () => {
                               onClick={() => photoRef.current?.click()}
                               className="aspect-[4/5] bg-stone-50 rounded-[3.5rem] overflow-hidden border-8 border-white shadow-2xl group relative cursor-pointer ring-1 ring-stone-100 hover:ring-green-500 transition-all"
                             >
-                              <img src={editingLlama.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                              <img src={editingLlama.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="Preview" />
                               <div className="absolute inset-0 bg-stone-900/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all backdrop-blur-sm">
                                 <Camera className="mb-4" size={44} />
                                 <span className="font-black text-xs uppercase tracking-[0.4em]">Replace Portrait</span>
@@ -351,21 +358,20 @@ const App: React.FC = () => {
                               const f = e.target.files?.[0]; 
                               if (f) { 
                                 setIsProcessing(true); 
-                                const r = new FileReader(); 
-                                r.onload = async ev => { 
-                                  const opt = await compressImage(ev.target?.result as string); 
-                                  setEditingLlama({...editingLlama, imageUrl: opt}); 
-                                  setIsProcessing(false); 
-                                }; 
-                                r.readAsDataURL(f); 
+                                try {
+                                  const r = new FileReader(); 
+                                  r.onload = async ev => { 
+                                    const opt = await compressImage(ev.target?.result as string); 
+                                    setEditingLlama({...editingLlama, imageUrl: opt}); 
+                                    setIsProcessing(false); 
+                                  }; 
+                                  r.readAsDataURL(f); 
+                                } catch (err) {
+                                  console.error(err);
+                                  setIsProcessing(false);
+                                }
                               }
                             }} />
-                            <button 
-                              onClick={() => photoRef.current?.click()}
-                              className="w-full py-6 border-4 border-dashed border-stone-100 rounded-[2rem] text-stone-300 font-black text-[10px] uppercase tracking-[0.3em] hover:border-green-800 hover:text-green-800 transition-all"
-                            >
-                              Upload Profile Photo
-                            </button>
                           </div>
                           <div className="space-y-10">
                              <div className="grid grid-cols-2 gap-8">
@@ -377,7 +383,7 @@ const App: React.FC = () => {
                                <div className="space-y-2"><label className="label-cms">Max Payload (lbs)</label><input type="number" className="input-cms" value={editingLlama.maxLoad} onChange={e => setEditingLlama({...editingLlama, maxLoad: parseInt(e.target.value)})} /></div>
                              </div>
                              <div className="space-y-2"><label className="label-cms">Personality & Intel</label><textarea className="input-cms h-48 resize-none leading-relaxed text-lg" value={editingLlama.personality} onChange={e => setEditingLlama({...editingLlama, personality: e.target.value})} /></div>
-                             <button onClick={() => handleFleetAction('save')} className="w-full bg-green-800 text-white py-8 rounded-[2rem] font-black text-xl shadow-2xl flex items-center justify-center gap-4 hover:bg-green-900 transition-all"><Save size={28}/> Commit Changes</button>
+                             <button onClick={() => handleFleetAction('save')} className="w-full bg-green-800 text-white py-8 rounded-[2rem] font-black text-xl shadow-2xl flex items-center justify-center gap-4 hover:bg-green-900 transition-all active:scale-[0.98]"><Save size={28}/> Save Profile</button>
                           </div>
                        </div>
                     </div>
@@ -385,7 +391,7 @@ const App: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
                       {llamas.map(l => (
                         <div key={l.id} className="bg-white p-8 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all">
-                           <div className="aspect-square rounded-[2.5rem] overflow-hidden mb-8 border-4 border-stone-50 shadow-inner"><img src={l.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" /></div>
+                           <div className="aspect-square rounded-[2.5rem] overflow-hidden mb-8 border-4 border-stone-50 shadow-inner"><img src={l.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={l.name} /></div>
                            <h4 className="text-2xl font-black text-stone-900 tracking-tight">{l.name}</h4>
                            <span className="text-[10px] font-black uppercase text-green-700 bg-green-50 px-3 py-1.5 rounded-full mt-3 inline-block tracking-widest">{l.specialty}</span>
                            <div className="flex gap-3 mt-12">
@@ -402,8 +408,8 @@ const App: React.FC = () => {
               {adminTab === 'gallery' && (
                 <div className="space-y-16 animate-in slide-in-from-bottom-8">
                    <header className="flex justify-between items-end">
-                    <div><h2 className="text-5xl font-black tracking-tighter">Wilderness Journal</h2><p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">Curate the public visual feed of expeditions</p></div>
-                    <button onClick={() => galleryRef.current?.click()} className="bg-stone-900 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-black transition-all"><Upload size={20}/> Batch Import</button>
+                    <div><h2 className="text-5xl font-black tracking-tighter text-stone-900">Wilderness Journal</h2><p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">Curate the visual feed for {branding.siteName}</p></div>
+                    <button onClick={() => galleryRef.current?.click()} className="bg-stone-900 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-black transition-all active:scale-95"><Upload size={20}/> Batch Import</button>
                     <input type="file" ref={galleryRef} multiple className="hidden" accept="image/*" onChange={async e => {
                       const files = e.target.files; if (!files || files.length === 0) return; 
                       
@@ -431,7 +437,7 @@ const App: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
                        {gallery.map((img, idx) => (
                          <div key={idx} className="aspect-square bg-stone-50 rounded-[2.5rem] overflow-hidden relative group border-2 border-stone-50 hover:border-green-200 transition-all shadow-sm">
-                           <img src={img.url} className="w-full h-full object-cover" />
+                           <img src={img.url} className="w-full h-full object-cover" alt="Journal Asset" />
                            <div className="absolute inset-0 bg-stone-950/80 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-4 transition-all p-6 backdrop-blur-md">
                              <div className="flex gap-2">
                                 <button onClick={() => moveGallery(idx, 'up')} disabled={idx === 0} className="w-10 h-10 bg-white/20 hover:bg-white text-white hover:text-stone-950 rounded-xl flex items-center justify-center disabled:opacity-5 transition-all"><ArrowUp size={20}/></button>
@@ -452,7 +458,7 @@ const App: React.FC = () => {
 
               {adminTab === 'bookings' && (
                 <div className="space-y-16 animate-in slide-in-from-bottom-8">
-                  <header><h2 className="text-5xl font-black tracking-tighter">Expedition Logs</h2><p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">Manage customer leads and trail deployments</p></header>
+                  <header><h2 className="text-5xl font-black tracking-tighter text-stone-900">Expedition Logs</h2><p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">Manage customer leads and trail deployments</p></header>
                   <div className="space-y-6">
                     {bookings.length === 0 ? (
                       <div className="bg-white p-40 rounded-[5rem] border-4 border-dashed border-stone-100 flex flex-col items-center text-stone-200 shadow-inner"><Clock size={80} className="mb-8 opacity-40"/><p className="font-black uppercase tracking-widest text-sm">No trail logs found.</p></div>
@@ -467,8 +473,8 @@ const App: React.FC = () => {
                               </div>
                            </div>
                            <div className="flex gap-4 w-full lg:w-auto">
-                              {b.status !== 'confirmed' && <button onClick={() => updateLogs(b.id, 'confirm')} className="flex-1 lg:flex-none px-12 py-6 bg-green-800 text-white rounded-3xl font-black text-xs uppercase tracking-widest shadow-2xl hover:bg-green-900 transition-all">Approve</button>}
-                              <button onClick={() => updateLogs(b.id, 'delete')} className="p-6 bg-red-50 text-red-500 rounded-3xl hover:bg-red-500 hover:text-white transition-all shadow-sm"><Trash2 size={28}/></button>
+                              {b.status !== 'confirmed' && <button onClick={() => updateLogs(b.id, 'confirm')} className="flex-1 lg:flex-none px-12 py-6 bg-green-800 text-white rounded-3xl font-black text-xs uppercase tracking-widest shadow-2xl hover:bg-green-900 transition-all active:scale-95">Approve</button>}
+                              <button onClick={() => updateLogs(b.id, 'delete')} className="p-6 bg-red-50 text-red-500 rounded-3xl hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-90"><Trash2 size={28}/></button>
                            </div>
                         </div>
                       ))
@@ -505,14 +511,15 @@ const App: React.FC = () => {
                 {['Benefits', 'About', 'Gear', 'Gallery', 'FAQ'].map(l => (
                   <a key={l} href={`#${l.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-6xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase">{l}</a>
                 ))}
-                <a href="#booking" onClick={() => setIsMenuOpen(false)} className="mt-12 bg-green-600 text-white py-12 rounded-[3.5rem] text-3xl font-black uppercase tracking-widest text-center shadow-2xl">Plan My Trek</a>
+                <a href="#booking" onClick={() => setIsMenuOpen(false)} className="mt-12 bg-green-600 text-white py-12 rounded-[3.5rem] text-3xl font-black uppercase tracking-widest text-center shadow-2xl active:scale-95">Plan My Trek</a>
               </nav>
             </div>
           </div>
 
           <main>
+            {/* HERO */}
             <section className="relative h-[98vh] flex items-center justify-center text-center overflow-hidden">
-              <div className="absolute inset-0 -z-10 animate-in zoom-in duration-[5000ms]"><img src={branding.heroImageUrl} className="w-full h-full object-cover brightness-[0.4] scale-110" alt="Montana Wilderness" /></div>
+              <div className="absolute inset-0 -z-10 animate-in zoom-in duration-[5000ms]"><img src={branding.heroImageUrl} className="w-full h-full object-cover brightness-[0.4] scale-110" alt="Montana High Country" /></div>
               <div className="max-w-5xl px-4 text-white">
                 <h1 className="text-6xl md:text-9xl font-black mb-10 leading-[0.9] tracking-tighter animate-in slide-in-from-top-16 duration-1000">Pack the Peak. <br /><span className="italic text-green-400 font-light tracking-tight">Free the Trek.</span></h1>
                 <p className="text-xl md:text-3xl text-stone-200 mb-16 max-w-3xl mx-auto animate-in fade-in duration-1000 delay-300 font-medium leading-relaxed">{slogan}</p>
@@ -522,6 +529,7 @@ const App: React.FC = () => {
               </div>
             </section>
 
+            {/* CONTENT SECTIONS */}
             <section id="benefits" className="py-48 bg-white"><div className="max-w-7xl mx-auto px-6"><h2 className="text-7xl font-black mb-24 text-center tracking-tighter">Wilderness Intelligence</h2><div className="grid grid-cols-1 md:grid-cols-4 gap-12">{BENEFITS.map((b,i)=>(<div key={i} className="p-12 bg-stone-50 rounded-[3.5rem] border border-stone-100 hover:border-green-200 hover:bg-white transition-all group hover:shadow-2xl duration-500"><div className="mb-10 group-hover:scale-110 transition-transform duration-500">{b.icon}</div><h3 className="text-2xl font-black mb-4 tracking-tight">{b.title}</h3><p className="text-stone-500 font-medium leading-relaxed">{b.description}</p></div>))}</div></div></section>
             <section id="about" className="py-48 bg-stone-100"><div className="max-w-7xl mx-auto px-6"><h2 className="text-7xl font-black mb-24 text-center tracking-tighter">The Heritage String</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">{llamas.map(l=><LlamaCard key={l.id} llama={l} />)}</div></div></section>
             <section id="gear" className="py-48 bg-white"><div className="max-w-7xl mx-auto px-6"><h2 className="text-7xl font-black mb-24 text-center tracking-tighter">Expedition Kit</h2><GearSection /></div></section>
@@ -542,7 +550,6 @@ const App: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Llama Fact Widget */}
                 <LlamaFact />
 
                 <div className="grid grid-cols-2 gap-20">
@@ -576,13 +583,6 @@ const App: React.FC = () => {
         </>
       )}
 
-      {/* Global Style Helper */}
-      <style>{`
-        .label-cms { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #a8a29e; margin-bottom: 0.5rem; letter-spacing: 0.25em; }
-        .input-cms { width: 100%; background-color: #fafaf9; border: 1px solid #f5f5f4; padding: 1.25rem; border-radius: 1.25rem; font-weight: 700; outline: none; transition: all 0.2s; }
-        .input-cms:focus { background-color: white; border-color: #166534; box-shadow: 0 0 0 4px rgba(22, 101, 52, 0.05); }
-      `}</style>
-
       {/* PROCESS LOADER */}
       {isProcessing && (
         <div className="fixed inset-0 z-[500] bg-stone-950/80 backdrop-blur-3xl flex items-center justify-center">
@@ -590,7 +590,7 @@ const App: React.FC = () => {
              <div className="w-24 h-24 bg-green-800 text-white rounded-[2rem] flex items-center justify-center shadow-2xl animate-bounce"><Zap size={48} /></div>
              <div className="w-full">
                <h3 className="text-4xl font-black text-stone-900 mb-3 tracking-tighter">
-                 {uploadStatus ? "Syncing Terrain Assets" : "Optimizing Portrait"}
+                 {uploadStatus ? "Syncing Terrain Assets" : "Optimizing Visuals"}
                </h3>
                {uploadStatus ? (
                  <div className="space-y-6">
@@ -603,13 +603,19 @@ const App: React.FC = () => {
                     </div>
                  </div>
                ) : (
-                 <p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px]">Polishing High-Res Visual Assets...</p>
+                 <p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px]">Finalizing High-Res Expedition Intel...</p>
                )}
              </div>
              <Loader2 className="w-12 h-12 text-green-800 animate-spin mt-4" />
           </div>
         </div>
       )}
+
+      <style>{`
+        .label-cms { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #a8a29e; margin-bottom: 0.5rem; letter-spacing: 0.25em; }
+        .input-cms { width: 100%; background-color: #fafaf9; border: 1px solid #f5f5f4; padding: 1.25rem; border-radius: 1.25rem; font-weight: 700; outline: none; transition: all 0.2s; color: #1c1917; }
+        .input-cms:focus { background-color: white; border-color: #166534; box-shadow: 0 0 0 4px rgba(22, 101, 52, 0.05); }
+      `}</style>
     </div>
   );
 };
