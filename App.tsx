@@ -36,7 +36,8 @@ import {
   Edit3,
   Calendar,
   Sparkles,
-  Info
+  Info,
+  Camera
 } from 'lucide-react';
 
 // --- Types ---
@@ -45,6 +46,11 @@ interface Branding {
   accentName: string;
   heroImageUrl: string;
   adminEmail: string;
+}
+
+interface UploadStatus {
+  current: number;
+  total: number;
 }
 
 // --- Image Compression Utility ---
@@ -117,6 +123,7 @@ const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [slogan, setSlogan] = useState("Helena’s premier mountain-trained pack string.");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
   
   // --- Admin Logic State ---
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('hbl_isAdmin') === 'true');
@@ -163,10 +170,22 @@ const App: React.FC = () => {
     return () => window.removeEventListener('hbl_new_booking', loadLogs);
   }, []);
 
-  useEffect(() => { localStorage.setItem('hbl_branding', JSON.stringify(branding)); document.title = branding.siteName; }, [branding]);
-  useEffect(() => { localStorage.setItem('hbl_llamas', JSON.stringify(llamas)); }, [llamas]);
-  useEffect(() => { localStorage.setItem('hbl_gallery', JSON.stringify(gallery)); }, [gallery]);
-  useEffect(() => { sessionStorage.setItem('hbl_isAdmin', isAdmin.toString()); }, [isAdmin]);
+  useEffect(() => { 
+    localStorage.setItem('hbl_branding', JSON.stringify(branding)); 
+    document.title = branding.siteName; 
+  }, [branding]);
+
+  useEffect(() => { 
+    localStorage.setItem('hbl_llamas', JSON.stringify(llamas)); 
+  }, [llamas]);
+
+  useEffect(() => { 
+    localStorage.setItem('hbl_gallery', JSON.stringify(gallery)); 
+  }, [gallery]);
+
+  useEffect(() => { 
+    sessionStorage.setItem('hbl_isAdmin', isAdmin.toString()); 
+  }, [isAdmin]);
 
   // --- Handlers ---
   const handleAuth = (e: React.FormEvent) => {
@@ -182,7 +201,11 @@ const App: React.FC = () => {
     if (action === 'save' && editingLlama) {
       setLlamas(prev => {
         const idx = prev.findIndex(l => l.id === editingLlama.id);
-        if (idx > -1) { const next = [...prev]; next[idx] = editingLlama; return next; }
+        if (idx > -1) { 
+          const next = [...prev]; 
+          next[idx] = editingLlama; 
+          return next; 
+        }
         return [editingLlama, ...prev];
       });
       setEditingLlama(null);
@@ -303,16 +326,46 @@ const App: React.FC = () => {
                   </header>
                   {editingLlama ? (
                     <div className="bg-white p-16 rounded-[5rem] shadow-2xl border border-stone-100 animate-in zoom-in duration-500">
-                       <div className="flex items-center gap-6 mb-16"><button onClick={() => setEditingLlama(null)} className="p-5 bg-stone-50 rounded-full hover:bg-stone-100 transition-colors"><ChevronLeft size={24}/></button><h4 className="text-4xl font-black">Editor: {editingLlama.name}</h4></div>
+                       <div className="flex items-center gap-6 mb-16">
+                         <button onClick={() => setEditingLlama(null)} className="p-5 bg-stone-50 rounded-full hover:bg-stone-100 transition-colors"><ChevronLeft size={24}/></button>
+                         <h4 className="text-4xl font-black">Editor: {editingLlama.name}</h4>
+                       </div>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
                           <div className="space-y-8">
-                            <div className="aspect-[4/5] bg-stone-50 rounded-[3.5rem] overflow-hidden border-8 border-white shadow-2xl group relative cursor-pointer">
-                              <img src={editingLlama.imageUrl} className="w-full h-full object-cover" />
-                              <button onClick={() => photoRef.current?.click()} className="absolute inset-0 bg-stone-900/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white font-black text-[10px] uppercase tracking-[0.4em] transition-all backdrop-blur-sm"><ImageIcon className="mb-4" size={40} /> Swap Visual Asset</button>
+                            <label className="label-cms">Visual Asset Profile</label>
+                            <div 
+                              onClick={() => photoRef.current?.click()}
+                              className="aspect-[4/5] bg-stone-50 rounded-[3.5rem] overflow-hidden border-8 border-white shadow-2xl group relative cursor-pointer ring-1 ring-stone-100 hover:ring-green-500 transition-all"
+                            >
+                              <img src={editingLlama.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                              <div className="absolute inset-0 bg-stone-900/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all backdrop-blur-sm">
+                                <Camera className="mb-4" size={44} />
+                                <span className="font-black text-xs uppercase tracking-[0.4em]">Replace Portrait</span>
+                              </div>
+                              <div className="absolute top-6 right-6 bg-white/20 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-full flex items-center gap-2">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white">Live Preview</span>
+                              </div>
                             </div>
                             <input type="file" ref={photoRef} className="hidden" accept="image/*" onChange={async e => {
-                              const f = e.target.files?.[0]; if (f) { setIsProcessing(true); const r = new FileReader(); r.onload = async ev => { const opt = await compressImage(ev.target?.result as string); setEditingLlama({...editingLlama, imageUrl: opt}); setIsProcessing(false); }; r.readAsDataURL(f); }
+                              const f = e.target.files?.[0]; 
+                              if (f) { 
+                                setIsProcessing(true); 
+                                const r = new FileReader(); 
+                                r.onload = async ev => { 
+                                  const opt = await compressImage(ev.target?.result as string); 
+                                  setEditingLlama({...editingLlama, imageUrl: opt}); 
+                                  setIsProcessing(false); 
+                                }; 
+                                r.readAsDataURL(f); 
+                              }
                             }} />
+                            <button 
+                              onClick={() => photoRef.current?.click()}
+                              className="w-full py-6 border-4 border-dashed border-stone-100 rounded-[2rem] text-stone-300 font-black text-[10px] uppercase tracking-[0.3em] hover:border-green-800 hover:text-green-800 transition-all"
+                            >
+                              Upload Profile Photo
+                            </button>
                           </div>
                           <div className="space-y-10">
                              <div className="grid grid-cols-2 gap-8">
@@ -324,7 +377,7 @@ const App: React.FC = () => {
                                <div className="space-y-2"><label className="label-cms">Max Payload (lbs)</label><input type="number" className="input-cms" value={editingLlama.maxLoad} onChange={e => setEditingLlama({...editingLlama, maxLoad: parseInt(e.target.value)})} /></div>
                              </div>
                              <div className="space-y-2"><label className="label-cms">Personality & Intel</label><textarea className="input-cms h-48 resize-none leading-relaxed text-lg" value={editingLlama.personality} onChange={e => setEditingLlama({...editingLlama, personality: e.target.value})} /></div>
-                             <button onClick={() => handleFleetAction('save')} className="w-full bg-green-800 text-white py-8 rounded-[2rem] font-black text-xl shadow-2xl flex items-center justify-center gap-4 hover:bg-green-900 transition-all"><Save size={28}/> Save Profile</button>
+                             <button onClick={() => handleFleetAction('save')} className="w-full bg-green-800 text-white py-8 rounded-[2rem] font-black text-xl shadow-2xl flex items-center justify-center gap-4 hover:bg-green-900 transition-all"><Save size={28}/> Commit Changes</button>
                           </div>
                        </div>
                     </div>
@@ -352,15 +405,26 @@ const App: React.FC = () => {
                     <div><h2 className="text-5xl font-black tracking-tighter">Wilderness Journal</h2><p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">Curate the public visual feed of expeditions</p></div>
                     <button onClick={() => galleryRef.current?.click()} className="bg-stone-900 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-black transition-all"><Upload size={20}/> Batch Import</button>
                     <input type="file" ref={galleryRef} multiple className="hidden" accept="image/*" onChange={async e => {
-                      const files = e.target.files; if (!files) return; setIsProcessing(true);
+                      const files = e.target.files; if (!files || files.length === 0) return; 
+                      
+                      setIsProcessing(true);
+                      setUploadStatus({ current: 0, total: files.length });
+                      
                       const news: GalleryImage[] = [];
                       for (let i = 0; i < files.length; i++) {
+                        setUploadStatus({ current: i + 1, total: files.length });
                         const r = new FileReader();
-                        const p = new Promise<string>(res => { r.onload = ev => res(ev.target?.result as string); r.readAsDataURL(files[i]); });
-                        const raw = await p; const opt = await compressImage(raw);
+                        const p = new Promise<string>(res => { 
+                          r.onload = ev => res(ev.target?.result as string); 
+                          r.readAsDataURL(files[i]); 
+                        });
+                        const raw = await p; 
+                        const opt = await compressImage(raw);
                         news.push({ url: opt, caption: "Expedition Moment" });
                       }
-                      setGallery(prev => [...news, ...prev]); setIsProcessing(false);
+                      setGallery(prev => [...news, ...prev]); 
+                      setIsProcessing(false);
+                      setUploadStatus(null);
                     }} />
                   </header>
                   <div className="bg-white p-12 rounded-[5rem] shadow-2xl border border-stone-100">
@@ -522,13 +586,27 @@ const App: React.FC = () => {
       {/* PROCESS LOADER */}
       {isProcessing && (
         <div className="fixed inset-0 z-[500] bg-stone-950/80 backdrop-blur-3xl flex items-center justify-center">
-          <div className="bg-white px-16 py-20 rounded-[5rem] shadow-2xl flex flex-col items-center gap-10 animate-in zoom-in">
+          <div className="bg-white px-16 py-20 rounded-[5rem] shadow-2xl flex flex-col items-center gap-10 animate-in zoom-in w-full max-w-lg mx-6 text-center">
              <div className="w-24 h-24 bg-green-800 text-white rounded-[2rem] flex items-center justify-center shadow-2xl animate-bounce"><Zap size={48} /></div>
-             <div className="text-center">
-               <h3 className="text-4xl font-black text-stone-900 mb-3 tracking-tighter">Syncing Terrain Data</h3>
-               <p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px]">Optimizing Expedition Assets...</p>
+             <div className="w-full">
+               <h3 className="text-4xl font-black text-stone-900 mb-3 tracking-tighter">
+                 {uploadStatus ? "Syncing Terrain Assets" : "Optimizing Portrait"}
+               </h3>
+               {uploadStatus ? (
+                 <div className="space-y-6">
+                    <p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px]">Processing Journal Entry {uploadStatus.current} of {uploadStatus.total}</p>
+                    <div className="w-full bg-stone-100 h-3 rounded-full overflow-hidden shadow-inner ring-1 ring-stone-200">
+                      <div 
+                        className="h-full bg-green-800 transition-all duration-500 ease-out" 
+                        style={{ width: `${(uploadStatus.current / uploadStatus.total) * 100}%` }}
+                      />
+                    </div>
+                 </div>
+               ) : (
+                 <p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px]">Polishing High-Res Visual Assets...</p>
+               )}
              </div>
-             <Loader2 className="w-12 h-12 text-green-800 animate-spin" />
+             <Loader2 className="w-12 h-12 text-green-800 animate-spin mt-4" />
           </div>
         </div>
       )}
