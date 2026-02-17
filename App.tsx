@@ -40,10 +40,12 @@ import {
   Truck,
   GraduationCap,
   Ban,
-  Activity
+  Activity,
+  MapPin,
+  ExternalLink
 } from 'lucide-react';
 
-const APP_VERSION = "3.0.0-Rebuild";
+const APP_VERSION = "3.1.0-Production";
 
 interface Branding {
   siteName: string;
@@ -437,7 +439,7 @@ const App: React.FC = () => {
             <div className="max-w-7xl mx-auto px-8 w-full flex justify-between items-center">
               <Logo branding={branding} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
               <div className="hidden md:flex items-center gap-12 font-black uppercase text-[11px] tracking-[0.2em]">
-                {['Benefits', 'About', 'Gear', 'Gallery', 'FAQ'].map(item => (
+                {['Benefits', 'About', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(item => (
                   <a key={item} href={`#${item.toLowerCase()}`} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">{item}</a>
                 ))}
                 <a href="#booking" className="bg-green-800 text-white px-10 py-5 rounded-2xl flex items-center gap-2 shadow-2xl shadow-green-900/20 hover:bg-green-900 transition-all active:scale-95">Book Trek <ChevronRight size={14} /></a>
@@ -448,7 +450,7 @@ const App: React.FC = () => {
 
           <div className={`fixed inset-0 z-[110] bg-stone-950 transition-all duration-700 md:hidden ${isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
             <div className="p-16 pt-32 flex flex-col h-full space-y-12">
-              {['Benefits', 'About', 'Gear', 'Gallery', 'FAQ'].map(l => (
+              {['Benefits', 'About', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(l => (
                 <a key={l} href={`#${l.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-6xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase">{l}</a>
               ))}
               <a href="#booking" onClick={() => setIsMenuOpen(false)} className="bg-green-600 text-white py-12 rounded-[3rem] text-3xl font-black uppercase tracking-widest text-center shadow-2xl">Plan My Trek</a>
@@ -473,6 +475,50 @@ const App: React.FC = () => {
             <section id="gallery" className="py-64 bg-stone-950 text-white"><div className="max-w-7xl mx-auto px-8"><header className="flex flex-col md:flex-row justify-between items-end mb-32 gap-8"><h2 className="text-9xl font-black tracking-tighter leading-none">Journal.</h2><div className="bg-white/5 border border-white/10 px-12 py-6 rounded-full text-green-400 font-black uppercase tracking-widest text-xs">High Country Field Notes</div></header><PhotoCarousel images={gallery} /></div></section>
             <section id="faq" className="py-64 bg-stone-50"><div className="max-w-7xl mx-auto px-8"><FAQSection /></div></section>
             <section id="booking" className="py-64 bg-white"><div className="max-w-5xl mx-auto px-8 text-center"><h2 className="text-8xl font-black mb-32 tracking-tighter leading-none">Logistics.</h2><BookingForm /></div></section>
+            
+            {/* CONTACT SECTION */}
+            <section id="contact" className="py-64 bg-stone-50 relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-32 opacity-[0.03] rotate-12 pointer-events-none">
+                 <Mountain size={600} />
+               </div>
+               <div className="max-w-7xl mx-auto px-8 relative z-10">
+                 <header className="text-center mb-24">
+                   <h2 className="text-8xl font-black tracking-tighter leading-none mb-8">Base Camp.</h2>
+                   <p className="text-stone-500 text-xl font-medium max-w-2xl mx-auto">Reach out to finalize your high country deployment intel.</p>
+                 </header>
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                   <div className="bg-white p-16 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all duration-500">
+                     <div className="w-20 h-20 bg-green-50 text-green-800 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-green-800 group-hover:text-white transition-all shadow-lg">
+                       <MapPin size={36} />
+                     </div>
+                     <h3 className="text-2xl font-black mb-4 tracking-tight">Deployment Point</h3>
+                     <p className="text-stone-500 font-medium leading-relaxed mb-10">310 Lump Gulch Road<br />Clancy, MT 59634</p>
+                     <a href="https://www.google.com/maps/search/310+Lump+Gulch+Road+Clancy,+MT+59634" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-green-800 font-black text-xs uppercase tracking-widest hover:gap-4 transition-all">
+                       Get Bearings <ExternalLink size={14} />
+                     </a>
+                   </div>
+
+                   <div className="bg-white p-16 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all duration-500">
+                     <div className="w-20 h-20 bg-green-50 text-green-800 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-green-800 group-hover:text-white transition-all shadow-lg">
+                       <Phone size={36} />
+                     </div>
+                     <h3 className="text-2xl font-black mb-4 tracking-tight">Direct Line</h3>
+                     <p className="text-stone-500 font-medium leading-relaxed mb-10">Available for trail updates and technical kit support.</p>
+                     <a href="tel:8013720353" className="text-3xl font-black text-stone-900 hover:text-green-800 transition-colors">801-372-0353</a>
+                   </div>
+
+                   <div className="bg-white p-16 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all duration-500">
+                     <div className="w-20 h-20 bg-green-50 text-green-800 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-green-800 group-hover:text-white transition-all shadow-lg">
+                       <Mail size={36} />
+                     </div>
+                     <h3 className="text-2xl font-black mb-4 tracking-tight">Dispatch</h3>
+                     <p className="text-stone-500 font-medium leading-relaxed mb-10">Send over your itinerary or custom hunt requests.</p>
+                     <a href="mailto:kevin.paul.brown@gmail.com" className="font-black text-stone-900 border-b-4 border-green-800/20 hover:border-green-800 transition-all py-1">kevin.paul.brown@gmail.com</a>
+                   </div>
+                 </div>
+               </div>
+            </section>
           </main>
 
           <footer className="bg-stone-950 text-stone-500 pt-48 pb-24 border-t border-white/5 relative">
@@ -481,10 +527,15 @@ const App: React.FC = () => {
                 <div className="space-y-10 max-w-xl">
                   <Logo branding={branding} light onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
                   <p className="text-stone-500 font-medium leading-relaxed text-lg">Providing elite mountain-trained pack strings for adventures since 2018. We specialize in low-impact, high-efficiency wilderness logistics across the Montana Rockies.</p>
+                  <div className="space-y-2 pt-4">
+                    <p className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2"><MapPin size={14} className="text-green-500"/> 310 Lump Gulch Road, Clancy, MT 59634</p>
+                    <p className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2"><Phone size={14} className="text-green-500"/> 801-372-0353</p>
+                    <p className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2"><Mail size={14} className="text-green-500"/> kevin.paul.brown@gmail.com</p>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-24">
                   <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Exploration</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#benefits" className="hover:text-green-500 transition-colors">Benefits</a></li><li><a href="#about" className="hover:text-green-500 transition-colors">The Herd</a></li><li><a href="#gear" className="hover:text-green-500 transition-colors">Gear Kit</a></li></ul></div>
-                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Intel</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#faq" className="hover:text-green-500 transition-colors">Field Manual</a></li><li><a href="#booking" className="hover:text-green-500 transition-colors">Deployment</a></li></ul></div>
+                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Intel</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#faq" className="hover:text-green-500 transition-colors">Field Manual</a></li><li><a href="#booking" className="hover:text-green-500 transition-colors">Deployment</a></li><li><a href="#contact" className="hover:text-green-500 transition-colors">Base Camp</a></li></ul></div>
                 </div>
               </div>
               <div className="pt-24 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-12 text-[10px] font-black uppercase tracking-[0.5em]">
