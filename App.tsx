@@ -5,7 +5,7 @@ import { BookingForm } from './components/BookingForm';
 import { PhotoCarousel } from './components/PhotoCarousel';
 import { GearSection } from './components/GearSection';
 import { FAQSection } from './components/FAQSection';
-import { generateWelcomeSlogan } from './services/geminiService';
+import { generateWelcomeSlogan, generateBackdrop } from './services/geminiService';
 import { GalleryImage, Llama, BookingData } from './types';
 import { 
   Menu, 
@@ -42,10 +42,12 @@ import {
   Ban,
   Activity,
   MapPin,
-  ExternalLink
+  ExternalLink,
+  CreditCard,
+  Settings
 } from 'lucide-react';
 
-const APP_VERSION = "3.1.0-Production";
+const APP_VERSION = "3.2.0-Production";
 
 interface Branding {
   siteName: string;
@@ -59,7 +61,6 @@ interface UploadStatus {
   total: number;
 }
 
-// Utility: Image optimization for LocalStorage limits
 const compressImage = (base64Str: string, maxWidth = 1000, quality = 0.6): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -105,21 +106,19 @@ const Logo = ({ branding, light = false, onClick }: { branding: Branding, light?
 };
 
 const App: React.FC = () => {
-  // --- UI State ---
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [slogan, setSlogan] = useState("Montana’s premier backcountry packing string.");
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
+  const [hasApiKey, setHasApiKey] = useState(false);
   
-  // --- Admin State ---
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('hbl_isAdmin') === 'true');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
-  const [adminTab, setAdminTab] = useState<'branding' | 'fleet' | 'gallery' | 'bookings'>('branding');
+  const [adminTab, setAdminTab] = useState<'branding' | 'fleet' | 'gallery' | 'bookings' | 'billing'>('branding');
   const [passwordInput, setPasswordInput] = useState("");
   const [editingLlama, setEditingLlama] = useState<Llama | null>(null);
 
-  // --- Content State (Hydrated from LocalStorage) ---
   const [branding, setBranding] = useState<Branding>(() => {
     const saved = localStorage.getItem('hbl_branding');
     const defaults = {
@@ -143,12 +142,21 @@ const App: React.FC = () => {
 
   const [bookings, setBookings] = useState<BookingData[]>([]);
 
-  // --- Persistence & Sync ---
   useEffect(() => {
     generateWelcomeSlogan().then(val => { if (val) setSlogan(val); });
     const loadLogs = () => setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
     loadLogs();
     window.addEventListener('hbl_new_booking', loadLogs);
+    
+    // Check for API Key selection status
+    const checkApiKey = async () => {
+      if (typeof window.aistudio !== 'undefined') {
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        setHasApiKey(hasKey);
+      }
+    };
+    checkApiKey();
+    
     return () => window.removeEventListener('hbl_new_booking', loadLogs);
   }, []);
 
@@ -157,13 +165,36 @@ const App: React.FC = () => {
   useEffect(() => { localStorage.setItem('hbl_gallery', JSON.stringify(gallery)); }, [gallery]);
   useEffect(() => { sessionStorage.setItem('hbl_isAdmin', isAdmin.toString()); }, [isAdmin]);
 
-  // --- Action Handlers ---
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordInput === "llama123") {
       setIsAdmin(true); setShowAdminLogin(false); setPasswordInput(""); setShowDashboard(true);
     } else {
       alert("Invalid Access Key");
+    }
+  };
+
+  const handleSelectKey = async () => {
+    if (typeof window.aistudio !== 'undefined') {
+      await window.aistudio.openSelectKey();
+      setHasApiKey(true); // Assume success per instructions
+    }
+  };
+
+  const handleGenerateHero = async () => {
+    setIsProcessing(true);
+    try {
+      const url = await generateBackdrop("A sweeping panorama of the Elkhorn Mountains near Helena, Montana at sunset.");
+      setBranding({ ...branding, heroImageUrl: url });
+    } catch (err: any) {
+      if (err.message?.includes("Requested entity was not found")) {
+        alert("API Key expired or invalid. Please re-select your API key in the Billing tab.");
+        setHasApiKey(false);
+      } else {
+        alert("Generation failed: " + err.message);
+      }
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -184,7 +215,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen selection:bg-green-100 selection:text-green-900">
-      {/* 🛠 ADMIN PORTAL TRIGGER */}
       <button 
         onClick={() => isAdmin ? setShowDashboard(true) : setShowAdminLogin(true)}
         className="fixed bottom-8 right-8 z-[150] w-16 h-16 bg-white border border-stone-100 rounded-full shadow-2xl flex items-center justify-center text-3xl hover:scale-110 active:scale-95 transition-all group overflow-hidden"
@@ -193,7 +223,6 @@ const App: React.FC = () => {
         {isAdmin && <div className="absolute top-2 right-2 w-4 h-4 bg-green-500 rounded-full ring-4 ring-white animate-pulse" />}
       </button>
 
-      {/* LOGIN MODAL */}
       {showAdminLogin && (
         <div className="fixed inset-0 z-[300] bg-stone-950/90 backdrop-blur-xl flex items-center justify-center p-6">
           <div className="bg-white rounded-[4rem] p-12 max-w-sm w-full shadow-2xl animate-in zoom-in duration-500">
@@ -217,7 +246,6 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* DASHBOARD VIEW */}
       {showDashboard && isAdmin && (
         <div className="fixed inset-0 z-[200] bg-white flex flex-col overflow-hidden animate-in slide-in-from-bottom-12 duration-700">
           <header className="bg-white border-b px-12 py-8 flex items-center justify-between shrink-0">
@@ -230,7 +258,8 @@ const App: React.FC = () => {
                 { id: 'branding' as const, icon: Palette, label: 'Identity' },
                 { id: 'fleet' as const, icon: Users, label: 'Herd' },
                 { id: 'gallery' as const, icon: ImageIcon, label: 'Journal' },
-                { id: 'bookings' as const, icon: ClipboardList, label: 'Expeditions' }
+                { id: 'bookings' as const, icon: ClipboardList, label: 'Expeditions' },
+                { id: 'billing' as const, icon: CreditCard, label: 'Billing' }
               ].map(t => (
                 <button 
                   key={t.id} 
@@ -244,7 +273,7 @@ const App: React.FC = () => {
             </nav>
             <div className="flex gap-4">
               <button onClick={() => setShowDashboard(false)} className="px-8 py-4 rounded-2xl border border-stone-100 font-black text-[10px] uppercase tracking-widest text-stone-500 flex items-center gap-2 hover:bg-stone-50 transition-all shadow-sm"><Home size={16} /> Public View</button>
-              <button onClick={() => { setIsAdmin(false); setShowDashboard(false); }} className="p-4 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm"><LogOut size={20} /></button>
+              <button onClick={() => { setIsAdmin(false); setShowDashboard(false); }} className="p-4 bg-red-50 text-red-500 rounded-2xl hover:bg-red-600 hover:text-white transition-all shadow-sm"><LogOut size={20} /></button>
             </div>
           </header>
 
@@ -259,7 +288,20 @@ const App: React.FC = () => {
                       <div className="space-y-3"><label className="label-cms">Admin Email</label><input className="input-cms" value={branding.adminEmail} onChange={e => setBranding({...branding, adminEmail: e.target.value})} /></div>
                     </div>
                     <div className="space-y-3"><label className="label-cms">Branding Accent (Italic Word)</label><input className="input-cms font-black italic text-green-800" value={branding.accentName} onChange={e => setBranding({...branding, accentName: e.target.value})} /></div>
-                    <div className="space-y-3"><label className="label-cms">Hero Image URL</label><input className="input-cms" value={branding.heroImageUrl} onChange={e => setBranding({...branding, heroImageUrl: e.target.value})} /></div>
+                    <div className="space-y-3">
+                      <label className="label-cms">Hero Image URL</label>
+                      <div className="flex gap-4">
+                        <input className="input-cms flex-1" value={branding.heroImageUrl} onChange={e => setBranding({...branding, heroImageUrl: e.target.value})} />
+                        <button 
+                          onClick={handleGenerateHero}
+                          disabled={isProcessing}
+                          className="bg-stone-900 text-white px-8 rounded-2xl flex items-center gap-2 hover:bg-black transition-all active:scale-95 disabled:opacity-50"
+                        >
+                          {isProcessing ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />}
+                          AI Render
+                        </button>
+                      </div>
+                    </div>
                     <div className="pt-8 border-t flex items-center gap-4 text-green-700 font-black uppercase text-[10px] tracking-widest"><CheckCircle size={16}/> All changes saved locally to this device</div>
                   </div>
                 </div>
@@ -427,12 +469,42 @@ const App: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {adminTab === 'billing' && (
+                <div className="max-w-4xl space-y-16 animate-in slide-in-from-bottom-8">
+                  <header><h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Billing & API</h2><p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Secure connection to Google AI services</p></header>
+                  <div className="bg-white p-12 rounded-[4rem] shadow-2xl border border-stone-100 space-y-10">
+                    <div className="flex items-center justify-between gap-12 bg-stone-50 p-10 rounded-[2.5rem] border border-stone-100">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full animate-pulse ${hasApiKey ? 'bg-green-500' : 'bg-orange-500'}`} />
+                          <h4 className="text-2xl font-black tracking-tight">{hasApiKey ? 'API Connection Active' : 'API Setup Required'}</h4>
+                        </div>
+                        <p className="text-stone-500 text-sm font-medium leading-relaxed max-w-md">To generate high-quality images and use advanced reasoning, you must connect a Google AI Studio API key from a paid GCP project.</p>
+                      </div>
+                      <button 
+                        onClick={handleSelectKey}
+                        className="bg-stone-900 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-xl hover:bg-black transition-all active:scale-95"
+                      >
+                        <Settings size={20}/> {hasApiKey ? 'Reconfigure Key' : 'Connect API Key'}
+                      </button>
+                    </div>
+
+                    <div className="flex items-start gap-6 bg-blue-50/50 p-8 rounded-[2rem] border border-blue-100">
+                      <Info className="text-blue-500 shrink-0 mt-1" />
+                      <div>
+                        <h5 className="font-black text-blue-900 text-sm uppercase tracking-widest mb-2">Important Notice</h5>
+                        <p className="text-blue-700/70 text-sm leading-relaxed">Advanced features like AI image rendering require a paid API key. You can manage your keys and billing at the <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-blue-900 transition-colors">Google AI Studio Billing Portal</a>.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </main>
         </div>
       )}
 
-      {/* PUBLIC SITE VIEW */}
       {!showDashboard && (
         <>
           <nav className="fixed w-full z-[100] bg-white/95 backdrop-blur-2xl border-b h-24 flex items-center shadow-sm">
@@ -458,7 +530,6 @@ const App: React.FC = () => {
           </div>
 
           <main>
-            {/* HERO */}
             <section className="relative h-screen flex items-center justify-center text-center overflow-hidden">
               <div className="absolute inset-0 -z-10"><img src={branding.heroImageUrl} className="w-full h-full object-cover brightness-[0.4] scale-105 animate-in zoom-in duration-[10000ms]" alt="Landscape" /></div>
               <div className="max-w-5xl px-8 text-white">
@@ -468,7 +539,6 @@ const App: React.FC = () => {
               </div>
             </section>
 
-            {/* SECTIONS */}
             <section id="benefits" className="py-64 bg-white"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">Intelligence.</h2><div className="grid grid-cols-1 md:grid-cols-4 gap-16">{BENEFITS.map((b,i)=>(<div key={i} className="p-12 bg-stone-50 rounded-[4rem] border border-stone-100 hover:border-green-200 hover:bg-white transition-all group hover:shadow-2xl duration-500 text-center"><div className="mb-12 flex justify-center group-hover:scale-110 transition-transform duration-500 text-green-700">{b.icon}</div><h3 className="text-3xl font-black mb-6 tracking-tight leading-none">{b.title}</h3><p className="text-stone-500 font-medium leading-relaxed text-lg">{b.description}</p></div>))}</div></div></section>
             <section id="about" className="py-64 bg-stone-100"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">The Herd.</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">{llamas.map(l=><LlamaCard key={l.id} llama={l} />)}</div></div></section>
             <section id="gear" className="py-64 bg-white"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">Kit.</h2><GearSection /></div></section>
@@ -476,7 +546,6 @@ const App: React.FC = () => {
             <section id="faq" className="py-64 bg-stone-50"><div className="max-w-7xl mx-auto px-8"><FAQSection /></div></section>
             <section id="booking" className="py-64 bg-white"><div className="max-w-5xl mx-auto px-8 text-center"><h2 className="text-8xl font-black mb-32 tracking-tighter leading-none">Logistics.</h2><BookingForm /></div></section>
             
-            {/* CONTACT SECTION */}
             <section id="contact" className="py-64 bg-stone-50 relative overflow-hidden">
                <div className="absolute top-0 right-0 p-32 opacity-[0.03] rotate-12 pointer-events-none">
                  <Mountain size={600} />
@@ -547,7 +616,6 @@ const App: React.FC = () => {
         </>
       )}
 
-      {/* PROCESS LOADER */}
       {isProcessing && (
         <div className="fixed inset-0 z-[500] bg-stone-950/80 backdrop-blur-3xl flex items-center justify-center">
           <div className="bg-white px-20 py-24 rounded-[5rem] shadow-2xl flex flex-col items-center gap-12 animate-in zoom-in w-full max-w-lg mx-6 text-center">

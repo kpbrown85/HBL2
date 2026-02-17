@@ -1,9 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export async function getLlamaAdvice(question: string) {
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `You are an expert llama packer from Helena Backcountry Llamas. 
@@ -24,6 +23,7 @@ export async function getLlamaAdvice(question: string) {
 
 export async function generateWelcomeSlogan(): Promise<string> {
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: "Generate a short, punchy 1-sentence slogan for a llama rental company in Helena, Montana that specializes in backcountry backpacking and hunting.",
@@ -40,15 +40,20 @@ export async function generateWelcomeSlogan(): Promise<string> {
 
 export async function generateBackdrop(prompt: string) {
   try {
-    const fullPrompt = `A high-quality, scenic landscape photograph of the Montana wilderness. ${prompt}. Realistic, natural lighting, sharp focus, 8k resolution, cinematic composition.`;
-    // Fix: Using the correct contents structure according to Gemini API guidelines
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const fullPrompt = `A stunning, high-quality landscape photograph of the Montana wilderness. ${prompt}. Realistic, natural lighting, sharp focus, 4k resolution, cinematic composition.`;
+    
+    // Upgraded to gemini-3-pro-image-preview for high-quality generation
+    // and enabled googleSearch to ground the visual features in reality.
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: 'gemini-3-pro-image-preview',
       contents: { parts: [{ text: fullPrompt }] },
       config: {
         imageConfig: {
-          aspectRatio: "16:9"
-        }
+          aspectRatio: "16:9",
+          imageSize: "1K"
+        },
+        tools: [{ googleSearch: {} }]
       }
     });
 
@@ -60,7 +65,7 @@ export async function generateBackdrop(prompt: string) {
         }
       }
     }
-    throw new Error("No image data returned");
+    throw new Error("No image data returned from model");
   } catch (error) {
     console.error("Image Generation Error:", error);
     throw error;
