@@ -19,9 +19,6 @@ import {
   Image as ImageIcon,
   Lock,
   Trash2,
-  Settings,
-  Palette,
-  ClipboardList,
   Users,
   Home,
   Zap,
@@ -37,7 +34,13 @@ import {
   Calendar,
   Sparkles,
   Info,
-  Camera
+  Camera,
+  Palette,
+  ClipboardList,
+  Phone,
+  Truck,
+  GraduationCap,
+  Ban
 } from 'lucide-react';
 
 // --- Branding Type ---
@@ -231,12 +234,14 @@ const App: React.FC = () => {
     setGallery(next);
   };
 
-  const updateLogs = (id: string, action: 'confirm' | 'delete') => {
+  const updateLogs = (id: string, action: 'confirm' | 'cancel' | 'delete') => {
     const current = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
     let next;
     if (action === 'delete') {
-      if (!confirm("Permanently purge this expedition log?")) return;
+      if (!confirm("Permanently purge this expedition log? This cannot be undone.")) return;
       next = current.filter((l: any) => l.id !== id);
+    } else if (action === 'cancel') {
+      next = current.map((l: any) => l.id === id ? { ...l, status: 'canceled' as const, isRead: true } : l);
     } else {
       next = current.map((l: any) => l.id === id ? { ...l, status: 'confirmed' as const, isRead: true } : l);
     }
@@ -295,7 +300,7 @@ const App: React.FC = () => {
                 { id: 'branding' as const, icon: Palette, label: 'Identity' },
                 { id: 'fleet' as const, icon: Users, label: 'Herd' },
                 { id: 'gallery' as const, icon: ImageIcon, label: 'Journal' },
-                { id: 'bookings' as const, icon: ClipboardList, label: 'Logs' }
+                { id: 'bookings' as const, icon: ClipboardList, label: 'Expeditions' }
               ].map(t => (
                 <button key={t.id} onClick={() => { setAdminTab(t.id); setEditingLlama(null); }} className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${adminTab === t.id ? 'bg-stone-900 text-white shadow-xl' : 'text-stone-400 hover:bg-stone-100'}`}>
                   <t.icon size={18} /> <span className="hidden lg:inline">{t.label}</span>
@@ -458,23 +463,66 @@ const App: React.FC = () => {
 
               {adminTab === 'bookings' && (
                 <div className="space-y-16 animate-in slide-in-from-bottom-8">
-                  <header><h2 className="text-5xl font-black tracking-tighter text-stone-900">Expedition Logs</h2><p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">Manage customer leads and trail deployments</p></header>
-                  <div className="space-y-6">
+                  <header><h2 className="text-5xl font-black tracking-tighter text-stone-900">Expedition Logs</h2><p className="text-stone-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">Review and manage incoming trail deployment requests</p></header>
+                  <div className="space-y-8">
                     {bookings.length === 0 ? (
                       <div className="bg-white p-40 rounded-[5rem] border-4 border-dashed border-stone-100 flex flex-col items-center text-stone-200 shadow-inner"><Clock size={80} className="mb-8 opacity-40"/><p className="font-black uppercase tracking-widest text-sm">No trail logs found.</p></div>
                     ) : (
                       bookings.map(b => (
-                        <div key={b.id} className={`bg-white p-12 rounded-[4rem] border transition-all flex flex-col lg:flex-row items-center justify-between gap-12 shadow-xl hover:shadow-2xl ${!b.isRead ? 'border-green-800/20 ring-4 ring-green-800/5' : 'border-stone-100'}`}>
-                           <div className="flex flex-col sm:flex-row items-center gap-10 text-center sm:text-left flex-1">
-                              <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center shrink-0 shadow-xl ${b.status === 'confirmed' ? 'bg-green-800 text-white' : 'bg-orange-500 text-white'}`}>{b.status === 'confirmed' ? <CheckCircle size={44}/> : <Clock size={44}/>}</div>
-                              <div className="flex-1">
-                                <h4 className="text-4xl font-black text-stone-900 tracking-tight leading-none mb-4">{b.name}</h4>
-                                <div className="flex flex-wrap gap-x-10 gap-y-3 text-stone-400 font-bold uppercase tracking-widest text-xs"><span className="flex items-center gap-2"><Calendar className="w-5 h-5"/> {b.startDate} to {b.endDate}</span><span className="flex items-center gap-2"><Users className="w-5 h-5"/> {b.numLlamas} Pack Animals</span><span className="flex items-center gap-2 text-stone-900"><Mail className="w-5 h-5"/> {b.email}</span></div>
+                        <div key={b.id} className={`bg-white p-12 rounded-[4rem] border transition-all flex flex-col lg:flex-row items-center justify-between gap-12 shadow-xl hover:shadow-2xl relative ${!b.isRead ? 'border-green-800/30 ring-4 ring-green-800/5' : 'border-stone-100'}`}>
+                           {!b.isRead && <div className="absolute -top-3 left-12 bg-green-800 text-white px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg">New Request</div>}
+                           
+                           <div className="flex flex-col sm:flex-row items-center gap-10 text-center sm:text-left flex-1 w-full">
+                              <div className={`w-28 h-28 rounded-[2.5rem] flex flex-col items-center justify-center shrink-0 shadow-2xl ${b.status === 'confirmed' ? 'bg-green-800 text-white' : b.status === 'canceled' ? 'bg-red-500 text-white' : 'bg-orange-500 text-white animate-pulse'}`}>
+                                {b.status === 'confirmed' ? <CheckCircle size={44}/> : b.status === 'canceled' ? <Ban size={44}/> : <Clock size={44}/>}
+                                <span className="text-[8px] font-black uppercase tracking-widest mt-2">{b.status}</span>
+                              </div>
+                              
+                              <div className="flex-1 w-full">
+                                <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+                                  <h4 className="text-4xl font-black text-stone-900 tracking-tight leading-none">{b.name}</h4>
+                                  <div className="flex items-center gap-2">
+                                    <a href={`mailto:${b.email}`} className="p-2 bg-stone-50 text-stone-400 hover:bg-green-800 hover:text-white rounded-lg transition-all" title="Email Client"><Mail size={16}/></a>
+                                    <a href={`tel:${b.phone}`} className="p-2 bg-stone-50 text-stone-400 hover:bg-green-800 hover:text-white rounded-lg transition-all" title="Call Client"><Phone size={16}/></a>
+                                  </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                  <div className="space-y-1">
+                                    <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Deployment Dates</p>
+                                    <p className="font-bold text-stone-900 flex items-center gap-2 text-sm"><Calendar size={14} className="text-stone-300"/> {b.startDate} to {b.endDate}</p>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Fleet Strength</p>
+                                    <p className="font-bold text-stone-900 flex items-center gap-2 text-sm"><Users size={14} className="text-stone-300"/> {b.numLlamas} Pack Animals</p>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Logistics</p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {b.trailerNeeded && <span className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-[9px] font-black uppercase tracking-tighter"><Truck size={10}/> Trailer</span>}
+                                      {b.isFirstTimer && <span className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded-md text-[9px] font-black uppercase tracking-tighter"><GraduationCap size={10}/> Clinic</span>}
+                                      {!b.trailerNeeded && !b.isFirstTimer && <span className="text-stone-400 text-[10px] italic">Self-Sufficient</span>}
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Contact Intel</p>
+                                    <p className="text-stone-500 font-medium text-xs truncate max-w-[200px]">{b.email}</p>
+                                  </div>
+                                </div>
                               </div>
                            </div>
-                           <div className="flex gap-4 w-full lg:w-auto">
-                              {b.status !== 'confirmed' && <button onClick={() => updateLogs(b.id, 'confirm')} className="flex-1 lg:flex-none px-12 py-6 bg-green-800 text-white rounded-3xl font-black text-xs uppercase tracking-widest shadow-2xl hover:bg-green-900 transition-all active:scale-95">Approve</button>}
-                              <button onClick={() => updateLogs(b.id, 'delete')} className="p-6 bg-red-50 text-red-500 rounded-3xl hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-90"><Trash2 size={28}/></button>
+                           
+                           <div className="flex flex-row lg:flex-col gap-3 w-full lg:w-48 pt-8 lg:pt-0 border-t lg:border-t-0 lg:border-l border-stone-100 lg:pl-8">
+                              {b.status === 'pending' && (
+                                <>
+                                  <button onClick={() => updateLogs(b.id, 'confirm')} className="flex-1 px-4 py-4 bg-green-800 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-green-900 transition-all active:scale-95 flex items-center justify-center gap-2">Confirm</button>
+                                  <button onClick={() => updateLogs(b.id, 'cancel')} className="flex-1 px-4 py-4 bg-stone-100 text-stone-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-stone-200 transition-all active:scale-95 flex items-center justify-center gap-2">Cancel</button>
+                                </>
+                              )}
+                              {b.status !== 'pending' && (
+                                <div className="flex-1 flex items-center justify-center py-4 bg-stone-50 rounded-2xl text-[9px] font-black text-stone-400 uppercase tracking-widest border border-dashed border-stone-200">Archived Status</div>
+                              )}
+                              <button onClick={() => updateLogs(b.id, 'delete')} className="p-4 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-90 flex items-center justify-center" title="Delete Log"><Trash2 size={20}/></button>
                            </div>
                         </div>
                       ))
