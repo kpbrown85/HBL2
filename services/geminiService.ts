@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -42,9 +41,10 @@ export async function generateWelcomeSlogan(): Promise<string> {
 export async function generateBackdrop(prompt: string) {
   try {
     const fullPrompt = `A high-quality, scenic landscape photograph of the Montana wilderness. ${prompt}. Realistic, natural lighting, sharp focus, 8k resolution, cinematic composition.`;
+    // Fix: Using the correct contents structure according to Gemini API guidelines
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
-      contents: [{ parts: [{ text: fullPrompt }] }],
+      contents: { parts: [{ text: fullPrompt }] },
       config: {
         imageConfig: {
           aspectRatio: "16:9"
