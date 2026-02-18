@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Llama, FAQItem, GalleryImage, GearItem, Review } from './types';
 import { 
@@ -115,6 +116,19 @@ export const GEAR_ITEMS: GearItem[] = [
   { id: 'g5', name: 'Alpine Tent', description: 'Since the llamas carry the bulk, enjoy a higher-tier base camp setup.', category: 'backpacking', icon: <Tent className="w-6 h-6" /> }
 ];
 
+export const PERSONAL_GEAR_CHECKLIST = [
+  { id: 'p1', label: 'Bear Spray (Mandatory)', essential: true },
+  { id: 'p2', label: 'Water Filtration System', essential: true },
+  { id: 'p3', label: 'Emergency GPS / InReach', essential: true },
+  { id: 'p4', label: 'Mountain Boots (Broken In)', essential: true },
+  { id: 'p5', label: 'Sleeping Bag (15°F or lower)', essential: true },
+  { id: 'p6', label: 'Headlamp + Spare Batteries', essential: true },
+  { id: 'p7', label: 'Polarized Sunglasses', essential: false },
+  { id: 'p8', label: 'Multi-tool / Knife', essential: false },
+  { id: 'p9', label: 'Full Personal First Aid Kit', essential: true },
+  { id: 'p10', label: 'Sunscreen & Lip Balm', essential: false }
+];
+
 export const LLAMA_FACTS = [
   "Llamas have three stomach compartments for extreme nutrient efficiency.",
   "Their feet have soft pads and two toes, making them incredibly sure-footed on loose shale.",
@@ -132,7 +146,6 @@ export const PRICING = {
   trailerDaily: 25
 };
 
-// Added REVIEWS constant to fix the missing export error in components/Testimonials.tsx
 export const REVIEWS: Review[] = [
   {
     id: 'r1',
