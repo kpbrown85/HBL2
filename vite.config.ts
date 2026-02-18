@@ -1,6 +1,9 @@
+
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
+  plugins: [react()],
   root: '.',
   build: {
     outDir: 'dist',
@@ -9,7 +12,6 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        // Splitting large libraries into separate chunks to resolve the 500kB warning
         manualChunks: {
           'vendor-react': ['react', 'react-dom'],
           'vendor-icons': ['lucide-react'],
@@ -22,7 +24,6 @@ export default defineConfig({
     port: 3000
   },
   define: {
-    // Inject the API key from environment variables during the build process
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY || '')
   }
 });
