@@ -47,7 +47,7 @@ import {
   Settings
 } from 'lucide-react';
 
-const APP_VERSION = "3.2.0-Production";
+const APP_VERSION = "3.2.1-Production";
 
 interface Branding {
   siteName: string;
@@ -533,7 +533,7 @@ const App: React.FC = () => {
             <section className="relative h-screen flex items-center justify-center text-center overflow-hidden">
               <div className="absolute inset-0 -z-10"><img src={branding.heroImageUrl} className="w-full h-full object-cover brightness-[0.4] scale-105 animate-in zoom-in duration-[10000ms]" alt="Landscape" /></div>
               <div className="max-w-5xl px-8 text-white">
-                <h1 className="text-7xl md:text-9xl font-black mb-12 leading-[0.85] tracking-tighter animate-in slide-in-from-top-12 duration-1000">Pack the Peak. <br /><span className="italic text-green-400 font-light font-display">Free the Trek.</span></h1>
+                <h1 className="text-7xl md:text-9xl font-black mb-12 leading-[0.85] tracking-tighter animate-in slide-in-from-top-12 duration-1000">Carry the Wild. <br /><span className="italic text-green-400 font-light font-display">Conquer the Crest.</span></h1>
                 <p className="text-2xl md:text-4xl text-stone-200 mb-20 max-w-4xl mx-auto font-medium leading-relaxed tracking-tight">{slogan}</p>
                 <a href="#booking" className="bg-green-600 px-20 py-8 rounded-3xl text-3xl font-black shadow-2xl shadow-green-900/40 hover:bg-green-500 transition-all active:scale-95 inline-block">Secure Your String</a>
               </div>
