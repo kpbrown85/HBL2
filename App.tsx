@@ -142,6 +142,12 @@ const App: React.FC = () => {
 
   const [bookings, setBookings] = useState<BookingData[]>([]);
 
+  // Fact of the Day Logic
+  const dailyFact = useMemo(() => {
+    const day = new Date().getDate();
+    return LLAMA_FACTS[day % LLAMA_FACTS.length];
+  }, []);
+
   useEffect(() => {
     generateWelcomeSlogan().then(val => { if (val) setSlogan(val); });
     const loadLogs = () => setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
@@ -592,6 +598,20 @@ const App: React.FC = () => {
 
           <footer className="bg-stone-950 text-stone-500 pt-48 pb-24 border-t border-white/5 relative">
             <div className="max-w-7xl mx-auto px-8">
+              {/* Llama Fact of the Day */}
+              <div className="mb-24 p-12 bg-white/5 rounded-[3rem] border border-white/10 flex flex-col md:flex-row items-center gap-8 group transition-all hover:bg-white/[0.08] hover:border-green-500/30">
+                <div className="w-16 h-16 bg-green-800/20 text-green-400 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-green-900/20">
+                  <Sparkles size={24} className="animate-float" />
+                </div>
+                <div className="flex-1">
+                  <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-green-500 mb-2">Llama Fact of the Day</h5>
+                  <p className="text-stone-300 text-lg md:text-xl font-medium italic leading-relaxed">"{dailyFact}"</p>
+                </div>
+                <div className="hidden lg:block">
+                   <Mountain size={48} className="text-white/5" />
+                </div>
+              </div>
+
               <div className="flex flex-col md:flex-row justify-between items-start gap-24 mb-32">
                 <div className="space-y-10 max-w-xl">
                   <Logo branding={branding} light onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
