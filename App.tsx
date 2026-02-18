@@ -46,10 +46,11 @@ import {
   CreditCard,
   Settings,
   RefreshCcw,
-  Layout
+  Layout,
+  Globe
 } from 'lucide-react';
 
-const APP_VERSION = "3.2.9-Production";
+const APP_VERSION = "3.3.0-Production";
 
 interface Branding {
   siteName: string;
@@ -124,7 +125,7 @@ const App: React.FC = () => {
   // Admin State
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('hbl_isAdmin') === 'true');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(isAdmin); // Automatically show if already admin
+  const [showDashboard, setShowDashboard] = useState(isAdmin);
   const [adminTab, setAdminTab] = useState<'branding' | 'fleet' | 'gallery' | 'bookings' | 'billing'>('branding');
   const [passwordInput, setPasswordInput] = useState("");
   const [editingLlama, setEditingLlama] = useState<Llama | null>(null);
@@ -198,7 +199,7 @@ const App: React.FC = () => {
       setShowAdminLogin(false); 
       setPasswordInput(""); 
       setShowDashboard(true);
-      setAdminTab('branding'); // Ensure we start on branding
+      setAdminTab('branding');
     } else {
       alert("Invalid Access Key");
     }
@@ -306,9 +307,12 @@ const App: React.FC = () => {
       {showDashboard && isAdmin && (
         <div className="fixed inset-0 z-[200] bg-white flex flex-col overflow-hidden animate-in slide-in-from-bottom-12 duration-700">
           <header className="bg-white border-b px-12 py-8 flex items-center justify-between shrink-0">
-            <div>
+            <div className="flex items-center gap-12">
               <Logo branding={branding} onClick={() => setShowDashboard(false)} />
-              <div className="flex items-center gap-2 mt-1.5 opacity-50"><Activity size={10} className="text-green-500"/><span className="text-[8px] font-black uppercase tracking-[0.3em]">{APP_VERSION}</span></div>
+              <div className="hidden lg:flex items-center gap-4 bg-stone-50 px-4 py-2 rounded-full border border-stone-100">
+                <Globe size={14} className="text-stone-400" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Deployment Live: <span className="text-green-600">{APP_VERSION}</span></span>
+              </div>
             </div>
             <nav className="flex items-center gap-2 bg-stone-50 p-2 rounded-3xl border border-stone-100">
               {[
@@ -361,7 +365,7 @@ const App: React.FC = () => {
                         <input className="input-cms" value={branding.siteName} onChange={e => setBranding({...branding, siteName: e.target.value})} />
                       </div>
                       <div className="space-y-3">
-                        <label className="label-cms">Admin Contact Email</label>
+                        <label className="label-cms">Admin Dispatch Email</label>
                         <input className="input-cms" value={branding.adminEmail} onChange={e => setBranding({...branding, adminEmail: e.target.value})} />
                       </div>
                     </div>
