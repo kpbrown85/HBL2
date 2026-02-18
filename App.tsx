@@ -47,7 +47,7 @@ import {
   Settings
 } from 'lucide-react';
 
-const APP_VERSION = "3.2.5-Production";
+const APP_VERSION = "3.2.6-Production";
 
 interface Branding {
   siteName: string;
@@ -177,6 +177,7 @@ const App: React.FC = () => {
 
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
+    // Keep internal logic but remove UI hints
     if (passwordInput === "llama123") {
       setIsAdmin(true); setShowAdminLogin(false); setPasswordInput(""); setShowDashboard(true);
     } else {
@@ -263,7 +264,7 @@ const App: React.FC = () => {
              <form onSubmit={handleAuth} className="space-y-6">
                <input 
                 type="password" 
-                placeholder="Access Key (llama123)" 
+                placeholder="Access Key" 
                 className="w-full bg-stone-50 border border-stone-100 p-5 rounded-2xl outline-none focus:ring-4 focus:ring-green-500/10 font-black text-center text-lg text-stone-900" 
                 value={passwordInput} 
                 onChange={(e) => setPasswordInput(e.target.value)} 
