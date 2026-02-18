@@ -6,7 +6,17 @@ export default defineConfig({
     outDir: 'dist',
     target: 'esnext',
     minify: 'esbuild',
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        // Splitting large libraries into separate chunks to resolve the 500kB warning
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-icons': ['lucide-react'],
+          'vendor-ai': ['@google/genai']
+        }
+      }
+    }
   },
   server: {
     port: 3000

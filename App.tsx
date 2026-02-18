@@ -47,13 +47,14 @@ import {
   Settings
 } from 'lucide-react';
 
-const APP_VERSION = "3.2.3-Production";
+const APP_VERSION = "3.2.5-Production";
 
 interface Branding {
   siteName: string;
   accentName: string;
   heroImageUrl: string;
   adminEmail: string;
+  logoUrl?: string;
 }
 
 interface UploadStatus {
@@ -91,8 +92,12 @@ const Logo = ({ branding, light = false, onClick }: { branding: Branding, light?
   const parts = (branding.siteName || "Helena Backcountry Llamas").split(regex);
   return (
     <div className="flex items-center gap-3 cursor-pointer select-none group" onClick={onClick}>
-      <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 active:scale-95`}>
-        <Mountain className="w-6 h-6" />
+      <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 active:scale-95 overflow-hidden ring-1 ring-stone-100/10`}>
+        {branding.logoUrl ? (
+          <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+        ) : (
+          <Mountain className="w-6 h-6" />
+        )}
       </div>
       <span className={`text-xl font-black tracking-tight ${light ? 'text-white' : 'text-stone-900'}`}>
         {parts.map((part, i) => (
@@ -125,7 +130,8 @@ const App: React.FC = () => {
       siteName: "Helena Backcountry Llamas",
       accentName: "Llamas",
       heroImageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=2400",
-      adminEmail: 'kevin.paul.brown@gmail.com'
+      adminEmail: 'kevin.paul.brown@gmail.com',
+      logoUrl: ''
     };
     return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
   });
@@ -142,7 +148,6 @@ const App: React.FC = () => {
 
   const [bookings, setBookings] = useState<BookingData[]>([]);
 
-  // Fact of the Day Logic
   const dailyFact = useMemo(() => {
     const day = new Date().getDate();
     return LLAMA_FACTS[day % LLAMA_FACTS.length];
@@ -154,7 +159,6 @@ const App: React.FC = () => {
     loadLogs();
     window.addEventListener('hbl_new_booking', loadLogs);
     
-    // Check for API Key selection status
     const checkApiKey = async () => {
       if (typeof window.aistudio !== 'undefined') {
         const hasKey = await window.aistudio.hasSelectedApiKey();
@@ -183,7 +187,7 @@ const App: React.FC = () => {
   const handleSelectKey = async () => {
     if (typeof window.aistudio !== 'undefined') {
       await window.aistudio.openSelectKey();
-      setHasApiKey(true); // Assume success per instructions
+      setHasApiKey(true);
     }
   };
 
@@ -219,6 +223,26 @@ const App: React.FC = () => {
 
   const unreadCount = bookings.filter(b => !b.isRead).length;
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsProcessing(true);
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const optimized = await compressImage(ev.target?.result as string, 400, 0.7);
+          setBranding({ ...branding, logoUrl: optimized });
+        } catch (err) {
+          console.error("Logo processing failed:", err);
+          alert("Failed to process logo image.");
+        } finally {
+          setIsProcessing(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="min-h-screen selection:bg-green-100 selection:text-green-900">
       <button 
@@ -235,12 +259,12 @@ const App: React.FC = () => {
              <div className="w-20 h-20 bg-green-800 text-white rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-xl ring-8 ring-green-800/10">
                <Lock size={36} />
              </div>
-             <h3 className="text-3xl font-black text-center mb-12 tracking-tight">Mission Control</h3>
+             <h3 className="text-3xl font-black text-center mb-12 tracking-tight text-stone-900">Mission Control</h3>
              <form onSubmit={handleAuth} className="space-y-6">
                <input 
                 type="password" 
                 placeholder="Access Key (llama123)" 
-                className="w-full bg-stone-50 border border-stone-100 p-5 rounded-2xl outline-none focus:ring-4 focus:ring-green-500/10 font-black text-center text-lg" 
+                className="w-full bg-stone-50 border border-stone-100 p-5 rounded-2xl outline-none focus:ring-4 focus:ring-green-500/10 font-black text-center text-lg text-stone-900" 
                 value={passwordInput} 
                 onChange={(e) => setPasswordInput(e.target.value)} 
                 autoFocus 
@@ -293,9 +317,50 @@ const App: React.FC = () => {
                       <div className="space-y-3"><label className="label-cms">Business Name</label><input className="input-cms" value={branding.siteName} onChange={e => setBranding({...branding, siteName: e.target.value})} /></div>
                       <div className="space-y-3"><label className="label-cms">Admin Email</label><input className="input-cms" value={branding.adminEmail} onChange={e => setBranding({...branding, adminEmail: e.target.value})} /></div>
                     </div>
-                    <div className="space-y-3"><label className="label-cms">Branding Accent (Italic Word)</label><input className="input-cms font-black italic text-green-800" value={branding.accentName} onChange={e => setBranding({...branding, accentName: e.target.value})} /></div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                      <div className="space-y-3"><label className="label-cms">Branding Accent (Italic Word)</label><input className="input-cms font-black italic text-green-800" value={branding.accentName} onChange={e => setBranding({...branding, accentName: e.target.value})} /></div>
+                      <div className="space-y-3">
+                        <label className="label-cms">Custom Logo Asset</label>
+                        <div className="flex items-center gap-6">
+                          <div className="w-16 h-16 bg-stone-50 border border-stone-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-sm shrink-0">
+                            {branding.logoUrl ? (
+                              <img src={branding.logoUrl} alt="Preview" className="w-full h-full object-cover" />
+                            ) : (
+                              <ImageIcon className="text-stone-300" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              id="logo-upload" 
+                              accept="image/*" 
+                              onChange={handleLogoUpload}
+                            />
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={() => document.getElementById('logo-upload')?.click()}
+                                className="bg-stone-100 text-stone-900 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-stone-200 transition-all flex items-center gap-2"
+                              >
+                                <Upload size={14} /> Upload Logo
+                              </button>
+                              {branding.logoUrl && (
+                                <button 
+                                  onClick={() => setBranding({...branding, logoUrl: ''})}
+                                  className="text-red-500 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all"
+                                >
+                                  Reset
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="space-y-3">
-                      <label className="label-cms">Hero Image URL</label>
+                      <label className="label-cms">Hero Cinematic Backdrop</label>
                       <div className="flex gap-4">
                         <input className="input-cms flex-1" value={branding.heroImageUrl} onChange={e => setBranding({...branding, heroImageUrl: e.target.value})} />
                         <button 
@@ -308,7 +373,7 @@ const App: React.FC = () => {
                         </button>
                       </div>
                     </div>
-                    <div className="pt-8 border-t flex items-center gap-4 text-green-700 font-black uppercase text-[10px] tracking-widest"><CheckCircle size={16}/> All changes saved locally to this device</div>
+                    <div className="pt-8 border-t flex items-center gap-4 text-green-700 font-black uppercase text-[10px] tracking-widest"><CheckCircle size={16}/> State persisted to secure local storage</div>
                   </div>
                 </div>
               )}
@@ -426,7 +491,7 @@ const App: React.FC = () => {
                                 <button onClick={() => {
                                   if (idx === gallery.length-1) return;
                                   const n = [...gallery]; [n[idx], n[idx+1]] = [n[idx+1], n[idx]]; setGallery(n);
-                                }} className="w-10 h-10 bg-white/20 hover:bg-white text-white hover:text-stone-950 rounded-xl flex items-center justify-center transition-all"><ArrowUp size={20}/></button>
+                                }} className="w-10 h-10 bg-white/20 hover:bg-white text-white hover:text-stone-950 rounded-xl flex items-center justify-center transition-all"><ArrowDown size={20}/></button>
                              </div>
                              <button onClick={() => setGallery(prev => prev.filter((_, i) => i !== idx))} className="w-full py-3 bg-red-500/80 hover:bg-red-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest">Delete</button>
                            </div>
@@ -598,7 +663,6 @@ const App: React.FC = () => {
 
           <footer className="bg-stone-950 text-stone-500 pt-48 pb-24 border-t border-white/5 relative">
             <div className="max-w-7xl mx-auto px-8">
-              {/* Llama Fact of the Day */}
               <div className="mb-24 p-12 bg-white/5 rounded-[3rem] border border-white/10 flex flex-col md:flex-row items-center gap-8 group transition-all hover:bg-white/[0.08] hover:border-green-500/30">
                 <div className="w-16 h-16 bg-green-800/20 text-green-400 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-green-900/20">
                   <Sparkles size={24} className="animate-float" />
