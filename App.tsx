@@ -47,7 +47,7 @@ import {
   Settings
 } from 'lucide-react';
 
-const APP_VERSION = "3.2.1-Production";
+const APP_VERSION = "3.2.3-Production";
 
 interface Branding {
   siteName: string;
@@ -426,7 +426,7 @@ const App: React.FC = () => {
                                 <button onClick={() => {
                                   if (idx === gallery.length-1) return;
                                   const n = [...gallery]; [n[idx], n[idx+1]] = [n[idx+1], n[idx]]; setGallery(n);
-                                }} className="w-10 h-10 bg-white/20 hover:bg-white text-white hover:text-stone-950 rounded-xl flex items-center justify-center transition-all"><ArrowDown size={20}/></button>
+                                }} className="w-10 h-10 bg-white/20 hover:bg-white text-white hover:text-stone-950 rounded-xl flex items-center justify-center transition-all"><ArrowUp size={20}/></button>
                              </div>
                              <button onClick={() => setGallery(prev => prev.filter((_, i) => i !== idx))} className="w-full py-3 bg-red-500/80 hover:bg-red-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest">Delete</button>
                            </div>
@@ -539,7 +539,7 @@ const App: React.FC = () => {
             <section className="relative h-screen flex items-center justify-center text-center overflow-hidden">
               <div className="absolute inset-0 -z-10"><img src={branding.heroImageUrl} className="w-full h-full object-cover brightness-[0.4] scale-105 animate-in zoom-in duration-[10000ms]" alt="Landscape" /></div>
               <div className="max-w-5xl px-8 text-white">
-                <h1 className="text-7xl md:text-9xl font-black mb-12 leading-[0.85] tracking-tighter animate-in slide-in-from-top-12 duration-1000">Carry the Wild. <br /><span className="italic text-green-400 font-light font-display">Conquer the Crest.</span></h1>
+                <h1 className="text-7xl md:text-9xl font-black mb-12 leading-[0.85] tracking-tighter animate-in slide-in-from-top-12 duration-1000">Master the Montana Peaks. <br /><span className="italic text-green-400 font-light font-display">Elite Strings for the High Country.</span></h1>
                 <p className="text-2xl md:text-4xl text-stone-200 mb-20 max-w-4xl mx-auto font-medium leading-relaxed tracking-tight">{slogan}</p>
                 <a href="#booking" className="bg-green-600 px-20 py-8 rounded-3xl text-3xl font-black shadow-2xl shadow-green-900/40 hover:bg-green-500 transition-all active:scale-95 inline-block">Secure Your String</a>
               </div>
@@ -547,7 +547,7 @@ const App: React.FC = () => {
 
             <section id="benefits" className="py-64 bg-white"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">Intelligence.</h2><div className="grid grid-cols-1 md:grid-cols-4 gap-16">{BENEFITS.map((b,i)=>(<div key={i} className="p-12 bg-stone-50 rounded-[4rem] border border-stone-100 hover:border-green-200 hover:bg-white transition-all group hover:shadow-2xl duration-500 text-center"><div className="mb-12 flex justify-center group-hover:scale-110 transition-transform duration-500 text-green-700">{b.icon}</div><h3 className="text-3xl font-black mb-6 tracking-tight leading-none">{b.title}</h3><p className="text-stone-500 font-medium leading-relaxed text-lg">{b.description}</p></div>))}</div></div></section>
             <section id="about" className="py-64 bg-stone-100"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">The Herd.</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">{llamas.map(l=><LlamaCard key={l.id} llama={l} />)}</div></div></section>
-            <section id="gear" className="py-64 bg-white"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">Kit.</h2><GearSection /></div></section>
+            <section id="gear" className="py-64 bg-white"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">Expedition Assets.</h2><GearSection /></div></section>
             <section id="gallery" className="py-64 bg-stone-950 text-white"><div className="max-w-7xl mx-auto px-8"><header className="flex flex-col md:flex-row justify-between items-end mb-32 gap-8"><h2 className="text-9xl font-black tracking-tighter leading-none">Journal.</h2><div className="bg-white/5 border border-white/10 px-12 py-6 rounded-full text-green-400 font-black uppercase tracking-widest text-xs">High Country Field Notes</div></header><PhotoCarousel images={gallery} /></div></section>
             <section id="faq" className="py-64 bg-stone-50"><div className="max-w-7xl mx-auto px-8"><FAQSection /></div></section>
             <section id="booking" className="py-64 bg-white"><div className="max-w-5xl mx-auto px-8 text-center"><h2 className="text-8xl font-black mb-32 tracking-tighter leading-none">Logistics.</h2><BookingForm /></div></section>
