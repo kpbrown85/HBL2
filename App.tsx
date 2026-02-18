@@ -52,7 +52,7 @@ import {
   Type
 } from 'lucide-react';
 
-const APP_VERSION = "3.5.0-Production";
+const APP_VERSION = "3.6.0-Production";
 
 interface Branding {
   siteName: string;
@@ -253,7 +253,7 @@ const App: React.FC = () => {
       const reader = new FileReader();
       reader.onload = async (ev) => {
         try {
-          const optimized = await compressImage(ev.target?.result as string, 300, 0.8);
+          const optimized = await compressImage(ev.target?.result as string, 400, 0.8);
           setBranding({ ...branding, logoUrl: optimized });
         } catch (err) {
           console.error("Logo processing failed:", err);
@@ -313,16 +313,16 @@ const App: React.FC = () => {
               <Logo branding={branding} onClick={() => setShowDashboard(false)} />
               <div className="hidden lg:flex items-center gap-4 bg-stone-50 px-4 py-2 rounded-full border border-stone-100">
                 <Globe size={14} className="text-stone-400" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Node Verified: <span className="text-green-600">{APP_VERSION}</span></span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Environment: <span className="text-green-600">{APP_VERSION}</span></span>
               </div>
             </div>
             <nav className="flex items-center gap-2 bg-stone-50 p-2 rounded-3xl border border-stone-100">
               {[
-                { id: 'branding' as const, icon: Palette, label: 'Identity' },
+                { id: 'branding' as const, icon: Palette, label: 'Branding' },
                 { id: 'fleet' as const, icon: Users, label: 'Herd' },
                 { id: 'gallery' as const, icon: ImageIcon, label: 'Journal' },
-                { id: 'bookings' as const, icon: ClipboardList, label: 'Expeditions' },
-                { id: 'billing' as const, icon: CreditCard, label: 'Billing' }
+                { id: 'bookings' as const, icon: ClipboardList, label: 'Logs' },
+                { id: 'billing' as const, icon: CreditCard, label: 'API' }
               ].map(t => (
                 <button 
                   key={t.id} 
@@ -335,7 +335,7 @@ const App: React.FC = () => {
               ))}
             </nav>
             <div className="flex gap-4">
-              <button onClick={() => setShowDashboard(false)} className="px-8 py-4 rounded-2xl border border-stone-100 font-black text-[10px] uppercase tracking-widest text-stone-500 flex items-center gap-2 hover:bg-stone-50 transition-all shadow-sm"><Home size={16} /> Public View</button>
+              <button onClick={() => setShowDashboard(false)} className="px-8 py-4 rounded-2xl border border-stone-100 font-black text-[10px] uppercase tracking-widest text-stone-500 flex items-center gap-2 hover:bg-stone-50 transition-all shadow-sm"><Home size={16} /> Exit Admin</button>
               <button onClick={() => { setIsAdmin(false); setShowDashboard(false); }} className="p-4 bg-red-50 text-red-500 rounded-2xl hover:bg-red-600 hover:text-white transition-all shadow-sm"><LogOut size={20} /></button>
             </div>
           </header>
@@ -347,14 +347,8 @@ const App: React.FC = () => {
                 <div className="max-w-6xl space-y-16 animate-in slide-in-from-bottom-8">
                   <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                     <div>
-                      <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Identity Control</h2>
-                      <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Core visual assets for {branding.siteName}</p>
-                    </div>
-                    <div className="flex gap-4">
-                       <div className="bg-green-50 px-6 py-3 rounded-2xl border border-green-100 flex items-center gap-3">
-                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                         <span className="text-[10px] font-black uppercase tracking-widest text-green-800">Cloud Sync Active</span>
-                       </div>
+                      <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Branding & Assets</h2>
+                      <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Control site-wide identity for {branding.siteName}</p>
                     </div>
                   </header>
                   
@@ -364,19 +358,19 @@ const App: React.FC = () => {
                         {/* Business Info Section */}
                         <div className="space-y-10">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-stone-900 text-white rounded-xl flex items-center justify-center"><Layout size={20}/></div>
-                            <h3 className="text-2xl font-black text-stone-900">Basic Configuration</h3>
+                            <div className="w-10 h-10 bg-stone-900 text-white rounded-xl flex items-center justify-center shadow-lg"><Globe size={20}/></div>
+                            <h3 className="text-2xl font-black text-stone-900">Identity Details</h3>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-3">
-                              <label className="label-cms">Official Business Name</label>
+                              <label className="label-cms">Business Display Name</label>
                               <div className="relative">
                                 <input className="input-cms pl-14" value={branding.siteName} onChange={e => setBranding({...branding, siteName: e.target.value})} />
-                                <Globe className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
+                                <Type className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
                               </div>
                             </div>
                             <div className="space-y-3">
-                              <label className="label-cms">Admin Support Email</label>
+                              <label className="label-cms">Admin Email (Public/Booking)</label>
                               <div className="relative">
                                 <input className="input-cms pl-14" value={branding.adminEmail} onChange={e => setBranding({...branding, adminEmail: e.target.value})} />
                                 <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
@@ -385,41 +379,47 @@ const App: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Visual Assets Section */}
+                        {/* Logo Control Area - HIGH VISIBILITY */}
                         <div className="pt-12 border-t border-stone-50 space-y-10">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-green-800 text-white rounded-xl flex items-center justify-center"><Palette size={20}/></div>
-                            <h3 className="text-2xl font-black text-stone-900">Logo & Visual Assets</h3>
+                            <div className="w-10 h-10 bg-green-800 text-white rounded-xl flex items-center justify-center shadow-lg"><Palette size={20}/></div>
+                            <h3 className="text-2xl font-black text-stone-900">Primary Logo & Branding</h3>
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                             <div className="space-y-4">
-                              <label className="label-cms">Stylized Branding Accent</label>
+                              <label className="label-cms">Logo Accent Text</label>
                               <div className="relative">
                                 <input className="input-cms pl-14 font-black italic text-green-800" value={branding.accentName} onChange={e => setBranding({...branding, accentName: e.target.value})} />
-                                <Type className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
+                                <Zap className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
                               </div>
-                              <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest leading-relaxed">This word will be italicized in the primary logo to provide visual contrast.</p>
+                              <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest leading-relaxed">This word will appear italicized and colored in the generated text logo.</p>
                             </div>
                             
                             <div className="space-y-4">
-                              <label className="label-cms">Primary Logo Asset</label>
-                              <div className="bg-stone-50 p-6 rounded-3xl border border-stone-100 flex items-center gap-6">
-                                <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center overflow-hidden shadow-lg border-2 border-white ring-1 ring-stone-200">
+                              <label className="label-cms">Custom Brand Image</label>
+                              <div className="bg-stone-50 p-6 rounded-3xl border border-stone-100 flex flex-col sm:flex-row items-center gap-6 shadow-inner">
+                                <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center overflow-hidden shadow-xl border-4 border-white ring-1 ring-stone-200 shrink-0">
                                   {branding.logoUrl ? (
                                     <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-cover" />
                                   ) : (
-                                    <Mountain className="text-stone-300 w-10 h-10" />
+                                    <Mountain className="text-stone-200 w-12 h-12" />
                                   )}
                                 </div>
-                                <div className="flex-1 space-y-3">
-                                  <input type="file" id="logo-uploader" className="hidden" accept="image/*" onChange={handleLogoUpload} />
-                                  <button onClick={() => document.getElementById('logo-uploader')?.click()} className="w-full py-3 bg-stone-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-black transition-all active:scale-95 shadow-xl">
-                                    <Upload size={14}/> Change Logo
+                                <div className="flex-1 w-full space-y-3">
+                                  <input type="file" id="dashboard-logo-uploader" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                                  <button 
+                                    onClick={() => document.getElementById('dashboard-logo-uploader')?.click()} 
+                                    className="w-full py-4 bg-stone-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-black transition-all active:scale-95 shadow-xl"
+                                  >
+                                    <Upload size={16}/> Change Logo Image
                                   </button>
                                   {branding.logoUrl && (
-                                    <button onClick={() => setBranding({...branding, logoUrl: ''})} className="w-full py-2 text-red-500 font-black text-[9px] uppercase tracking-widest hover:text-red-700 transition-colors">
-                                      Restore Default
+                                    <button 
+                                      onClick={() => setBranding({...branding, logoUrl: ''})} 
+                                      className="w-full py-2 text-red-500 font-black text-[9px] uppercase tracking-widest hover:text-red-700 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                      <Trash2 size={12} /> Revert to Default Icon
                                     </button>
                                   )}
                                 </div>
@@ -428,27 +428,25 @@ const App: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Backdrop Section */}
+                        {/* Hero Backdrop Section */}
                         <div className="pt-12 border-t border-stone-50 space-y-10">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center"><ImageIcon size={20}/></div>
-                            <h3 className="text-2xl font-black text-stone-900">Cinematic Backdrop</h3>
+                            <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg"><ImageIcon size={20}/></div>
+                            <h3 className="text-2xl font-black text-stone-900">Hero Landscape</h3>
                           </div>
                           <div className="space-y-6">
                             <div className="relative">
                               <input className="input-cms pl-14" value={branding.heroImageUrl} onChange={e => setBranding({...branding, heroImageUrl: e.target.value})} />
                               <Camera className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
                             </div>
-                            <div className="flex gap-4">
-                              <button 
-                                onClick={handleGenerateHero}
-                                disabled={isProcessing}
-                                className="flex-1 bg-green-800 text-white py-6 rounded-2xl flex items-center justify-center gap-3 hover:bg-green-900 transition-all active:scale-95 disabled:opacity-50 shadow-2xl shadow-green-900/20"
-                              >
-                                {isProcessing ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />}
-                                <span className="font-black text-xs uppercase tracking-[0.2em]">Generate High-Country Render</span>
-                              </button>
-                            </div>
+                            <button 
+                              onClick={handleGenerateHero}
+                              disabled={isProcessing}
+                              className="w-full bg-green-800 text-white py-6 rounded-[2rem] flex items-center justify-center gap-3 hover:bg-green-900 transition-all active:scale-95 disabled:opacity-50 shadow-2xl shadow-green-900/20"
+                            >
+                              {isProcessing ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />}
+                              <span className="font-black text-xs uppercase tracking-[0.2em]">Generate High-Country Backdrop</span>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -459,34 +457,25 @@ const App: React.FC = () => {
                       <div className="bg-stone-900 p-12 rounded-[4rem] shadow-2xl border border-white/5 text-white sticky top-12">
                         <header className="flex items-center gap-3 mb-10 pb-8 border-b border-white/5">
                           <Eye size={20} className="text-green-500" />
-                          <h3 className="text-2xl font-black tracking-tight leading-none">Live Context</h3>
+                          <h3 className="text-2xl font-black tracking-tight leading-none">Real-time Preview</h3>
                         </header>
                         <div className="space-y-12">
                           <div className="space-y-4">
-                            <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-500 block">Site Header Preview</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-500 block">Header Context</label>
                             <div className="bg-white p-8 rounded-3xl border border-white/10 flex items-center justify-center shadow-inner">
                               <Logo branding={branding} />
                             </div>
                           </div>
                           <div className="space-y-4">
-                            <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-500 block">Site Footer Preview</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-500 block">Footer Context</label>
                             <div className="bg-stone-950 p-8 rounded-3xl border border-white/5 flex items-center justify-center shadow-inner">
                               <Logo branding={branding} light />
-                            </div>
-                          </div>
-                          <div className="space-y-4">
-                            <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-500 block">Hero Backdrop Mockup</label>
-                            <div className="aspect-video bg-stone-800 rounded-3xl overflow-hidden border border-white/5 shadow-2xl relative">
-                               <img src={branding.heroImageUrl} className="w-full h-full object-cover brightness-[0.4]" alt="Preview" />
-                               <div className="absolute inset-0 flex items-center justify-center text-center p-4">
-                                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] leading-relaxed">Master the<br/>Montana Peaks</h4>
-                               </div>
                             </div>
                           </div>
                         </div>
                         <div className="mt-12 pt-8 border-t border-white/5 flex items-center gap-4 text-green-500">
                           <CheckCircle size={18} />
-                          <span className="text-[9px] font-black uppercase tracking-widest leading-none">Real-time update stream verified</span>
+                          <span className="text-[9px] font-black uppercase tracking-widest leading-none">Global Sync Active</span>
                         </div>
                       </div>
                     </div>
