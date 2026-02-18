@@ -52,3 +52,19 @@ export interface GearItem {
   category: 'backpacking' | 'hunting' | 'both';
   icon: React.ReactNode;
 }
+
+export interface WeatherDay {
+  day: string;
+  condition: string;
+  high: string;
+  low: string;
+  precipitation: string;
+}
+
+export interface WeatherForecast {
+  currentTemp: string;
+  currentCondition: string;
+  lastUpdated: string;
+  forecast: WeatherDay[];
+  sources: { uri: string; title: string }[];
+}
