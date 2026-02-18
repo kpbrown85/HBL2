@@ -44,10 +44,11 @@ import {
   MapPin,
   ExternalLink,
   CreditCard,
-  Settings
+  Settings,
+  RefreshCcw
 } from 'lucide-react';
 
-const APP_VERSION = "3.2.7-Production";
+const APP_VERSION = "3.2.8-Production";
 
 interface Branding {
   siteName: string;
@@ -90,10 +91,12 @@ const Logo = ({ branding, light = false, onClick }: { branding: Branding, light?
   const safeAccent = accent.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
   const regex = new RegExp(`(${safeAccent})`, 'gi');
   const parts = (branding.siteName || "Helena Backcountry Llamas").split(regex);
+  const hasCustomLogo = branding.logoUrl && branding.logoUrl.trim() !== '';
+
   return (
     <div className="flex items-center gap-3 cursor-pointer select-none group" onClick={onClick}>
-      <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 active:scale-95 overflow-hidden ring-1 ring-stone-100/10`}>
-        {branding.logoUrl ? (
+      <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg transition-all group-hover:scale-110 active:scale-95 overflow-hidden ring-1 ring-stone-100/10`}>
+        {hasCustomLogo ? (
           <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-cover" />
         ) : (
           <Mountain className="w-6 h-6" />
@@ -241,7 +244,7 @@ const App: React.FC = () => {
       const reader = new FileReader();
       reader.onload = async (ev) => {
         try {
-          const optimized = await compressImage(ev.target?.result as string, 400, 0.7);
+          const optimized = await compressImage(ev.target?.result as string, 300, 0.8);
           setBranding({ ...branding, logoUrl: optimized });
         } catch (err) {
           console.error("Logo processing failed:", err);
@@ -256,6 +259,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen selection:bg-green-100 selection:text-green-900">
+      {/* Admin Quick Trigger */}
       <button 
         onClick={() => isAdmin ? setShowDashboard(true) : setShowAdminLogin(true)}
         className="fixed bottom-8 right-8 z-[150] w-16 h-16 bg-white border border-stone-100 rounded-full shadow-2xl flex items-center justify-center text-3xl hover:scale-110 active:scale-95 transition-all group overflow-hidden"
@@ -264,6 +268,7 @@ const App: React.FC = () => {
         {isAdmin && <div className="absolute top-2 right-2 w-4 h-4 bg-green-500 rounded-full ring-4 ring-white animate-pulse" />}
       </button>
 
+      {/* Admin Login Modal */}
       {showAdminLogin && (
         <div className="fixed inset-0 z-[300] bg-stone-950/90 backdrop-blur-xl flex items-center justify-center p-6">
           <div className="bg-white rounded-[4rem] p-12 max-w-sm w-full shadow-2xl animate-in zoom-in duration-500">
@@ -287,6 +292,7 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* Admin Dashboard */}
       {showDashboard && isAdmin && (
         <div className="fixed inset-0 z-[200] bg-white flex flex-col overflow-hidden animate-in slide-in-from-bottom-12 duration-700">
           <header className="bg-white border-b px-12 py-8 flex items-center justify-between shrink-0">
@@ -320,48 +326,62 @@ const App: React.FC = () => {
 
           <main className="flex-1 bg-stone-50/50 overflow-y-auto p-12 lg:p-24">
             <div className="max-w-7xl mx-auto">
+              {/* Branding Identity Tab */}
               {adminTab === 'branding' && (
                 <div className="max-w-4xl space-y-16 animate-in slide-in-from-bottom-8">
-                  <header><h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Presence & Identity</h2><p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Core DNA of {branding.siteName}</p></header>
+                  <header>
+                    <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Presence & Identity</h2>
+                    <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Core DNA of {branding.siteName}</p>
+                  </header>
+                  
                   <div className="bg-white p-12 rounded-[4rem] shadow-2xl border border-stone-100 space-y-12">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                      <div className="space-y-3"><label className="label-cms">Business Name</label><input className="input-cms" value={branding.siteName} onChange={e => setBranding({...branding, siteName: e.target.value})} /></div>
-                      <div className="space-y-3"><label className="label-cms">Admin Email</label><input className="input-cms" value={branding.adminEmail} onChange={e => setBranding({...branding, adminEmail: e.target.value})} /></div>
+                      <div className="space-y-3">
+                        <label className="label-cms">Business Name</label>
+                        <input className="input-cms" value={branding.siteName} onChange={e => setBranding({...branding, siteName: e.target.value})} />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="label-cms">Admin Dispatch Email</label>
+                        <input className="input-cms" value={branding.adminEmail} onChange={e => setBranding({...branding, adminEmail: e.target.value})} />
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                      <div className="space-y-3"><label className="label-cms">Branding Accent (Italic Word)</label><input className="input-cms font-black italic text-green-800" value={branding.accentName} onChange={e => setBranding({...branding, accentName: e.target.value})} /></div>
                       <div className="space-y-3">
-                        <label className="label-cms">Custom Logo Asset</label>
-                        <div className="flex items-center gap-6">
-                          <div className="w-16 h-16 bg-stone-50 border border-stone-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-sm shrink-0">
+                        <label className="label-cms">Branding Accent Word (Italic)</label>
+                        <input className="input-cms font-black italic text-green-800" value={branding.accentName} onChange={e => setBranding({...branding, accentName: e.target.value})} />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="label-cms">Brand Logo Asset</label>
+                        <div className="flex items-center gap-6 p-4 bg-stone-50 rounded-2xl border border-stone-100">
+                          <div className="w-16 h-16 bg-white border border-stone-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-md shrink-0 ring-4 ring-white">
                             {branding.logoUrl ? (
-                              <img src={branding.logoUrl} alt="Preview" className="w-full h-full object-cover" />
+                              <img src={branding.logoUrl} alt="Logo Preview" className="w-full h-full object-cover" />
                             ) : (
-                              <ImageIcon className="text-stone-300" />
+                              <Mountain className="text-stone-300 w-8 h-8" />
                             )}
                           </div>
                           <div className="flex-1">
                             <input 
                               type="file" 
                               className="hidden" 
-                              id="logo-upload" 
+                              id="brand-logo-upload" 
                               accept="image/*" 
                               onChange={handleLogoUpload}
                             />
                             <div className="flex gap-2">
                               <button 
-                                onClick={() => document.getElementById('logo-upload')?.click()}
-                                className="bg-stone-100 text-stone-900 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-stone-200 transition-all flex items-center gap-2"
+                                onClick={() => document.getElementById('brand-logo-upload')?.click()}
+                                className="bg-stone-900 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 shadow-sm"
                               >
-                                <Upload size={14} /> Upload Logo
+                                <Upload size={14} /> New Logo
                               </button>
                               {branding.logoUrl && (
                                 <button 
                                   onClick={() => setBranding({...branding, logoUrl: ''})}
-                                  className="text-red-500 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all"
+                                  className="text-red-500 bg-white border border-red-50 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all flex items-center gap-2"
                                 >
-                                  Reset Logo
+                                  <RefreshCcw size={14} /> Reset
                                 </button>
                               )}
                             </div>
@@ -384,11 +404,15 @@ const App: React.FC = () => {
                         </button>
                       </div>
                     </div>
-                    <div className="pt-8 border-t flex items-center gap-4 text-green-700 font-black uppercase text-[10px] tracking-widest"><CheckCircle size={16}/> Identity is persisted to secure local storage</div>
+                    
+                    <div className="pt-8 border-t flex items-center gap-4 text-green-700 font-black uppercase text-[10px] tracking-widest">
+                      <CheckCircle size={16}/> Identity changes persist to local encrypted storage
+                    </div>
                   </div>
                 </div>
               )}
 
+              {/* Herd Management Tab */}
               {adminTab === 'fleet' && (
                 <div className="space-y-16 animate-in slide-in-from-bottom-8">
                    <header className="flex justify-between items-end">
@@ -465,6 +489,7 @@ const App: React.FC = () => {
                 </div>
               )}
 
+              {/* Journal Gallery Tab */}
               {adminTab === 'gallery' && (
                 <div className="space-y-16 animate-in slide-in-from-bottom-8">
                    <header className="flex justify-between items-end">
@@ -514,6 +539,7 @@ const App: React.FC = () => {
                 </div>
               )}
 
+              {/* Expedition Logs Tab */}
               {adminTab === 'bookings' && (
                 <div className="space-y-16 animate-in slide-in-from-bottom-8">
                   <header><h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Expedition Logs</h2><p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Review incoming deployment requests</p></header>
@@ -552,6 +578,7 @@ const App: React.FC = () => {
                 </div>
               )}
 
+              {/* Billing & API Tab */}
               {adminTab === 'billing' && (
                 <div className="max-w-4xl space-y-16 animate-in slide-in-from-bottom-8">
                   <header><h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Billing & API</h2><p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Secure connection to Google AI services</p></header>
@@ -601,6 +628,7 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* Public Facing Website */}
       {!showDashboard && (
         <>
           <nav className="fixed w-full z-[100] bg-white/95 backdrop-blur-2xl border-b h-24 flex items-center shadow-sm">
@@ -626,6 +654,7 @@ const App: React.FC = () => {
           </div>
 
           <main>
+            {/* Hero Section */}
             <section className="relative h-screen flex items-center justify-center text-center overflow-hidden">
               <div className="absolute inset-0 -z-10"><img src={branding.heroImageUrl} className="w-full h-full object-cover brightness-[0.4] scale-105 animate-in zoom-in duration-[10000ms]" alt="Landscape" /></div>
               <div className="max-w-5xl px-8 text-white">
@@ -635,6 +664,7 @@ const App: React.FC = () => {
               </div>
             </section>
 
+            {/* Content Sections */}
             <section id="benefits" className="py-64 bg-white"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">Intelligence.</h2><div className="grid grid-cols-1 md:grid-cols-4 gap-16">{BENEFITS.map((b,i)=>(<div key={i} className="p-12 bg-stone-50 rounded-[4rem] border border-stone-100 hover:border-green-200 hover:bg-white transition-all group hover:shadow-2xl duration-500 text-center"><div className="mb-12 flex justify-center group-hover:scale-110 transition-transform duration-500 text-green-700">{b.icon}</div><h3 className="text-3xl font-black mb-6 tracking-tight leading-none">{b.title}</h3><p className="text-stone-500 font-medium leading-relaxed text-lg">{b.description}</p></div>))}</div></div></section>
             <section id="about" className="py-64 bg-stone-100"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">The Herd.</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">{llamas.map(l=><LlamaCard key={l.id} llama={l} />)}</div></div></section>
             <section id="gear" className="py-64 bg-white"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">Expedition Assets.</h2><GearSection /></div></section>
@@ -642,6 +672,7 @@ const App: React.FC = () => {
             <section id="faq" className="py-64 bg-stone-50"><div className="max-w-7xl mx-auto px-8"><FAQSection /></div></section>
             <section id="booking" className="py-64 bg-white"><div className="max-w-5xl mx-auto px-8 text-center"><h2 className="text-8xl font-black mb-32 tracking-tighter leading-none">Logistics.</h2><BookingForm /></div></section>
             
+            {/* Contact Section */}
             <section id="contact" className="py-64 bg-stone-50 relative overflow-hidden">
                <div className="absolute top-0 right-0 p-32 opacity-[0.03] rotate-12 pointer-events-none">
                  <Mountain size={600} />
@@ -653,7 +684,7 @@ const App: React.FC = () => {
                  </header>
                  
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                   <div className="bg-white p-16 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all duration-500">
+                   <div className="bg-white p-16 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all duration-500 text-left">
                      <div className="w-20 h-20 bg-green-50 text-green-800 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-green-800 group-hover:text-white transition-all shadow-lg">
                        <MapPin size={36} />
                      </div>
@@ -664,7 +695,7 @@ const App: React.FC = () => {
                      </a>
                    </div>
 
-                   <div className="bg-white p-16 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all duration-500">
+                   <div className="bg-white p-16 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all duration-500 text-left">
                      <div className="w-20 h-20 bg-green-50 text-green-800 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-green-800 group-hover:text-white transition-all shadow-lg">
                        <Phone size={36} />
                      </div>
@@ -673,7 +704,7 @@ const App: React.FC = () => {
                      <a href="tel:8013720353" className="text-3xl font-black text-stone-900 hover:text-green-800 transition-colors">801-372-0353</a>
                    </div>
 
-                   <div className="bg-white p-16 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all duration-500">
+                   <div className="bg-white p-16 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all duration-500 text-left">
                      <div className="w-20 h-20 bg-green-50 text-green-800 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-green-800 group-hover:text-white transition-all shadow-lg">
                        <Mail size={36} />
                      </div>
@@ -686,13 +717,14 @@ const App: React.FC = () => {
             </section>
           </main>
 
+          {/* Footer */}
           <footer className="bg-stone-950 text-stone-500 pt-48 pb-24 border-t border-white/5 relative">
             <div className="max-w-7xl mx-auto px-8">
               <div className="mb-24 p-12 bg-white/5 rounded-[3rem] border border-white/10 flex flex-col md:flex-row items-center gap-8 group transition-all hover:bg-white/[0.08] hover:border-green-500/30">
                 <div className="w-16 h-16 bg-green-800/20 text-green-400 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-green-900/20">
                   <Sparkles size={24} className="animate-float" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 text-left">
                   <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-green-500 mb-2">Llama Fact of the Day</h5>
                   <p className="text-stone-300 text-lg md:text-xl font-medium italic leading-relaxed">"{dailyFact}"</p>
                 </div>
@@ -701,14 +733,14 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col md:flex-row justify-between items-start gap-24 mb-32">
+              <div className="flex flex-col md:flex-row justify-between items-start gap-24 mb-32 text-left">
                 <div className="space-y-10 max-w-xl">
                   <Logo branding={branding} light onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
                   <p className="text-stone-500 font-medium leading-relaxed text-lg">Providing elite mountain-trained pack strings for adventures since 2018. We specialize in low-impact, high-efficiency wilderness logistics across the Montana Rockies.</p>
                   <div className="space-y-2 pt-4">
                     <p className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2"><MapPin size={14} className="text-green-500"/> 310 Lump Gulch Road, Clancy, MT 59634</p>
                     <p className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2"><Phone size={14} className="text-green-500"/> 801-372-0353</p>
-                    <p className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2"><Mail size={14} className="text-green-500"/> kevin.paul.brown@gmail.com</p>
+                    <p className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2"><Mail size={14} className="text-green-500"/> {branding.adminEmail}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-24">
@@ -725,6 +757,7 @@ const App: React.FC = () => {
         </>
       )}
 
+      {/* Global Processing Loader */}
       {isProcessing && (
         <div className="fixed inset-0 z-[500] bg-stone-950/80 backdrop-blur-3xl flex items-center justify-center">
           <div className="bg-white px-20 py-24 rounded-[5rem] shadow-2xl flex flex-col items-center gap-12 animate-in zoom-in w-full max-w-lg mx-6 text-center">
