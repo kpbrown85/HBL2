@@ -45,10 +45,11 @@ import {
   ExternalLink,
   CreditCard,
   Settings,
-  RefreshCcw
+  RefreshCcw,
+  Layout
 } from 'lucide-react';
 
-const APP_VERSION = "3.2.8-Production";
+const APP_VERSION = "3.2.9-Production";
 
 interface Branding {
   siteName: string;
@@ -120,9 +121,10 @@ const App: React.FC = () => {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
   const [hasApiKey, setHasApiKey] = useState(false);
   
+  // Admin State
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('hbl_isAdmin') === 'true');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(isAdmin); // Automatically show if already admin
   const [adminTab, setAdminTab] = useState<'branding' | 'fleet' | 'gallery' | 'bookings' | 'billing'>('branding');
   const [passwordInput, setPasswordInput] = useState("");
   const [editingLlama, setEditingLlama] = useState<Llama | null>(null);
@@ -192,7 +194,11 @@ const App: React.FC = () => {
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordInput === "llama123") {
-      setIsAdmin(true); setShowAdminLogin(false); setPasswordInput(""); setShowDashboard(true);
+      setIsAdmin(true); 
+      setShowAdminLogin(false); 
+      setPasswordInput(""); 
+      setShowDashboard(true);
+      setAdminTab('branding'); // Ensure we start on branding
     } else {
       alert("Invalid Access Key");
     }
@@ -262,10 +268,14 @@ const App: React.FC = () => {
       {/* Admin Quick Trigger */}
       <button 
         onClick={() => isAdmin ? setShowDashboard(true) : setShowAdminLogin(true)}
-        className="fixed bottom-8 right-8 z-[150] w-16 h-16 bg-white border border-stone-100 rounded-full shadow-2xl flex items-center justify-center text-3xl hover:scale-110 active:scale-95 transition-all group overflow-hidden"
+        className="fixed bottom-8 right-8 z-[150] w-16 h-16 bg-white border border-stone-100 rounded-full shadow-2xl flex flex-col items-center justify-center hover:scale-110 active:scale-95 transition-all group overflow-hidden"
       >
-        <span className="group-hover:rotate-12 transition-transform">🦙</span>
-        {isAdmin && <div className="absolute top-2 right-2 w-4 h-4 bg-green-500 rounded-full ring-4 ring-white animate-pulse" />}
+        <span className="text-3xl group-hover:rotate-12 transition-transform">🦙</span>
+        {isAdmin && (
+          <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
+             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+          </div>
+        )}
       </button>
 
       {/* Admin Login Modal */}
@@ -292,7 +302,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Admin Dashboard */}
+      {/* Admin Dashboard Overlay */}
       {showDashboard && isAdmin && (
         <div className="fixed inset-0 z-[200] bg-white flex flex-col overflow-hidden animate-in slide-in-from-bottom-12 duration-700">
           <header className="bg-white border-b px-12 py-8 flex items-center justify-between shrink-0">
@@ -330,18 +340,28 @@ const App: React.FC = () => {
               {adminTab === 'branding' && (
                 <div className="max-w-4xl space-y-16 animate-in slide-in-from-bottom-8">
                   <header>
-                    <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Presence & Identity</h2>
+                    <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Branding & Presence</h2>
                     <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Core DNA of {branding.siteName}</p>
                   </header>
                   
                   <div className="bg-white p-12 rounded-[4rem] shadow-2xl border border-stone-100 space-y-12">
+                    <div className="flex items-center gap-6 pb-10 border-b border-stone-50">
+                      <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-green-800 shadow-sm ring-1 ring-green-100">
+                        <Palette size={32} />
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-black text-stone-900">Visual Identity</h3>
+                        <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Global Styles & Brand Assets</p>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                       <div className="space-y-3">
                         <label className="label-cms">Business Name</label>
                         <input className="input-cms" value={branding.siteName} onChange={e => setBranding({...branding, siteName: e.target.value})} />
                       </div>
                       <div className="space-y-3">
-                        <label className="label-cms">Admin Dispatch Email</label>
+                        <label className="label-cms">Admin Contact Email</label>
                         <input className="input-cms" value={branding.adminEmail} onChange={e => setBranding({...branding, adminEmail: e.target.value})} />
                       </div>
                     </div>
@@ -353,15 +373,15 @@ const App: React.FC = () => {
                       </div>
                       <div className="space-y-3">
                         <label className="label-cms">Brand Logo Asset</label>
-                        <div className="flex items-center gap-6 p-4 bg-stone-50 rounded-2xl border border-stone-100">
-                          <div className="w-16 h-16 bg-white border border-stone-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-md shrink-0 ring-4 ring-white">
+                        <div className="flex items-center gap-6 p-6 bg-stone-50 rounded-[2rem] border border-stone-100">
+                          <div className="w-20 h-20 bg-white border-2 border-white rounded-[1.5rem] flex items-center justify-center overflow-hidden shadow-lg shrink-0 ring-1 ring-stone-200/20 transition-transform hover:scale-105">
                             {branding.logoUrl ? (
                               <img src={branding.logoUrl} alt="Logo Preview" className="w-full h-full object-cover" />
                             ) : (
-                              <Mountain className="text-stone-300 w-8 h-8" />
+                              <Mountain className="text-stone-300 w-10 h-10" />
                             )}
                           </div>
-                          <div className="flex-1">
+                          <div className="flex-1 space-y-4">
                             <input 
                               type="file" 
                               className="hidden" 
@@ -372,19 +392,20 @@ const App: React.FC = () => {
                             <div className="flex gap-2">
                               <button 
                                 onClick={() => document.getElementById('brand-logo-upload')?.click()}
-                                className="bg-stone-900 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 shadow-sm"
+                                className="bg-stone-900 text-white px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 shadow-xl shadow-stone-950/10 active:scale-95"
                               >
                                 <Upload size={14} /> New Logo
                               </button>
                               {branding.logoUrl && (
                                 <button 
                                   onClick={() => setBranding({...branding, logoUrl: ''})}
-                                  className="text-red-500 bg-white border border-red-50 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all flex items-center gap-2"
+                                  className="text-red-500 bg-white border border-red-50 px-4 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all flex items-center gap-2"
                                 >
                                   <RefreshCcw size={14} /> Reset
                                 </button>
                               )}
                             </div>
+                            <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">Recommended: 400x400 PNG/JPG</p>
                           </div>
                         </div>
                       </div>
@@ -397,22 +418,25 @@ const App: React.FC = () => {
                         <button 
                           onClick={handleGenerateHero}
                           disabled={isProcessing}
-                          className="bg-stone-900 text-white px-8 rounded-2xl flex items-center gap-2 hover:bg-black transition-all active:scale-95 disabled:opacity-50"
+                          className="bg-green-800 text-white px-8 rounded-2xl flex items-center gap-3 hover:bg-green-900 transition-all active:scale-95 disabled:opacity-50 shadow-xl shadow-green-900/10"
                         >
                           {isProcessing ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />}
-                          AI Render
+                          <span className="font-black text-[10px] uppercase tracking-widest">AI Render</span>
                         </button>
                       </div>
                     </div>
                     
-                    <div className="pt-8 border-t flex items-center gap-4 text-green-700 font-black uppercase text-[10px] tracking-widest">
-                      <CheckCircle size={16}/> Identity changes persist to local encrypted storage
+                    <div className="pt-10 border-t flex items-center gap-4 text-green-700 font-black uppercase text-[10px] tracking-[0.3em]">
+                      <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center text-green-600">
+                        <CheckCircle size={16}/>
+                      </div>
+                      Brand Identity is synchronized with local storage cache
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Herd Management Tab */}
+              {/* Fleet Management Tab */}
               {adminTab === 'fleet' && (
                 <div className="space-y-16 animate-in slide-in-from-bottom-8">
                    <header className="flex justify-between items-end">
