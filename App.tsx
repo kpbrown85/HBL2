@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { LLAMAS, GALLERY_IMAGES, BENEFITS, LLAMA_FACTS } from './constants';
 import { LlamaCard } from './components/LlamaCard';
@@ -5,6 +6,7 @@ import { BookingForm } from './components/BookingForm';
 import { PhotoCarousel } from './components/PhotoCarousel';
 import { GearSection } from './components/GearSection';
 import { FAQSection } from './components/FAQSection';
+import { PackingListGenerator } from './components/PackingListGenerator';
 import { generateWelcomeSlogan, generateBackdrop } from './services/geminiService';
 import { GalleryImage, Llama, BookingData } from './types';
 import { 
@@ -210,6 +212,7 @@ const App: React.FC = () => {
   const handleSelectKey = async () => {
     if (typeof window.aistudio !== 'undefined') {
       await window.aistudio.openSelectKey();
+      // Assume success to avoid race condition delays as per guidelines
       setHasApiKey(true);
     }
   };
@@ -220,9 +223,14 @@ const App: React.FC = () => {
       const url = await generateBackdrop("A sweeping panorama of the Elkhorn Mountains near Helena, Montana at sunset.");
       setBranding({ ...branding, heroImageUrl: url });
     } catch (err: any) {
+      // Re-prompt user to select key if requested entity was not found (expired/invalid key)
       if (err.message?.includes("Requested entity was not found")) {
-        alert("API Key expired or invalid. Please re-select your API key in the Billing tab.");
+        alert("API Key expired or invalid. Please re-select your API key in the next dialog.");
         setHasApiKey(false);
+        if (typeof window.aistudio !== 'undefined') {
+          await window.aistudio.openSelectKey();
+          setHasApiKey(true);
+        }
       } else {
         alert("Generation failed: " + err.message);
       }
@@ -739,6 +747,19 @@ const App: React.FC = () => {
             <section id="benefits" className="py-64 bg-white"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">Intelligence.</h2><div className="grid grid-cols-1 md:grid-cols-4 gap-16">{BENEFITS.map((b,i)=>(<div key={i} className="p-12 bg-stone-50 rounded-[4rem] border border-stone-100 hover:border-green-200 hover:bg-white transition-all group hover:shadow-2xl duration-500 text-center"><div className="mb-12 flex justify-center group-hover:scale-110 transition-transform duration-500 text-green-700">{b.icon}</div><h3 className="text-3xl font-black mb-6 tracking-tight leading-none">{b.title}</h3><p className="text-stone-500 font-medium leading-relaxed text-lg">{b.description}</p></div>))}</div></div></section>
             <section id="about" className="py-64 bg-stone-100"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">The Herd.</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">{llamas.map(l=><LlamaCard key={l.id} llama={l} />)}</div></div></section>
             <section id="gear" className="py-64 bg-white"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">Expedition Assets.</h2><GearSection /></div></section>
+            
+            {/* New Packing List Section */}
+            <section id="packing" className="py-64 bg-stone-50">
+              <div className="max-w-7xl mx-auto px-8">
+                <header className="text-center mb-24">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-green-700 mb-4">Precision Planning</h4>
+                  <h2 className="text-8xl font-black tracking-tighter leading-none mb-8">Load Intel.</h2>
+                  <p className="text-stone-500 text-xl font-medium max-w-2xl mx-auto">Generate a personalized mission gear list using our AI Trail Advisor.</p>
+                </header>
+                <PackingListGenerator />
+              </div>
+            </section>
+
             <section id="gallery" className="py-64 bg-stone-950 text-white"><div className="max-w-7xl mx-auto px-8"><header className="flex flex-col md:flex-row justify-between items-end mb-32 gap-8"><h2 className="text-9xl font-black tracking-tighter leading-none">Journal.</h2><div className="bg-white/5 border border-white/10 px-12 py-6 rounded-full text-green-400 font-black uppercase tracking-widest text-xs">High Country Field Notes</div></header><PhotoCarousel images={gallery} /></div></section>
             <section id="faq" className="py-64 bg-stone-50"><div className="max-w-7xl mx-auto px-8"><FAQSection /></div></section>
             <section id="booking" className="py-64 bg-white"><div className="max-w-5xl mx-auto px-8 text-center"><h2 className="text-8xl font-black mb-32 tracking-tighter leading-none">Logistics.</h2><BookingForm /></div></section>
