@@ -47,7 +47,7 @@ import {
   Settings
 } from 'lucide-react';
 
-const APP_VERSION = "3.2.6-Production";
+const APP_VERSION = "3.2.7-Production";
 
 interface Branding {
   siteName: string;
@@ -133,7 +133,15 @@ const App: React.FC = () => {
       adminEmail: 'kevin.paul.brown@gmail.com',
       logoUrl: ''
     };
-    return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return { ...defaults, ...parsed };
+      } catch (e) {
+        return defaults;
+      }
+    }
+    return defaults;
   });
 
   const [llamas, setLlamas] = useState<Llama[]>(() => {
@@ -170,14 +178,16 @@ const App: React.FC = () => {
     return () => window.removeEventListener('hbl_new_booking', loadLogs);
   }, []);
 
-  useEffect(() => { localStorage.setItem('hbl_branding', JSON.stringify(branding)); document.title = branding.siteName; }, [branding]);
+  useEffect(() => { 
+    localStorage.setItem('hbl_branding', JSON.stringify(branding)); 
+    document.title = branding.siteName + " | Montana Pack Strings"; 
+  }, [branding]);
   useEffect(() => { localStorage.setItem('hbl_llamas', JSON.stringify(llamas)); }, [llamas]);
   useEffect(() => { localStorage.setItem('hbl_gallery', JSON.stringify(gallery)); }, [gallery]);
   useEffect(() => { sessionStorage.setItem('hbl_isAdmin', isAdmin.toString()); }, [isAdmin]);
 
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
-    // Keep internal logic but remove UI hints
     if (passwordInput === "llama123") {
       setIsAdmin(true); setShowAdminLogin(false); setPasswordInput(""); setShowDashboard(true);
     } else {
@@ -351,7 +361,7 @@ const App: React.FC = () => {
                                   onClick={() => setBranding({...branding, logoUrl: ''})}
                                   className="text-red-500 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all"
                                 >
-                                  Reset
+                                  Reset Logo
                                 </button>
                               )}
                             </div>
@@ -374,7 +384,7 @@ const App: React.FC = () => {
                         </button>
                       </div>
                     </div>
-                    <div className="pt-8 border-t flex items-center gap-4 text-green-700 font-black uppercase text-[10px] tracking-widest"><CheckCircle size={16}/> State persisted to secure local storage</div>
+                    <div className="pt-8 border-t flex items-center gap-4 text-green-700 font-black uppercase text-[10px] tracking-widest"><CheckCircle size={16}/> Identity is persisted to secure local storage</div>
                   </div>
                 </div>
               )}
@@ -568,6 +578,20 @@ const App: React.FC = () => {
                         <h5 className="font-black text-blue-900 text-sm uppercase tracking-widest mb-2">Important Notice</h5>
                         <p className="text-blue-700/70 text-sm leading-relaxed">Advanced features like AI image rendering require a paid API key. You can manage your keys and billing at the <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-blue-900 transition-colors">Google AI Studio Billing Portal</a>.</p>
                       </div>
+                    </div>
+
+                    <div className="pt-8 border-t">
+                       <button 
+                        onClick={() => {
+                          if (confirm("Clear local cache? This will reset custom branding and herd data on THIS browser only.")) {
+                            localStorage.clear();
+                            window.location.reload();
+                          }
+                        }}
+                        className="text-red-400 font-black text-[10px] uppercase tracking-widest hover:text-red-600 transition-colors"
+                       >
+                         Emergency: Clear Local Storage Cache
+                       </button>
                     </div>
                   </div>
                 </div>
