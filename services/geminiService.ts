@@ -1,6 +1,5 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { WeatherForecast } from "../types";
 
 export async function getLlamaAdvice(question: string) {
   try {
@@ -29,16 +28,16 @@ export async function generateWelcomeSlogan(): Promise<string> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: "Generate a short, punchy 1-sentence slogan for a llama rental company in Helena, Montana that specializes in backcountry backpacking and hunting.",
+      contents: "Generate a short, punchy 1-sentence slogan for a llama rental company in Helena, Montana. Focus on the bond between human and animal in the rugged wilderness.",
       config: {
         maxOutputTokens: 50,
         thinkingConfig: { thinkingBudget: 25 },
         temperature: 1,
       }
     });
-    return response.text || "The Ultimate Montana Backcountry Partner.";
+    return response.text || "Your Trusted Companion in the Montana High Country.";
   } catch {
-    return "The Ultimate Montana Backcountry Partner.";
+    return "Your Trusted Companion in the Montana High Country.";
   }
 }
 
@@ -63,67 +62,10 @@ export async function generatePackingList(tripType: string, duration: number, we
         temperature: 0.7,
       }
     });
-    return response.text || "Unable to generate list at base camp. Please check back later.";
+    return response.text || "The trail guide is currently unavailable. Please try again later.";
   } catch (error) {
     console.error("Packing List Error:", error);
     return "The trail guide is currently unavailable. Please try again later.";
-  }
-}
-
-export async function getWeatherForecast(): Promise<WeatherForecast | null> {
-  try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const prompt = `What is the current weather and the 5-day forecast for Helena, Montana? Return the data in valid JSON format with the following structure:
-    {
-      "currentTemp": "string",
-      "currentCondition": "string",
-      "lastUpdated": "string",
-      "forecast": [
-        { "day": "string", "condition": "string", "high": "string", "low": "string", "precipitation": "string" }
-      ]
-    }`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
-      config: {
-        tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            currentTemp: { type: Type.STRING },
-            currentCondition: { type: Type.STRING },
-            lastUpdated: { type: Type.STRING },
-            forecast: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  day: { type: Type.STRING },
-                  condition: { type: Type.STRING },
-                  high: { type: Type.STRING },
-                  low: { type: Type.STRING },
-                  precipitation: { type: Type.STRING }
-                }
-              }
-            }
-          },
-          required: ["currentTemp", "currentCondition", "lastUpdated", "forecast"]
-        }
-      }
-    });
-
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => ({
-      uri: chunk.web?.uri || '',
-      title: chunk.web?.title || 'Source'
-    })) || [];
-
-    const data = JSON.parse(response.text || '{}');
-    return { ...data, sources };
-  } catch (error) {
-    console.error("Weather Fetch Error:", error);
-    return null;
   }
 }
 

@@ -7,7 +7,6 @@ import { PhotoCarousel } from './components/PhotoCarousel';
 import { GearSection } from './components/GearSection';
 import { FAQSection } from './components/FAQSection';
 import { PackingListGenerator } from './components/PackingListGenerator';
-import { WeatherForecast } from './components/WeatherForecast';
 import { generateWelcomeSlogan, generateBackdrop } from './services/geminiService';
 import { GalleryImage, Llama, BookingData } from './types';
 import { 
@@ -123,7 +122,7 @@ const Logo = ({ branding, light = false, onClick }: { branding: Branding, light?
 
 const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [slogan, setSlogan] = useState("Montana’s premier backcountry packing string.");
+  const [slogan, setSlogan] = useState("Forging Unbreakable Bonds in the Montana Wild.");
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
   const [hasApiKey, setHasApiKey] = useState(false);
@@ -271,6 +270,42 @@ const App: React.FC = () => {
         }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleLlamaImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingLlama) {
+      setIsProcessing(true);
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const optimized = await compressImage(ev.target?.result as string, 800, 0.7);
+          setEditingLlama({ ...editingLlama, imageUrl: optimized });
+        } catch (err) {
+          console.error("Llama image processing failed:", err);
+          alert("Failed to process image.");
+        } finally {
+          setIsProcessing(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const saveLlama = (llama: Llama) => {
+    const exists = llamas.find(l => l.id === llama.id);
+    if (exists) {
+      setLlamas(llamas.map(l => l.id === llama.id ? llama : l));
+    } else {
+      setLlamas([...llamas, llama]);
+    }
+    setEditingLlama(null);
+  };
+
+  const deleteLlama = (id: string) => {
+    if (confirm("Are you sure you want to remove this llama from the herd?")) {
+      setLlamas(llamas.filter(l => l.id !== id));
     }
   };
 
@@ -470,7 +505,100 @@ const App: React.FC = () => {
                     <div><h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">The Herd</h2><p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Manage active pack animal string</p></div>
                     {!editingLlama && <button onClick={() => setEditingLlama({ id: Date.now().toString(), name: 'New Llama', age: 4, personality: 'A fresh recruit to the mountain string.', maxLoad: 75, imageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=800', specialty: 'Backpacking' })} className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"><Plus size={20}/> New Recruit</button>}
                   </header>
-                  {/* ... same fleet editor ... */}
+                  
+                  {editingLlama ? (
+                    <div className="bg-white p-12 rounded-[4rem] shadow-2xl border border-stone-100 grid grid-cols-1 lg:grid-cols-2 gap-16">
+                      <div className="space-y-10">
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 block">Llama Identity</label>
+                          <input 
+                            type="text" 
+                            value={editingLlama.name} 
+                            onChange={e => setEditingLlama({...editingLlama, name: e.target.value})}
+                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-2xl font-black tracking-tight focus:ring-2 focus:ring-green-800 outline-none"
+                            placeholder="Name"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-8">
+                          <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 block">Age (Years)</label>
+                            <input 
+                              type="number" 
+                              value={editingLlama.age} 
+                              onChange={e => setEditingLlama({...editingLlama, age: parseInt(e.target.value)})}
+                              className="w-full bg-stone-50 border-none rounded-3xl p-6 text-xl font-black focus:ring-2 focus:ring-green-800 outline-none"
+                            />
+                          </div>
+                          <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 block">Max Load (Lbs)</label>
+                            <input 
+                              type="number" 
+                              value={editingLlama.maxLoad} 
+                              onChange={e => setEditingLlama({...editingLlama, maxLoad: parseInt(e.target.value)})}
+                              className="w-full bg-stone-50 border-none rounded-3xl p-6 text-xl font-black focus:ring-2 focus:ring-green-800 outline-none"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 block">Specialty</label>
+                          <select 
+                            value={editingLlama.specialty}
+                            onChange={e => setEditingLlama({...editingLlama, specialty: e.target.value as any})}
+                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-lg font-bold focus:ring-2 focus:ring-green-800 outline-none"
+                          >
+                            <option value="Backpacking">Backpacking</option>
+                            <option value="Hunting">Hunting</option>
+                            <option value="Lead Llama">Lead Llama</option>
+                            <option value="Gentle Soul">Gentle Soul</option>
+                          </select>
+                        </div>
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 block">Personality Profile</label>
+                          <textarea 
+                            value={editingLlama.personality} 
+                            onChange={e => setEditingLlama({...editingLlama, personality: e.target.value})}
+                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-lg font-medium leading-relaxed focus:ring-2 focus:ring-green-800 outline-none h-40 resize-none"
+                            placeholder="Describe their temperament..."
+                          />
+                        </div>
+                        <div className="flex gap-4 pt-8">
+                          <button onClick={() => saveLlama(editingLlama)} className="flex-1 bg-green-800 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-xl hover:bg-green-900 transition-all active:scale-95">Save Changes</button>
+                          <button onClick={() => setEditingLlama(null)} className="flex-1 bg-stone-100 text-stone-900 py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest hover:bg-stone-200 transition-all active:scale-95">Cancel</button>
+                        </div>
+                      </div>
+                      <div className="space-y-10">
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 block">Profile Image</label>
+                          <div className="relative group aspect-square rounded-[3rem] overflow-hidden bg-stone-100 border-4 border-stone-50 shadow-inner">
+                            <img src={editingLlama.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                            <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white gap-4">
+                              <Upload size={48} />
+                              <span className="font-black uppercase tracking-widest text-xs">Replace Photo</span>
+                              <input type="file" accept="image/*" className="hidden" onChange={handleLlamaImageUpload} />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                      {llamas.map(l => (
+                        <div key={l.id} className="bg-white p-8 rounded-[3rem] shadow-xl border border-stone-100 flex items-center gap-8 group hover:border-green-200 transition-all">
+                          <div className="w-24 h-24 rounded-3xl overflow-hidden bg-stone-100 flex-shrink-0">
+                            <img src={l.imageUrl} alt={l.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xl font-black tracking-tight truncate">{l.name}</h4>
+                            <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mt-1">{l.specialty}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => setEditingLlama(l)} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-green-50 hover:text-green-800 transition-all"><Edit3 size={18}/></button>
+                            <button onClick={() => deleteLlama(l.id)} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all"><Trash2 size={18}/></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
               {/* ... billing, gallery etc ... */}
@@ -505,7 +633,7 @@ const App: React.FC = () => {
             <div className="max-w-7xl mx-auto px-8 w-full flex justify-between items-center">
               <Logo branding={branding} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
               <div className="hidden md:flex items-center gap-12 font-black uppercase text-[11px] tracking-[0.2em]">
-                {['Conditions', 'Benefits', 'About', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(item => (
+                {['Benefits', 'About', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(item => (
                   <a key={item} href={`#${item.toLowerCase()}`} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">{item}</a>
                 ))}
                 <a href="#booking" className="bg-green-800 text-white px-10 py-5 rounded-2xl flex items-center gap-2 shadow-2xl shadow-green-900/20 hover:bg-green-900 transition-all active:scale-95">Book Trek <ChevronRight size={14} /></a>
@@ -516,7 +644,7 @@ const App: React.FC = () => {
 
           <div className={`fixed inset-0 z-[110] bg-stone-950 transition-all duration-700 md:hidden ${isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
             <div className="p-16 pt-32 flex flex-col h-full space-y-12">
-              {['Conditions', 'Benefits', 'About', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(l => (
+              {['Benefits', 'About', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(l => (
                 <a key={l} href={`#${l.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-6xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase">{l}</a>
               ))}
               <a href="#booking" onClick={() => setIsMenuOpen(false)} className="bg-green-600 text-white py-12 rounded-[3rem] text-3xl font-black uppercase tracking-widest text-center shadow-2xl">Plan My Trek</a>
@@ -531,18 +659,6 @@ const App: React.FC = () => {
                 <h1 className="text-7xl md:text-9xl font-black mb-12 leading-[0.85] tracking-tighter animate-in slide-in-from-top-12 duration-1000">Master the Montana Peaks. <br /><span className="italic text-green-400 font-light font-display">Elite Strings for the High Country.</span></h1>
                 <p className="text-2xl md:text-4xl text-stone-200 mb-20 max-w-4xl mx-auto font-medium leading-relaxed tracking-tight">{slogan}</p>
                 <a href="#booking" className="bg-green-600 px-20 py-8 rounded-3xl text-3xl font-black shadow-2xl shadow-green-900/40 hover:bg-green-500 transition-all active:scale-95 inline-block">Secure Your String</a>
-              </div>
-            </section>
-
-            {/* Weather & Conditions Section */}
-            <section id="conditions" className="py-64 bg-stone-50">
-              <div className="max-w-7xl mx-auto px-8">
-                <header className="text-center mb-24">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-green-700 mb-4">Command Center</h4>
-                  <h2 className="text-8xl font-black tracking-tighter leading-none mb-8">Conditions.</h2>
-                  <p className="text-stone-500 text-xl font-medium max-w-2xl mx-auto">Real-time weather telemetry from Helena, MT. Essential for high-altitude mission planning.</p>
-                </header>
-                <WeatherForecast />
               </div>
             </section>
 
