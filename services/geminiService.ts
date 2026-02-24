@@ -82,7 +82,7 @@ export async function generateBackdrop(prompt: string) {
           aspectRatio: "16:9",
           imageSize: "1K"
         },
-        tools: [{ google_search: {} }]
+        tools: [{ googleSearch: {} }]
       }
     });
 

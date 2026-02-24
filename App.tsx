@@ -174,7 +174,24 @@ const App: React.FC = () => {
 
   useEffect(() => {
     generateWelcomeSlogan().then(val => { if (val) setSlogan(val); });
-    const loadLogs = () => setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
+    
+    const loadLogs = async () => {
+      try {
+        const response = await fetch('/api/bookings');
+        if (response.ok) {
+          const data = await response.json();
+          setBookings(data);
+          // Sync to localStorage for offline/redundancy
+          localStorage.setItem('hbl_bookings', JSON.stringify(data));
+        } else {
+          // Fallback to localStorage if API fails
+          setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
+        }
+      } catch (error) {
+        setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
+      }
+    };
+
     loadLogs();
     window.addEventListener('hbl_new_booking', loadLogs);
     
@@ -238,17 +255,28 @@ const App: React.FC = () => {
     }
   };
 
-  const updateBooking = (id: string, action: 'confirm' | 'cancel' | 'delete') => {
-    const current = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
-    let next;
-    if (action === 'delete') {
-      if (!confirm("Permanently delete this record?")) return;
-      next = current.filter((l: any) => l.id !== id);
-    } else {
-      next = current.map((l: any) => l.id === id ? { ...l, status: action === 'confirm' ? 'confirmed' : 'canceled', isRead: true } : l);
+  const updateBooking = async (id: string, action: 'confirm' | 'cancel' | 'delete') => {
+    try {
+      if (action === 'delete') {
+        if (!confirm("Permanently delete this record?")) return;
+        const response = await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Delete failed');
+      } else {
+        const status = action === 'confirm' ? 'confirmed' : 'canceled';
+        const response = await fetch(`/api/bookings/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status, isRead: true }),
+        });
+        if (!response.ok) throw new Error('Update failed');
+      }
+      
+      // Refresh logs
+      window.dispatchEvent(new Event('hbl_new_booking'));
+    } catch (error) {
+      console.error("Booking action error:", error);
+      alert("Failed to process action. Please try again.");
     }
-    localStorage.setItem('hbl_bookings', JSON.stringify(next));
-    setBookings(next);
   };
 
   const unreadCount = bookings.filter(b => !b.isRead).length;

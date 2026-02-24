@@ -73,25 +73,37 @@ export const BookingForm: React.FC = () => {
     setCheckedItems(next);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Save to localStorage
-    const newBooking: BookingData = {
+    const newBooking: Partial<BookingData> = {
       ...formData,
-      id: Math.random().toString(36).substr(2, 9),
-      timestamp: Date.now(),
       status: 'pending',
       isRead: false
     };
 
-    const existing = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
-    localStorage.setItem('hbl_bookings', JSON.stringify([newBooking, ...existing]));
-    
-    // Notify app of new booking
-    window.dispatchEvent(new Event('hbl_new_booking'));
-    
-    setIsSubmitted(true);
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBooking),
+      });
+
+      if (!response.ok) throw new Error('Failed to submit booking');
+      
+      const savedBooking = await response.json();
+
+      // Redundancy: Save to localStorage as well
+      const existing = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
+      localStorage.setItem('hbl_bookings', JSON.stringify([savedBooking, ...existing]));
+      
+      // Notify app of new booking
+      window.dispatchEvent(new Event('hbl_new_booking'));
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("There was an issue sending your request. Please try again or call us directly.");
+    }
   };
 
   const resetForm = () => {
