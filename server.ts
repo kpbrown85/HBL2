@@ -64,7 +64,7 @@ async function startServer() {
       bookings.unshift(booking);
       fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
 
-      // Send Email Notification
+      // Send Email Notification (Non-blocking)
       const transporter = getTransporter();
       const adminEmail = process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com";
 
@@ -105,7 +105,8 @@ async function startServer() {
           `,
         };
 
-        await transporter.sendMail(mailOptions);
+        // We don't 'await' here or we wrap it in a try/catch to ensure the response is sent regardless
+        transporter.sendMail(mailOptions).catch(err => console.error("Email failed but booking saved:", err));
       }
 
       res.status(201).json(booking);
