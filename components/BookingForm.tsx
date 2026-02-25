@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { PRICING, PERSONAL_GEAR_CHECKLIST } from '../constants';
+import { PRICING } from '../constants';
 import { BookingData } from '../types';
 import { 
   Calendar, 
@@ -14,9 +14,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Info,
-  Send,
-  Backpack,
-  Check
+  Send
 } from 'lucide-react';
 
 export const BookingForm: React.FC = () => {
@@ -31,18 +29,10 @@ export const BookingForm: React.FC = () => {
     isFirstTimer: false
   });
 
-  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [estimate, setEstimate] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [adminEmail, setAdminEmail] = useState('kevin.paul.brown@gmail.com');
 
   useEffect(() => {
-    // Sync with branding email if available
-    try {
-      const branding = JSON.parse(localStorage.getItem('hbl_branding') || '{}');
-      if (branding.adminEmail) setAdminEmail(branding.adminEmail);
-    } catch {}
-    
     if (formData.startDate && formData.endDate) {
       const start = new Date(formData.startDate);
       const end = new Date(formData.endDate);
@@ -65,13 +55,6 @@ export const BookingForm: React.FC = () => {
       setEstimate(0);
     }
   }, [formData]);
-
-  const toggleCheck = (id: string) => {
-    const next = new Set(checkedItems);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setCheckedItems(next);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,11 +100,8 @@ export const BookingForm: React.FC = () => {
       trailerNeeded: false,
       isFirstTimer: false
     });
-    setCheckedItems(new Set());
     setIsSubmitted(false);
   };
-
-  const progressPercent = Math.round((checkedItems.size / PERSONAL_GEAR_CHECKLIST.length) * 100);
 
   if (isSubmitted) {
     return (
@@ -136,7 +116,7 @@ export const BookingForm: React.FC = () => {
               We've received your expedition request, <span className="text-stone-900 font-bold">{formData.name.split(' ')[0]}</span>.
             </p>
             <div className="inline-flex items-center gap-2 px-6 py-2 bg-green-50 text-green-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-100">
-               <Send size={12} /> Notification dispatched to {adminEmail}
+               <Info size={12} /> Logged in Admin Dashboard
             </div>
           </div>
 
@@ -324,56 +304,7 @@ export const BookingForm: React.FC = () => {
         </div>
       </div>
 
-      {/* New Gear Checklist Section */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between gap-3 border-b border-stone-50 pb-4 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-700">
-              <Backpack className="w-5 h-5" />
-            </div>
-            <h3 className="text-2xl font-black text-stone-900 tracking-tight">Personal Gear Readiness</h3>
-          </div>
-          <div className="text-right">
-            <span className="text-[10px] font-black uppercase tracking-widest text-stone-400 block mb-1">Packing Status</span>
-            <div className="flex items-center gap-3">
-              <div className="w-32 h-2 bg-stone-100 rounded-full overflow-hidden shadow-inner">
-                <div className="h-full bg-green-800 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-              </div>
-              <span className="font-black text-stone-900 text-xs">{progressPercent}%</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {PERSONAL_GEAR_CHECKLIST.map((item) => (
-            <div 
-              key={item.id}
-              onClick={() => toggleCheck(item.id)}
-              className={`flex items-center gap-4 p-5 rounded-2xl border transition-all cursor-pointer group ${
-                checkedItems.has(item.id) 
-                  ? 'bg-green-50 border-green-200 shadow-sm' 
-                  : 'bg-stone-50 border-stone-100 hover:border-green-200'
-              }`}
-            >
-              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${
-                checkedItems.has(item.id) ? 'bg-green-800 border-green-800 text-white' : 'bg-white border-stone-200'
-              }`}>
-                {checkedItems.has(item.id) && <Check size={14} strokeWidth={4} />}
-              </div>
-              <div className="flex flex-col">
-                <span className={`font-bold text-sm transition-all ${checkedItems.has(item.id) ? 'text-green-900 line-through opacity-60' : 'text-stone-900'}`}>
-                  {item.label}
-                </span>
-                {item.essential && !checkedItems.has(item.id) && (
-                  <span className="text-[8px] font-black uppercase tracking-widest text-red-400 mt-0.5">Critical Item</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="mt-4 text-[10px] text-stone-400 italic font-medium">Items checked here help you track your readiness but do not affect booking rates.</p>
-      </div>
-
+      {/* Expedition Details Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12 bg-stone-50 p-8 rounded-[2rem] border border-stone-100">
         <div className="space-y-4">
           <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-stone-100 hover:border-green-200 transition-all shadow-sm">

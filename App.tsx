@@ -134,6 +134,7 @@ const App: React.FC = () => {
   const [adminTab, setAdminTab] = useState<'branding' | 'fleet' | 'gallery' | 'bookings' | 'billing'>('branding');
   const [passwordInput, setPasswordInput] = useState("");
   const [editingLlama, setEditingLlama] = useState<Llama | null>(null);
+  const [editingGalleryItem, setEditingGalleryItem] = useState<GalleryImage | null>(null);
 
   const [branding, setBranding] = useState<Branding>(() => {
     const saved = localStorage.getItem('hbl_branding');
@@ -335,6 +336,53 @@ const App: React.FC = () => {
     if (confirm("Are you sure you want to remove this llama from the herd?")) {
       setLlamas(llamas.filter(l => l.id !== id));
     }
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setIsProcessing(true);
+    setUploadStatus({ current: 0, total: files.length });
+
+    const newImages: GalleryImage[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadStatus({ current: i + 1, total: files.length });
+      
+      try {
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => resolve(ev.target?.result as string);
+          reader.readAsDataURL(file);
+        });
+
+        const optimized = await compressImage(base64, 1200, 0.7);
+        newImages.push({
+          url: optimized,
+          caption: file.name.split('.')[0].replace(/[-_]/g, ' ')
+        });
+      } catch (err) {
+        console.error("Failed to process gallery image:", err);
+      }
+    }
+
+    setGallery([...newImages, ...gallery]);
+    setIsProcessing(false);
+    setUploadStatus(null);
+  };
+
+  const deleteGalleryItem = (index: number) => {
+    if (confirm("Remove this entry from the Journal?")) {
+      setGallery(gallery.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateGalleryCaption = (index: number, caption: string) => {
+    const next = [...gallery];
+    next[index] = { ...next[index], caption };
+    setGallery(next);
   };
 
   return (
@@ -627,6 +675,60 @@ const App: React.FC = () => {
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+              
+              {adminTab === 'gallery' && (
+                <div className="space-y-16 animate-in slide-in-from-bottom-8">
+                  <header className="flex justify-between items-end">
+                    <div>
+                      <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Expedition Journal</h2>
+                      <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Manage field notes and high-country imagery</p>
+                    </div>
+                    <div className="flex gap-4">
+                      <input 
+                        type="file" 
+                        id="bulk-gallery-upload" 
+                        multiple 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleGalleryUpload} 
+                      />
+                      <button 
+                        onClick={() => document.getElementById('bulk-gallery-upload')?.click()} 
+                        className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
+                      >
+                        <Upload size={20}/> Bulk Upload
+                      </button>
+                    </div>
+                  </header>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {gallery.map((img, idx) => (
+                      <div key={idx} className="bg-white rounded-[3rem] overflow-hidden shadow-xl border border-stone-100 group">
+                        <div className="aspect-video relative overflow-hidden">
+                          <img src={img.url} alt={img.caption} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                            <button 
+                              onClick={() => deleteGalleryItem(idx)}
+                              className="w-12 h-12 bg-red-600 text-white rounded-2xl flex items-center justify-center shadow-xl hover:bg-red-700 transition-all"
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="p-8">
+                          <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 block mb-3">Field Note / Caption</label>
+                          <textarea 
+                            value={img.caption}
+                            onChange={(e) => updateGalleryCaption(idx, e.target.value)}
+                            className="w-full bg-stone-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-green-800 outline-none h-24 resize-none"
+                            placeholder="Describe this moment..."
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
               {/* ... billing, gallery etc ... */}

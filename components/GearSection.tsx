@@ -1,18 +1,26 @@
 
 import React, { useState } from 'react';
-import { GEAR_ITEMS } from '../constants';
+import { GEAR_ITEMS, PERSONAL_GEAR_CHECKLIST } from '../constants';
 import { GearItem } from '../types';
-import { Backpack, Target, Mountain, CheckCircle2, Info, Scale, PackageCheck } from 'lucide-react';
+import { Backpack, Target, Mountain, CheckCircle2, Info, Scale, PackageCheck, Check } from 'lucide-react';
 
 export const GearSection: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'backpacking' | 'hunting'>('all');
   const [checklist, setChecklist] = useState<Set<string>>(new Set());
+  const [personalChecklist, setPersonalChecklist] = useState<Set<string>>(new Set());
 
   const toggleCheck = (id: string) => {
     const newChecklist = new Set(checklist);
     if (newChecklist.has(id)) newChecklist.delete(id);
     else newChecklist.add(id);
     setChecklist(newChecklist);
+  };
+
+  const togglePersonalCheck = (id: string) => {
+    const next = new Set(personalChecklist);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setPersonalChecklist(next);
   };
 
   const filteredGear = GEAR_ITEMS.filter(item => 
@@ -124,6 +132,43 @@ export const GearSection: React.FC = () => {
           "Panniers must be balanced within <span className="text-green-800 font-black">2 lbs</span> of each other. 
           Uneven loads cause saddle sores and trail fatigue for your llama. Never exceed the individual load limit of your assigned pack string."
         </p>
+      </div>
+
+      {/* Personal Gear Checklist Section */}
+      <div className="mt-32 pt-32 border-t border-stone-100">
+        <header className="text-center mb-16">
+          <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-green-700 mb-4">Preparation Protocol</h4>
+          <h2 className="text-6xl font-black tracking-tighter leading-none mb-8">Personal Kit.</h2>
+          <p className="text-stone-500 text-lg font-medium max-w-2xl mx-auto">Essential items you must pack for a safe and successful high-country mission.</p>
+        </header>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {PERSONAL_GEAR_CHECKLIST.map((item) => (
+            <div 
+              key={item.id}
+              onClick={() => togglePersonalCheck(item.id)}
+              className={`flex items-center gap-4 p-6 rounded-2xl border transition-all cursor-pointer group ${
+                personalChecklist.has(item.id) 
+                  ? 'bg-green-50 border-green-200 shadow-sm' 
+                  : 'bg-white border-stone-100 hover:border-green-200'
+              }`}
+            >
+              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${
+                personalChecklist.has(item.id) ? 'bg-green-800 border-green-800 text-white' : 'bg-white border-stone-200'
+              }`}>
+                {personalChecklist.has(item.id) && <Check size={14} strokeWidth={4} />}
+              </div>
+              <div className="flex flex-col">
+                <span className={`font-bold text-sm transition-all ${personalChecklist.has(item.id) ? 'text-green-900 line-through opacity-60' : 'text-stone-900'}`}>
+                  {item.label}
+                </span>
+                {item.essential && !personalChecklist.has(item.id) && (
+                  <span className="text-[8px] font-black uppercase tracking-widest text-red-400 mt-0.5">Critical Item</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
