@@ -170,6 +170,7 @@ const App: React.FC = () => {
   });
 
   const [bookings, setBookings] = useState<BookingData[]>([]);
+  const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
   const dailyFact = useMemo(() => {
     const day = new Date().getDate();
@@ -179,9 +180,19 @@ const App: React.FC = () => {
   useEffect(() => {
     generateWelcomeSlogan().then(val => { if (val) setSlogan(val); });
     
+    const checkApi = async () => {
+      try {
+        const response = await fetch(`${window.location.origin}/api/ping`);
+        if (response.ok) setApiStatus('online');
+        else setApiStatus('offline');
+      } catch {
+        setApiStatus('offline');
+      }
+    };
+
     const loadLogs = async () => {
       try {
-        const response = await fetch('/api/bookings');
+        const response = await fetch(`${window.location.origin}/api/bookings`);
         if (response.ok) {
           const data = await response.json();
           setBookings(data);
@@ -196,6 +207,7 @@ const App: React.FC = () => {
       }
     };
 
+    checkApi();
     loadLogs();
     window.addEventListener('hbl_new_booking', loadLogs);
     
@@ -261,10 +273,11 @@ const App: React.FC = () => {
 
   const updateBooking = async (id: string, action: 'confirm' | 'cancel' | 'delete') => {
     console.log(`Attempting ${action} on booking ${id}`);
+    const baseUrl = window.location.origin;
     try {
       if (action === 'delete') {
         if (!confirm("Permanently delete this record?")) return;
-        const response = await fetch('/api/bookings/delete', { 
+        const response = await fetch(`${baseUrl}/api/bookings/delete`, { 
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id })
@@ -281,7 +294,7 @@ const App: React.FC = () => {
         }
       } else {
         const status = action === 'confirm' ? 'confirmed' : 'canceled';
-        const response = await fetch('/api/bookings/update', {
+        const response = await fetch(`${baseUrl}/api/bookings/update`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id, status, isRead: true }),
@@ -455,13 +468,15 @@ const App: React.FC = () => {
       {showDashboard && isAdmin && (
         <div className="fixed inset-0 z-[200] bg-white flex flex-col overflow-hidden animate-in slide-in-from-bottom-12 duration-700">
           <header className="bg-white border-b px-12 py-8 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-12">
-              <Logo branding={branding} onClick={() => setShowDashboard(false)} />
-              <div className="hidden lg:flex items-center gap-4 bg-stone-50 px-4 py-2 rounded-full border border-stone-100">
-                <Globe size={14} className="text-stone-400" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Environment: <span className="text-green-600">{APP_VERSION}</span></span>
+              <div className="flex items-center gap-12">
+                <Logo branding={branding} onClick={() => setShowDashboard(false)} />
+                <div className="hidden lg:flex items-center gap-4 bg-stone-50 px-4 py-2 rounded-full border border-stone-100">
+                  <Globe size={14} className="text-stone-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">
+                    API Status: <span className={apiStatus === 'online' ? 'text-green-600' : 'text-red-600'}>{apiStatus.toUpperCase()}</span>
+                  </span>
+                </div>
               </div>
-            </div>
             <nav className="flex items-center gap-2 bg-stone-50 p-2 rounded-3xl border border-stone-100">
               {[
                 { id: 'branding' as const, icon: Palette, label: 'Branding' },

@@ -39,6 +39,11 @@ async function startServer() {
     next();
   });
 
+  // Health Check / Ping
+  app.get("/api/ping", (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString(), env: process.env.NODE_ENV });
+  });
+
   // API: Get all bookings
   app.get("/api/bookings", (req, res) => {
     try {
