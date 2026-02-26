@@ -33,6 +33,12 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Global Request Logger
+  app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+  });
+
   // API: Get all bookings
   app.get("/api/bookings", (req, res) => {
     try {
@@ -96,10 +102,10 @@ async function startServer() {
   });
 
   // API: Update booking status
-  app.patch("/api/bookings/:id", (req, res) => {
+  app.post("/api/bookings/:id/update", (req, res) => {
     const { id } = req.params;
     const updates = req.body;
-    console.log(`Server: Patching booking ${id}`, updates);
+    console.log(`Server: Updating booking ${id}`, updates);
 
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
@@ -107,7 +113,7 @@ async function startServer() {
       const index = bookings.findIndex((b: any) => b.id === id);
       
       if (index === -1) {
-        console.warn(`Server: Booking ${id} not found for patch`);
+        console.warn(`Server: Booking ${id} not found for update`);
         return res.status(404).json({ error: "Booking not found" });
       }
 
@@ -116,13 +122,13 @@ async function startServer() {
       console.log(`Server: Booking ${id} updated successfully`);
       res.json({ success: true });
     } catch (error) {
-      console.error("Server: Patch Error:", error);
+      console.error("Server: Update Error:", error);
       res.status(500).json({ error: "Failed to update booking" });
     }
   });
 
   // API: Delete booking
-  app.delete("/api/bookings/:id", (req, res) => {
+  app.post("/api/bookings/:id/delete", (req, res) => {
     const { id } = req.params;
     console.log(`Server: Deleting booking ${id}`);
 
@@ -144,6 +150,11 @@ async function startServer() {
       console.error("Server: Delete Error:", error);
       res.status(500).json({ error: "Failed to delete booking" });
     }
+  });
+
+  // API Catch-all (JSON 404)
+  app.all("/api/*", (req, res) => {
+    res.status(404).json({ error: `API route not found: ${req.method} ${req.url}` });
   });
 
   // Vite middleware for development

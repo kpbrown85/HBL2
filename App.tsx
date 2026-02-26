@@ -264,21 +264,33 @@ const App: React.FC = () => {
     try {
       if (action === 'delete') {
         if (!confirm("Permanently delete this record?")) return;
-        const response = await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
+        const response = await fetch(`/api/bookings/${id}/delete`, { method: 'POST' });
         if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error || 'Delete failed');
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errData = await response.json();
+            throw new Error(errData.error || 'Delete failed');
+          } else {
+            const text = await response.text();
+            throw new Error(`Server error (${response.status}): ${text.substring(0, 50)}...`);
+          }
         }
       } else {
         const status = action === 'confirm' ? 'confirmed' : 'canceled';
-        const response = await fetch(`/api/bookings/${id}`, {
-          method: 'PATCH',
+        const response = await fetch(`/api/bookings/${id}/update`, {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status, isRead: true }),
         });
         if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error || 'Update failed');
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errData = await response.json();
+            throw new Error(errData.error || 'Update failed');
+          } else {
+            const text = await response.text();
+            throw new Error(`Server error (${response.status}): ${text.substring(0, 50)}...`);
+          }
         }
       }
       
