@@ -171,6 +171,7 @@ const App: React.FC = () => {
 
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const dailyFact = useMemo(() => {
     const day = new Date().getDate();
@@ -181,25 +182,31 @@ const App: React.FC = () => {
     generateWelcomeSlogan().then(val => { if (val) setSlogan(val); });
     
     const checkApi = async () => {
+      const pingUrl = `${window.location.origin}/api/ping`;
       try {
-        const response = await fetch(`${window.location.origin}/api/ping`);
-        if (response.ok) setApiStatus('online');
-        else setApiStatus('offline');
-      } catch {
+        const response = await fetch(pingUrl);
+        if (response.ok) {
+          setApiStatus('online');
+          setApiError(null);
+        } else {
+          setApiStatus('offline');
+          setApiError(`HTTP ${response.status}`);
+        }
+      } catch (err: any) {
         setApiStatus('offline');
+        setApiError(err.message || 'Connection failed');
       }
     };
 
     const loadLogs = async () => {
+      const logsUrl = `${window.location.origin}/api/bookings`;
       try {
-        const response = await fetch(`${window.location.origin}/api/bookings`);
+        const response = await fetch(logsUrl);
         if (response.ok) {
           const data = await response.json();
           setBookings(data);
-          // Sync to localStorage for offline/redundancy
           localStorage.setItem('hbl_bookings', JSON.stringify(data));
         } else {
-          // Fallback to localStorage if API fails
           setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
         }
       } catch (error) {
@@ -245,10 +252,12 @@ const App: React.FC = () => {
 
   const handleSelectKey = async () => {
     console.log("Select Key Triggered");
-    if (typeof window.aistudio !== 'undefined') {
+    const aistudio = (window as any).aistudio;
+    
+    if (aistudio && typeof aistudio.openSelectKey === 'function') {
       try {
-        await window.aistudio.openSelectKey();
-        const hasKey = await window.aistudio.hasSelectedApiKey();
+        await aistudio.openSelectKey();
+        const hasKey = await aistudio.hasSelectedApiKey();
         setHasApiKey(hasKey);
         console.log("API Key selection successful:", hasKey);
       } catch (err) {
@@ -256,8 +265,8 @@ const App: React.FC = () => {
         alert("Failed to open key selection dialog.");
       }
     } else {
-      console.warn("window.aistudio is not defined. This feature is only available within the AI Studio environment.");
-      alert("API Key management is only available when running inside AI Studio. If you are on the live site, the API key should be pre-configured by the administrator.");
+      // On live site, we just show a helpful message
+      alert("API Key management is handled by the platform. If AI features aren't working, please ensure an API key is configured in the project settings.");
     }
   };
 
@@ -284,15 +293,18 @@ const App: React.FC = () => {
 
   const updateBooking = async (id: string, action: 'confirm' | 'cancel' | 'delete') => {
     console.log(`Attempting ${action} on booking ${id}`);
-    // Use relative path with leading slash - most reliable for same-origin
-    const apiPath = action === 'delete' ? '/api/bookings-delete' : '/api/bookings-update';
+    // Use absolute path to avoid any relative routing issues
+    const apiPath = `${window.location.origin}/api/bookings/${action === 'delete' ? 'delete' : 'update'}`;
     
     try {
       const body = action === 'delete' ? { id } : { id, status: action === 'confirm' ? 'confirmed' : 'canceled', isRead: true };
       
       const response = await fetch(apiPath, { 
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(body)
       });
 
@@ -314,7 +326,7 @@ const App: React.FC = () => {
       window.dispatchEvent(new Event('hbl_new_booking'));
     } catch (error: any) {
       console.error("Booking action error:", error);
-      alert(`Action Failed: ${error.message}\n\nPath: ${apiPath}\nOrigin: ${window.location.origin}`);
+      alert(`Action Failed: ${error.message}\n\nTarget URL: ${apiPath}`);
     }
   };
 
@@ -471,7 +483,9 @@ const App: React.FC = () => {
                 <div className="hidden lg:flex items-center gap-4 bg-stone-50 px-4 py-2 rounded-full border border-stone-100">
                   <Globe size={14} className="text-stone-400" />
                   <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">
-                    API Status: <span className={apiStatus === 'online' ? 'text-green-600' : 'text-red-600'}>{apiStatus.toUpperCase()}</span>
+                    API Status: <span className={apiStatus === 'online' ? 'text-green-600' : 'text-red-600'}>
+                      {apiStatus.toUpperCase()} {apiError ? `(${apiError})` : ''}
+                    </span>
                   </span>
                 </div>
               </div>

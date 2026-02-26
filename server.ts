@@ -107,11 +107,14 @@ async function startServer() {
   });
 
   // API: Update booking status
-  app.post(["/api/bookings/update", "/api/bookings-update"], (req, res) => {
+  app.post("/api/bookings/update", (req, res) => {
     const { id, ...updates } = req.body;
-    console.log(`Server: Updating booking ${id}`, updates);
+    console.log(`[${new Date().toISOString()}] Server: Updating booking ${id}`, updates);
 
-    if (!id) return res.status(400).json({ error: "Missing booking ID" });
+    if (!id) {
+      console.error(`[${new Date().toISOString()}] Server: Update failed - Missing ID`);
+      return res.status(400).json({ error: "Missing booking ID" });
+    }
 
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
@@ -119,26 +122,29 @@ async function startServer() {
       const index = bookings.findIndex((b: any) => b.id === id);
       
       if (index === -1) {
-        console.warn(`Server: Booking ${id} not found for update`);
+        console.warn(`[${new Date().toISOString()}] Server: Booking ${id} not found for update`);
         return res.status(404).json({ error: "Booking not found" });
       }
 
       bookings[index] = { ...bookings[index], ...updates };
       fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
-      console.log(`Server: Booking ${id} updated successfully`);
+      console.log(`[${new Date().toISOString()}] Server: Booking ${id} updated successfully`);
       res.json({ success: true });
     } catch (error) {
-      console.error("Server: Update Error:", error);
+      console.error(`[${new Date().toISOString()}] Server: Update Error:`, error);
       res.status(500).json({ error: "Failed to update booking" });
     }
   });
 
   // API: Delete booking
-  app.post(["/api/bookings/delete", "/api/bookings-delete"], (req, res) => {
+  app.post("/api/bookings/delete", (req, res) => {
     const { id } = req.body;
-    console.log(`Server: Deleting booking ${id}`);
+    console.log(`[${new Date().toISOString()}] Server: Deleting booking ${id}`);
 
-    if (!id) return res.status(400).json({ error: "Missing booking ID" });
+    if (!id) {
+      console.error(`[${new Date().toISOString()}] Server: Delete failed - Missing ID`);
+      return res.status(400).json({ error: "Missing booking ID" });
+    }
 
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
@@ -147,15 +153,15 @@ async function startServer() {
       bookings = bookings.filter((b: any) => b.id !== id);
       
       if (bookings.length === initialLength) {
-        console.warn(`Server: Booking ${id} not found for delete`);
+        console.warn(`[${new Date().toISOString()}] Server: Booking ${id} not found for delete`);
         return res.status(404).json({ error: "Booking not found" });
       }
 
       fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
-      console.log(`Server: Booking ${id} deleted successfully`);
+      console.log(`[${new Date().toISOString()}] Server: Booking ${id} deleted successfully`);
       res.json({ success: true });
     } catch (error) {
-      console.error("Server: Delete Error:", error);
+      console.error(`[${new Date().toISOString()}] Server: Delete Error:`, error);
       res.status(500).json({ error: "Failed to delete booking" });
     }
   });
