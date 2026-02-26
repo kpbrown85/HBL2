@@ -73,7 +73,8 @@ export const BookingForm: React.FC = () => {
     };
 
     try {
-      const response = await fetch('/api/create-booking', {
+      const apiPath = `${window.location.origin}/api/create-booking`;
+      const response = await fetch(apiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newBooking),
@@ -93,9 +94,10 @@ export const BookingForm: React.FC = () => {
       // Notify app of new booking
       window.dispatchEvent(new Event('hbl_new_booking'));
       setIsSubmitted(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Submission error:", error);
-      alert("There was an issue sending your request. Please try again or call us directly.");
+      const msg = error instanceof Error ? error.message : String(error);
+      alert(`Submission Failed: ${msg}\n\nTarget URL: ${window.location.origin}/api/create-booking`);
     }
   };
 

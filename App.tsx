@@ -293,7 +293,7 @@ const App: React.FC = () => {
 
   const updateBooking = async (id: string, action: 'confirm' | 'cancel' | 'delete') => {
     console.log(`Attempting ${action} on booking ${id}`);
-    const apiPath = action === 'delete' ? '/api/delete-booking' : '/api/update-booking';
+    const apiPath = `${window.location.origin}/api/${action === 'delete' ? 'delete-booking' : 'update-booking'}`;
     
     try {
       const body = action === 'delete' ? { id } : { id, status: action === 'confirm' ? 'confirmed' : 'canceled', isRead: true };
@@ -332,7 +332,8 @@ const App: React.FC = () => {
 
   const testApiConnectivity = async () => {
     try {
-      const response = await fetch('/api/test-post', {
+      const apiPath = `${window.location.origin}/api/test-post`;
+      const response = await fetch(apiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ test: 'ping', timestamp: new Date().toISOString() })
