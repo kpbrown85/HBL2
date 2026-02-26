@@ -99,14 +99,24 @@ async function startServer() {
   app.patch("/api/bookings/:id", (req, res) => {
     const { id } = req.params;
     const updates = req.body;
+    console.log(`Server: Patching booking ${id}`, updates);
 
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
       let bookings = JSON.parse(data);
-      bookings = bookings.map((b: any) => (b.id === id ? { ...b, ...updates } : b));
+      const index = bookings.findIndex((b: any) => b.id === id);
+      
+      if (index === -1) {
+        console.warn(`Server: Booking ${id} not found for patch`);
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      bookings[index] = { ...bookings[index], ...updates };
       fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+      console.log(`Server: Booking ${id} updated successfully`);
       res.json({ success: true });
     } catch (error) {
+      console.error("Server: Patch Error:", error);
       res.status(500).json({ error: "Failed to update booking" });
     }
   });
@@ -114,14 +124,24 @@ async function startServer() {
   // API: Delete booking
   app.delete("/api/bookings/:id", (req, res) => {
     const { id } = req.params;
+    console.log(`Server: Deleting booking ${id}`);
 
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
       let bookings = JSON.parse(data);
+      const initialLength = bookings.length;
       bookings = bookings.filter((b: any) => b.id !== id);
+      
+      if (bookings.length === initialLength) {
+        console.warn(`Server: Booking ${id} not found for delete`);
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
       fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+      console.log(`Server: Booking ${id} deleted successfully`);
       res.json({ success: true });
     } catch (error) {
+      console.error("Server: Delete Error:", error);
       res.status(500).json({ error: "Failed to delete booking" });
     }
   });

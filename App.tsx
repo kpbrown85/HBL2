@@ -260,11 +260,15 @@ const App: React.FC = () => {
   };
 
   const updateBooking = async (id: string, action: 'confirm' | 'cancel' | 'delete') => {
+    console.log(`Attempting ${action} on booking ${id}`);
     try {
       if (action === 'delete') {
         if (!confirm("Permanently delete this record?")) return;
         const response = await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('Delete failed');
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Delete failed');
+        }
       } else {
         const status = action === 'confirm' ? 'confirmed' : 'canceled';
         const response = await fetch(`/api/bookings/${id}`, {
@@ -272,14 +276,18 @@ const App: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status, isRead: true }),
         });
-        if (!response.ok) throw new Error('Update failed');
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Update failed');
+        }
       }
       
+      console.log(`${action} successful for ${id}`);
       // Refresh logs
       window.dispatchEvent(new Event('hbl_new_booking'));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Booking action error:", error);
-      alert("Failed to process action. Please try again.");
+      alert(`Failed to process action: ${error.message}`);
     }
   };
 
