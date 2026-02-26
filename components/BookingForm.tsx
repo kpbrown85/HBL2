@@ -31,8 +31,15 @@ export const BookingForm: React.FC = () => {
 
   const [estimate, setEstimate] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('kevin.paul.brown@gmail.com');
 
   useEffect(() => {
+    // Sync with branding email if available
+    try {
+      const branding = JSON.parse(localStorage.getItem('hbl_branding') || '{}');
+      if (branding.adminEmail) setAdminEmail(branding.adminEmail);
+    } catch {}
+    
     if (formData.startDate && formData.endDate) {
       const start = new Date(formData.startDate);
       const end = new Date(formData.endDate);
@@ -116,7 +123,7 @@ export const BookingForm: React.FC = () => {
               We've received your expedition request, <span className="text-stone-900 font-bold">{formData.name.split(' ')[0]}</span>.
             </p>
             <div className="inline-flex items-center gap-2 px-6 py-2 bg-green-50 text-green-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-100">
-               <Info size={12} /> Logged in Admin Dashboard
+               <Send size={12} /> Notification dispatched to {adminEmail}
             </div>
           </div>
 

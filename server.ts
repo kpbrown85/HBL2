@@ -2,6 +2,7 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import nodemailer from "nodemailer";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,6 +13,19 @@ const BOOKINGS_FILE = path.join(__dirname, "bookings.json");
 if (!fs.existsSync(BOOKINGS_FILE)) {
   fs.writeFileSync(BOOKINGS_FILE, JSON.stringify([]));
 }
+
+// Email Transporter Configuration
+const getTransporter = () => {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "465"),
+    secure: true,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+};
 
 async function startServer() {
   const app = express();
@@ -43,6 +57,36 @@ async function startServer() {
       const bookings = JSON.parse(data);
       bookings.unshift(booking);
       fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+
+      // Send Email Notification (Non-blocking)
+      const adminEmail = process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com";
+      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+        const transporter = getTransporter();
+        const mailOptions = {
+          from: `"HBL Booking System" <${process.env.SMTP_USER}>`,
+          to: adminEmail,
+          subject: `New Booking Request: ${booking.name}`,
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; color: #1c1917;">
+              <h2 style="color: #166534;">New Expedition Request</h2>
+              <p><strong>Contact:</strong> ${booking.name}</p>
+              <p><strong>Email:</strong> ${booking.email}</p>
+              <p><strong>Phone:</strong> ${booking.phone}</p>
+              <hr style="border: 1px solid #f5f5f4;" />
+              <p><strong>Dates:</strong> ${booking.startDate} to ${booking.endDate}</p>
+              <p><strong>Llamas:</strong> ${booking.numLlamas}</p>
+              <p><strong>Trailer Needed:</strong> ${booking.trailerNeeded ? 'Yes' : 'No'}</p>
+              <p><strong>First Timer:</strong> ${booking.isFirstTimer ? 'Yes' : 'No'}</p>
+              <br />
+              <a href="${process.env.APP_URL || '#'}" style="background: #166534; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View in Admin Dashboard</a>
+            </div>
+          `,
+        };
+
+        transporter.sendMail(mailOptions).catch(err => {
+          console.error("Email Sending Error:", err);
+        });
+      }
 
       res.status(201).json(booking);
     } catch (error) {
