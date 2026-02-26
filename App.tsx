@@ -244,9 +244,20 @@ const App: React.FC = () => {
   };
 
   const handleSelectKey = async () => {
+    console.log("Select Key Triggered");
     if (typeof window.aistudio !== 'undefined') {
-      await window.aistudio.openSelectKey();
-      setHasApiKey(true);
+      try {
+        await window.aistudio.openSelectKey();
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        setHasApiKey(hasKey);
+        console.log("API Key selection successful:", hasKey);
+      } catch (err) {
+        console.error("API Key selection failed:", err);
+        alert("Failed to open key selection dialog.");
+      }
+    } else {
+      console.warn("window.aistudio is not defined. This feature is only available within the AI Studio environment.");
+      alert("API Key management is only available when running inside AI Studio. If you are on the live site, the API key should be pre-configured by the administrator.");
     }
   };
 
@@ -273,50 +284,37 @@ const App: React.FC = () => {
 
   const updateBooking = async (id: string, action: 'confirm' | 'cancel' | 'delete') => {
     console.log(`Attempting ${action} on booking ${id}`);
-    const baseUrl = window.location.origin;
+    // Use relative path with leading slash - most reliable for same-origin
+    const apiPath = action === 'delete' ? '/api/bookings-delete' : '/api/bookings-update';
+    
     try {
-      if (action === 'delete') {
-        if (!confirm("Permanently delete this record?")) return;
-        const response = await fetch(`${baseUrl}/api/bookings/delete`, { 
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id })
-        });
-        if (!response.ok) {
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            const errData = await response.json();
-            throw new Error(errData.error || 'Delete failed');
-          } else {
-            const text = await response.text();
-            throw new Error(`Server error (${response.status}): ${text.substring(0, 50)}...`);
-          }
+      const body = action === 'delete' ? { id } : { id, status: action === 'confirm' ? 'confirmed' : 'canceled', isRead: true };
+      
+      const response = await fetch(apiPath, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        let errorMessage = `Server error (${response.status})`;
+        
+        if (contentType && contentType.includes("application/json")) {
+          const errData = await response.json();
+          errorMessage = errData.error || errorMessage;
+        } else {
+          const text = await response.text();
+          errorMessage += `: ${text.substring(0, 100)}`;
         }
-      } else {
-        const status = action === 'confirm' ? 'confirmed' : 'canceled';
-        const response = await fetch(`${baseUrl}/api/bookings/update`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, status, isRead: true }),
-        });
-        if (!response.ok) {
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            const errData = await response.json();
-            throw new Error(errData.error || 'Update failed');
-          } else {
-            const text = await response.text();
-            throw new Error(`Server error (${response.status}): ${text.substring(0, 50)}...`);
-          }
-        }
+        throw new Error(errorMessage);
       }
       
       console.log(`${action} successful for ${id}`);
-      // Refresh logs
       window.dispatchEvent(new Event('hbl_new_booking'));
     } catch (error: any) {
       console.error("Booking action error:", error);
-      alert(`Failed to process action: ${error.message}`);
+      alert(`Action Failed: ${error.message}\n\nPath: ${apiPath}\nOrigin: ${window.location.origin}`);
     }
   };
 

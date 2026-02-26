@@ -107,7 +107,7 @@ async function startServer() {
   });
 
   // API: Update booking status
-  app.post("/api/bookings/update", (req, res) => {
+  app.post(["/api/bookings/update", "/api/bookings-update"], (req, res) => {
     const { id, ...updates } = req.body;
     console.log(`Server: Updating booking ${id}`, updates);
 
@@ -134,7 +134,7 @@ async function startServer() {
   });
 
   // API: Delete booking
-  app.post("/api/bookings/delete", (req, res) => {
+  app.post(["/api/bookings/delete", "/api/bookings-delete"], (req, res) => {
     const { id } = req.body;
     console.log(`Server: Deleting booking ${id}`);
 
