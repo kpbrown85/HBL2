@@ -24,6 +24,9 @@ import {
   Home,
   Zap,
   CheckCircle,
+  CheckCircle2,
+  XCircle,
+  User,
   Clock,
   ChevronLeft,
   ArrowUp,
@@ -728,6 +731,90 @@ const App: React.FC = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+              
+              {adminTab === 'bookings' && (
+                <div className="space-y-12 animate-in slide-in-from-bottom-8">
+                  <header className="flex justify-between items-end">
+                    <div>
+                      <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Expedition Logs</h2>
+                      <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Review and manage incoming mission requests</p>
+                    </div>
+                  </header>
+
+                  <div className="space-y-6">
+                    {bookings.length === 0 ? (
+                      <div className="bg-white p-24 rounded-[4rem] border border-stone-100 text-center">
+                        <div className="w-20 h-20 bg-stone-50 text-stone-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                          <ClipboardList size={40} />
+                        </div>
+                        <h3 className="text-2xl font-black text-stone-900 mb-2">No Requests Found</h3>
+                        <p className="text-stone-400 font-medium">Your expedition queue is currently clear.</p>
+                      </div>
+                    ) : (
+                      bookings.map((booking) => (
+                        <div key={booking.id} className={`bg-white p-10 rounded-[3rem] shadow-xl border-2 transition-all ${!booking.isRead ? 'border-green-500/20 bg-green-50/5' : 'border-stone-100'}`}>
+                          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-12">
+                            <div className="flex-1 space-y-8">
+                              <div className="flex items-center gap-6">
+                                <div className="w-16 h-16 bg-stone-900 text-white rounded-2xl flex items-center justify-center shadow-lg shrink-0">
+                                  <User size={24} />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-3 mb-1">
+                                    <h4 className="text-2xl font-black tracking-tight">{booking.name}</h4>
+                                    {!booking.isRead && <span className="px-3 py-1 bg-green-800 text-white text-[9px] font-black uppercase tracking-widest rounded-full">New</span>}
+                                    {booking.status === 'confirmed' && <span className="px-3 py-1 bg-blue-100 text-blue-700 text-[9px] font-black uppercase tracking-widest rounded-full">Confirmed</span>}
+                                    {booking.status === 'canceled' && <span className="px-3 py-1 bg-red-100 text-red-700 text-[9px] font-black uppercase tracking-widest rounded-full">Canceled</span>}
+                                  </div>
+                                  <div className="flex items-center gap-4 text-stone-400 font-bold text-xs">
+                                    <span className="flex items-center gap-1.5"><Mail size={12}/> {booking.email}</span>
+                                    <span className="flex items-center gap-1.5"><Phone size={12}/> {booking.phone}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-8 border-t border-stone-100">
+                                <div className="space-y-2">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Expedition Window</p>
+                                  <p className="font-bold text-stone-900 text-sm">{booking.startDate} to {booking.endDate}</p>
+                                </div>
+                                <div className="space-y-2">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Fleet Size</p>
+                                  <p className="font-bold text-stone-900 text-sm">{booking.numLlamas} Pack Animals</p>
+                                </div>
+                                <div className="space-y-2">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Equipment</p>
+                                  <p className="font-bold text-stone-900 text-sm">{booking.trailerNeeded ? 'Trailer' : 'No Trailer'} • {booking.isFirstTimer ? 'Clinic' : 'Pro'}</p>
+                                </div>
+                                <div className="space-y-2">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Timestamp</p>
+                                  <p className="font-bold text-stone-900 text-sm">{new Date(booking.timestamp).toLocaleDateString()}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex lg:flex-col gap-3 shrink-0">
+                              {booking.status === 'pending' && (
+                                <>
+                                  <button onClick={() => updateBooking(booking.id, 'confirm')} className="flex-1 lg:w-48 bg-green-800 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-green-900 transition-all shadow-lg flex items-center justify-center gap-2">
+                                    <CheckCircle2 size={16}/> Confirm Trip
+                                  </button>
+                                  <button onClick={() => updateBooking(booking.id, 'cancel')} className="flex-1 lg:w-48 bg-stone-100 text-stone-600 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-stone-200 transition-all flex items-center justify-center gap-2">
+                                    <XCircle size={16}/> Cancel Request
+                                  </button>
+                                </>
+                              )}
+                              <button onClick={() => updateBooking(booking.id, 'delete')} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all">
+                                <Trash2 size={20}/>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
