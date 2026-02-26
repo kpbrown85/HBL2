@@ -102,10 +102,11 @@ async function startServer() {
   });
 
   // API: Update booking status
-  app.post("/api/bookings/:id/update", (req, res) => {
-    const { id } = req.params;
-    const updates = req.body;
+  app.post("/api/bookings/update", (req, res) => {
+    const { id, ...updates } = req.body;
     console.log(`Server: Updating booking ${id}`, updates);
+
+    if (!id) return res.status(400).json({ error: "Missing booking ID" });
 
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
@@ -128,9 +129,11 @@ async function startServer() {
   });
 
   // API: Delete booking
-  app.post("/api/bookings/:id/delete", (req, res) => {
-    const { id } = req.params;
+  app.post("/api/bookings/delete", (req, res) => {
+    const { id } = req.body;
     console.log(`Server: Deleting booking ${id}`);
+
+    if (!id) return res.status(400).json({ error: "Missing booking ID" });
 
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");

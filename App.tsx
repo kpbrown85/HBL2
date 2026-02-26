@@ -264,7 +264,11 @@ const App: React.FC = () => {
     try {
       if (action === 'delete') {
         if (!confirm("Permanently delete this record?")) return;
-        const response = await fetch(`/api/bookings/${id}/delete`, { method: 'POST' });
+        const response = await fetch('/api/bookings/delete', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
         if (!response.ok) {
           const contentType = response.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
@@ -277,10 +281,10 @@ const App: React.FC = () => {
         }
       } else {
         const status = action === 'confirm' ? 'confirmed' : 'canceled';
-        const response = await fetch(`/api/bookings/${id}/update`, {
+        const response = await fetch('/api/bookings/update', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status, isRead: true }),
+          body: JSON.stringify({ id, status, isRead: true }),
         });
         if (!response.ok) {
           const contentType = response.headers.get("content-type");
