@@ -199,7 +199,7 @@ const App: React.FC = () => {
     };
 
     const loadLogs = async () => {
-      const logsUrl = `${window.location.origin}/api/bookings`;
+      const logsUrl = `${window.location.origin}/api/get-bookings`;
       try {
         const response = await fetch(logsUrl);
         if (response.ok) {
@@ -293,8 +293,7 @@ const App: React.FC = () => {
 
   const updateBooking = async (id: string, action: 'confirm' | 'cancel' | 'delete') => {
     console.log(`Attempting ${action} on booking ${id}`);
-    // Use absolute path to avoid any relative routing issues
-    const apiPath = `${window.location.origin}/api/bookings/${action === 'delete' ? 'delete' : 'update'}`;
+    const apiPath = action === 'delete' ? '/api/delete-booking' : '/api/update-booking';
     
     try {
       const body = action === 'delete' ? { id } : { id, status: action === 'confirm' ? 'confirmed' : 'canceled', isRead: true };
@@ -326,7 +325,27 @@ const App: React.FC = () => {
       window.dispatchEvent(new Event('hbl_new_booking'));
     } catch (error: any) {
       console.error("Booking action error:", error);
-      alert(`Action Failed: ${error.message}\n\nTarget URL: ${apiPath}`);
+      const msg = error instanceof Error ? error.message : String(error);
+      alert(`Action Failed: ${msg}\n\nTarget URL: ${window.location.origin}${apiPath}`);
+    }
+  };
+
+  const testApiConnectivity = async () => {
+    try {
+      const response = await fetch('/api/test-post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test: 'ping', timestamp: new Date().toISOString() })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        alert(`API Connection Test: SUCCESS\n\nServer received: ${JSON.stringify(data.received)}`);
+      } else {
+        const text = await response.text();
+        alert(`API Connection Test: FAILED (${response.status})\n\nResponse: ${text.substring(0, 200)}`);
+      }
+    } catch (err: any) {
+      alert(`API Connection Test: ERROR\n\n${err.message || String(err)}`);
     }
   };
 
@@ -487,6 +506,12 @@ const App: React.FC = () => {
                       {apiStatus.toUpperCase()} {apiError ? `(${apiError})` : ''}
                     </span>
                   </span>
+                  <button 
+                    onClick={testApiConnectivity}
+                    className="text-[9px] font-bold text-stone-400 hover:text-stone-600 underline decoration-stone-200 underline-offset-2"
+                  >
+                    TEST POST
+                  </button>
                 </div>
               </div>
             <nav className="flex items-center gap-2 bg-stone-50 p-2 rounded-3xl border border-stone-100">

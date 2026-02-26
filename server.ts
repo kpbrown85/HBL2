@@ -44,8 +44,14 @@ async function startServer() {
     res.json({ status: "ok", timestamp: new Date().toISOString(), env: process.env.NODE_ENV });
   });
 
+  // Test POST endpoint
+  app.post("/api/test-post", (req, res) => {
+    console.log(`[${new Date().toISOString()}] Server: Test POST received`, req.body);
+    res.json({ success: true, received: req.body });
+  });
+
   // API: Get all bookings
-  app.get("/api/bookings", (req, res) => {
+  app.get(["/api/bookings", "/api/get-bookings"], (req, res) => {
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
       res.json(JSON.parse(data));
@@ -55,12 +61,14 @@ async function startServer() {
   });
 
   // API: Create a booking
-  app.post("/api/bookings", async (req, res) => {
+  app.post(["/api/bookings", "/api/create-booking"], async (req, res) => {
     const booking = req.body;
     booking.id = Math.random().toString(36).substr(2, 9);
     booking.timestamp = Date.now();
     booking.status = booking.status || "pending";
     booking.isRead = false;
+
+    console.log(`[${new Date().toISOString()}] Server: Creating booking for ${booking.name}`);
 
     try {
       // Save to file
@@ -107,7 +115,7 @@ async function startServer() {
   });
 
   // API: Update booking status
-  app.post("/api/bookings/update", (req, res) => {
+  app.post("/api/update-booking", (req, res) => {
     const { id, ...updates } = req.body;
     console.log(`[${new Date().toISOString()}] Server: Updating booking ${id}`, updates);
 
@@ -137,7 +145,7 @@ async function startServer() {
   });
 
   // API: Delete booking
-  app.post("/api/bookings/delete", (req, res) => {
+  app.post("/api/delete-booking", (req, res) => {
     const { id } = req.body;
     console.log(`[${new Date().toISOString()}] Server: Deleting booking ${id}`);
 

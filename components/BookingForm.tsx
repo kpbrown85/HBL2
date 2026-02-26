@@ -73,13 +73,16 @@ export const BookingForm: React.FC = () => {
     };
 
     try {
-      const response = await fetch('/api/bookings', {
+      const response = await fetch('/api/create-booking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newBooking),
       });
 
-      if (!response.ok) throw new Error('Failed to submit booking');
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Server error (${response.status}): ${text.substring(0, 100)}`);
+      }
       
       const savedBooking = await response.json();
 
