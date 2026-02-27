@@ -3,11 +3,16 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
-import { supabase } from "../src/services/supabase.js";
+import { createClient } from '@supabase/supabase-js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const BOOKINGS_FILE = path.join(__dirname, "..", "bookings.json");
+
+// Direct Supabase client setup to avoid path issues
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 const app = express();
 app.use(express.json());
@@ -15,53 +20,44 @@ app.use(express.json());
 const api = express.Router();
 
 api.get("/ping", (req, res) => {
-  const supabaseSet = !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY);
-  const smtpSet = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
-  
   res.json({ 
     status: "ok", 
-    mode: supabaseSet ? "supabase" : "local", 
-    diagnostics: {
-      supabase: supabaseSet,
-      smtp: smtpSet,
-      node_env: process.env.NODE_ENV
-    },
+    supabase: !!supabase,
+    smtp: !!(process.env.SMTP_USER && process.env.SMTP_PASS),
     timestamp: new Date().toISOString() 
   });
 });
 
 api.post("/create-booking", async (req, res) => {
+  const booking = { 
+    ...req.body, 
+    id: Math.random().toString(36).substr(2, 9), 
+    timestamp: Date.now(), 
+    status: "pending",
+    isRead: false
+  };
+
+  let dbError = null;
+  let emailSent = false;
+
+  // 1. Try Database
   try {
-    const booking = { 
-      ...req.body, 
-      id: Math.random().toString(36).substr(2, 9), 
-      timestamp: Date.now(), 
-      status: "pending",
-      isRead: false
-    };
-
-    let savedTo = "local";
-
-    // 1. Try Supabase first
-    if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-      const { error } = await supabase
-        .from('bookings')
-        .insert([booking]);
-      
-      if (error) {
-        console.error("Supabase insert error:", error);
-        throw error;
-      }
-      savedTo = "supabase";
+    if (supabase) {
+      const { error } = await supabase.from('bookings').insert([booking]);
+      if (error) throw error;
     } else {
-      // 2. Fallback to local file (AI Studio dev mode)
       const data = fs.existsSync(BOOKINGS_FILE) ? fs.readFileSync(BOOKINGS_FILE, "utf-8") : "[]";
       const bookings = JSON.parse(data);
       bookings.unshift(booking);
       fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
     }
-    
-    // Email notification
+  } catch (err: any) {
+    console.error("Database error:", err);
+    dbError = err.message || String(err);
+  }
+
+  // 2. Try Email (Always attempt)
+  try {
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
       const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com", port: 465, secure: true,
@@ -76,87 +72,85 @@ api.post("/create-booking", async (req, res) => {
           <p><strong>Phone:</strong> ${booking.phone}</p>
           <p><strong>Dates:</strong> ${booking.startDate} to ${booking.endDate}</p>
           <p><strong>Llamas:</strong> ${booking.numLlamas}</p>
-          <p><strong>Trailer Needed:</strong> ${booking.trailerNeeded ? 'Yes' : 'No'}</p>
-          <p><strong>First Timer:</strong> ${booking.isFirstTimer ? 'Yes' : 'No'}</p>
+          <p><strong>Trailer:</strong> ${booking.trailerNeeded ? 'Yes' : 'No'}</p>
+          <p><strong>Clinic:</strong> ${booking.isFirstTimer ? 'Yes' : 'No'}</p>
+          ${dbError ? `<p style="color: red;"><strong>Note:</strong> Database save failed, but request was captured via email.</p>` : ''}
           <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">Stored in: ${savedTo}</p>
           <a href="https://www.helenallamas.com/admin" style="display: inline-block; background: #166534; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Dashboard</a>
         </div>
       `;
 
-      transporter.sendMail({
+      await transporter.sendMail({
         from: `"HBL Notifications" <${process.env.SMTP_USER}>`,
         to: "kevin.paul.brown@gmail.com",
         subject: `New Booking: ${booking.name}`,
         html: emailHtml
-      }).catch(err => console.error("Email error:", err));
+      });
+      emailSent = true;
     }
-    
-    res.status(201).json(booking);
-  } catch (e: any) {
-    console.error("Booking error:", e);
-    res.status(500).json({ error: "Booking failed", details: e.message });
+  } catch (err) {
+    console.error("Email error:", err);
+  }
+
+  // Respond with success if at least one method worked
+  if (!dbError || emailSent) {
+    res.status(201).json({ ...booking, _diagnostics: { dbError, emailSent } });
+  } else {
+    res.status(500).json({ error: "Booking failed completely", dbError });
   }
 });
 
 api.get("/get-bookings", async (req, res) => {
   try {
-    if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+    if (supabase) {
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
         .order('timestamp', { ascending: false });
-      
       if (error) throw error;
-      res.json(data);
+      res.json(data || []);
     } else {
       const data = fs.existsSync(BOOKINGS_FILE) ? fs.readFileSync(BOOKINGS_FILE, "utf-8") : "[]";
       res.json(JSON.parse(data));
     }
-  } catch (e) {
-    res.status(500).json({ error: "Failed to load bookings" });
+  } catch (e: any) {
+    console.error("Fetch error:", e);
+    res.status(500).json({ error: "Failed to load bookings", details: e.message });
   }
 });
 
 api.post("/update-booking", async (req, res) => {
   try {
     const { id, action, status, isRead } = req.body;
-    const effectiveAction = action || (status === 'confirmed' ? 'approve' : status === 'canceled' ? 'reject' : null);
+    const update: any = {};
+    if (action === 'approve' || status === 'confirmed') update.status = 'confirmed';
+    if (action === 'reject' || status === 'canceled') update.status = 'canceled';
+    if (action === 'markRead' || isRead) update.isRead = true;
 
-    if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-      if (effectiveAction === 'delete') {
+    if (supabase) {
+      if (action === 'delete') {
         const { error } = await supabase.from('bookings').delete().eq('id', id);
         if (error) throw error;
       } else {
-        const update: any = {};
-        if (effectiveAction === 'approve' || status === 'confirmed') update.status = 'confirmed';
-        if (effectiveAction === 'reject' || status === 'canceled') update.status = 'canceled';
-        if (effectiveAction === 'markRead' || isRead) update.isRead = true;
-        
         const { error } = await supabase.from('bookings').update(update).eq('id', id);
         if (error) throw error;
       }
-      res.json({ success: true });
     } else {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
       let bookings = JSON.parse(data);
       const index = bookings.findIndex((b: any) => b.id === id);
       if (index !== -1) {
-        if (effectiveAction === 'approve' || status === 'confirmed') bookings[index].status = 'confirmed';
-        if (effectiveAction === 'reject' || status === 'canceled') bookings[index].status = 'canceled';
-        if (effectiveAction === 'delete') {
+        if (action === 'delete') {
           bookings = bookings.filter((b: any) => b.id !== id);
-        } else if (effectiveAction === 'markRead' || isRead) {
-          bookings[index].isRead = true;
+        } else {
+          bookings[index] = { ...bookings[index], ...update };
         }
         fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
-        res.json({ success: true });
-      } else {
-        res.status(404).json({ error: "Booking not found" });
       }
     }
-  } catch (e) {
-    res.status(500).json({ error: "Update failed" });
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(500).json({ error: "Update failed", details: e.message });
   }
 });
 
