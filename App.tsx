@@ -327,36 +327,7 @@ const App: React.FC = () => {
     } catch (error: any) {
       console.error("Booking action error:", error);
       const msg = error instanceof Error ? error.message : String(error);
-      alert(`Action Failed: ${msg}\n\nTarget URL: ${window.location.origin}${apiPath}`);
-    }
-  };
-
-  const testApiConnectivity = async () => {
-    try {
-      const paths = ['/vite-ping', '/api/ping', '/ping', '/debug-test'];
-      const results: any = {};
-
-      for (const path of paths) {
-        try {
-          const url = window.location.origin + path + "?cb=" + Date.now();
-          const res = await fetch(url);
-          const headers: any = {};
-          res.headers.forEach((v, k) => { headers[k] = v; });
-          
-          const data = res.ok ? await res.json() : `FAILED (${res.status})`;
-          results[path] = {
-            data,
-            status: res.status,
-            headers
-          };
-        } catch (e: any) {
-          results[path] = `ERROR: ${e.message}`;
-        }
-      }
-
-      alert(`DIAGNOSTIC RESULTS (V8.2)\n\nLOCATION: ${window.location.href}\n\n${JSON.stringify(results, null, 2)}`);
-    } catch (err: any) {
-      alert(`DIAGNOSTIC ERROR\n\n${err.message || String(err)}`);
+      alert(`Action Failed: ${msg}`);
     }
   };
 
@@ -514,15 +485,9 @@ const App: React.FC = () => {
                   <Globe size={14} className="text-stone-400" />
                   <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">
                     API Status: <span className={apiStatus === 'online' ? 'text-green-600' : 'text-red-600'}>
-                      {apiStatus.toUpperCase()} {apiError ? `(${apiError})` : ''}
+                      {apiStatus.toUpperCase()}
                     </span>
                   </span>
-                  <button 
-                    onClick={testApiConnectivity}
-                    className="text-[9px] font-bold text-stone-400 hover:text-stone-600 underline decoration-stone-200 underline-offset-2"
-                  >
-                    DIAGNOSTIC PING
-                  </button>
                 </div>
               </div>
             <nav className="flex items-center gap-2 bg-stone-50 p-2 rounded-3xl border border-stone-100">
