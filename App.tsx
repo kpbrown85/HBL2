@@ -333,19 +333,26 @@ const App: React.FC = () => {
 
   const testApiConnectivity = async () => {
     try {
-      const paths = ['/debug-test', '/ping', '/api/ping', '/health'];
+      const paths = ['/vite-ping', '/api/ping', '/ping', '/debug-test'];
       const results: any = {};
 
       for (const path of paths) {
         try {
           const res = await fetch(path);
-          results[path] = res.ok ? await res.json() : `FAILED (${res.status})`;
+          const hblHeader = res.headers.get("X-HBL-Server");
+          const apiHeader = res.headers.get("X-HBL-API");
+          const data = res.ok ? await res.json() : `FAILED (${res.status})`;
+          results[path] = {
+            data,
+            server: hblHeader || "NONE",
+            api: apiHeader || "NONE"
+          };
         } catch (e: any) {
           results[path] = `ERROR: ${e.message}`;
         }
       }
 
-      alert(`DIAGNOSTIC RESULTS\n\n${JSON.stringify(results, null, 2)}`);
+      alert(`DIAGNOSTIC RESULTS (V5)\n\n${JSON.stringify(results, null, 2)}`);
     } catch (err: any) {
       alert(`DIAGNOSTIC ERROR\n\n${err.message || String(err)}`);
     }
