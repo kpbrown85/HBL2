@@ -333,7 +333,7 @@ const App: React.FC = () => {
 
   const testApiConnectivity = async () => {
     try {
-      const paths = ['/ping', '/api/ping', '/health'];
+      const paths = ['/debug-test', '/ping', '/api/ping', '/health'];
       const results: any = {};
 
       for (const path of paths) {
