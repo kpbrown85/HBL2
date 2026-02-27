@@ -333,18 +333,19 @@ const App: React.FC = () => {
 
   const testApiConnectivity = async () => {
     try {
-      const origin = window.location.origin;
-      const getRes = await fetch(`${origin}/api/ping`);
-      const postRes = await fetch(`${origin}/api/ping`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ test: 'ping', time: new Date().toISOString() })
-      });
+      const paths = ['/ping', '/api/ping', '/health'];
+      const results: any = {};
 
-      const getData = getRes.ok ? await getRes.json() : `FAILED (${getRes.status})`;
-      const postData = postRes.ok ? await postRes.json() : `FAILED (${postRes.status})`;
+      for (const path of paths) {
+        try {
+          const res = await fetch(path);
+          results[path] = res.ok ? await res.json() : `FAILED (${res.status})`;
+        } catch (e: any) {
+          results[path] = `ERROR: ${e.message}`;
+        }
+      }
 
-      alert(`DIAGNOSTIC RESULTS\n\nGET /api/ping: ${getRes.ok ? 'SUCCESS' : 'FAIL'}\n${JSON.stringify(getData, null, 2)}\n\nPOST /api/ping: ${postRes.ok ? 'SUCCESS' : 'FAIL'}\n${JSON.stringify(postData, null, 2)}`);
+      alert(`DIAGNOSTIC RESULTS\n\n${JSON.stringify(results, null, 2)}`);
     } catch (err: any) {
       alert(`DIAGNOSTIC ERROR\n\n${err.message || String(err)}`);
     }

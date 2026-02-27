@@ -76,28 +76,37 @@ export const BookingForm: React.FC = () => {
     };
 
     try {
-      // Use relative path for maximum compatibility behind proxies
-      const apiPath = '/api/create-booking';
-      console.log(`[${new Date().toISOString()}] Client: Submitting booking to ${apiPath}`);
-      
-      const response = await fetch(apiPath, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(newBooking),
-      });
+      // Try multiple paths for maximum compatibility
+      const paths = ['/create-booking', '/api/create-booking'];
+      let response: Response | null = null;
+      let lastError: any = null;
 
-      if (!response.ok) {
-        const text = await response.text();
-        let errorDetail = text;
+      for (const path of paths) {
         try {
-          const json = JSON.parse(text);
-          // If it's a JSON object, show the whole thing for debugging
-          errorDetail = JSON.stringify(json, null, 2);
-        } catch {}
-        throw new Error(`Server rejected request (${response.status}): ${errorDetail}`);
+          console.log(`[${new Date().toISOString()}] Client: Attempting submission to ${path}`);
+          const res = await fetch(path, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify(newBooking),
+          });
+          
+          if (res.ok) {
+            response = res;
+            break;
+          } else {
+            const text = await res.text();
+            lastError = `Path ${path} failed (${res.status}): ${text.substring(0, 100)}`;
+          }
+        } catch (err) {
+          lastError = err;
+        }
+      }
+
+      if (!response) {
+        throw new Error(lastError || "All submission paths failed");
       }
       
       const savedBooking = await response.json();

@@ -33,36 +33,26 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Global Request Logger
-  app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    next();
-  });
-
-  // Health Check / Ping
-  app.get("/api/ping", (req, res) => {
-    console.log(`[${new Date().toISOString()}] GET Ping received from ${req.ip}`);
+  // 1. PRIMARY API ROUTES (Defined first for maximum priority)
+  
+  // Health checks
+  app.get(["/ping", "/api/ping", "/health"], (req, res) => {
+    console.log(`[${new Date().toISOString()}] Ping received: ${req.method} ${req.url}`);
     res.json({ 
       status: "ok", 
-      timestamp: new Date().toISOString(), 
-      env: process.env.NODE_ENV,
-      url: req.url,
-      method: req.method
+      msg: "Server is alive",
+      timestamp: new Date().toISOString(),
+      url: req.url
     });
   });
 
-  app.post("/api/ping", (req, res) => {
-    console.log(`[${new Date().toISOString()}] POST Ping received from ${req.ip}`, req.body);
-    res.json({ 
-      status: "ok", 
-      timestamp: new Date().toISOString(), 
-      method: req.method,
-      receivedBody: req.body
-    });
+  app.post(["/ping", "/api/ping"], (req, res) => {
+    console.log(`[${new Date().toISOString()}] POST Ping received: ${req.url}`);
+    res.json({ status: "ok", received: req.body });
   });
 
-  // API: Get all bookings
-  app.get("/api/get-bookings", (req, res) => {
+  // Booking routes
+  app.get(["/get-bookings", "/api/get-bookings", "/api/bookings"], (req, res) => {
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
       res.json(JSON.parse(data));
@@ -71,15 +61,14 @@ async function startServer() {
     }
   });
 
-  // API: Create a booking
-  app.post("/api/create-booking", async (req, res) => {
+  app.post(["/create-booking", "/api/create-booking", "/api/bookings"], async (req, res) => {
     const booking = req.body;
     booking.id = Math.random().toString(36).substr(2, 9);
     booking.timestamp = Date.now();
     booking.status = "pending";
     booking.isRead = false;
 
-    console.log(`[${new Date().toISOString()}] Server: New booking request from ${booking.name}`);
+    console.log(`[${new Date().toISOString()}] Server: New booking for ${booking.name}`);
 
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
@@ -87,125 +76,65 @@ async function startServer() {
       bookings.unshift(booking);
       fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
 
-      // Send Email Notification
+      // Email (Non-blocking)
       const adminEmail = "kevin.paul.brown@gmail.com";
-      const smtpUser = process.env.SMTP_USER;
-      const smtpPass = process.env.SMTP_PASS;
-
-      if (smtpUser && smtpPass) {
+      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
         const transporter = getTransporter();
-        const mailOptions = {
-          from: `"HBL Booking System" <${smtpUser}>`,
+        transporter.sendMail({
+          from: `"HBL" <${process.env.SMTP_USER}>`,
           to: adminEmail,
-          subject: `NEW BOOKING: ${booking.name} - ${booking.startDate}`,
-          html: `
-            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #1c1917; max-width: 600px; margin: auto; border: 1px solid #f5f5f4; border-radius: 20px;">
-              <h1 style="color: #166534; font-size: 24px; font-weight: 900; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">New Expedition Request</h1>
-              <div style="background: #fafaf9; padding: 30px; border-radius: 15px; margin-bottom: 30px;">
-                <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 2px;">Lead Contact</p>
-                <p style="margin: 0; font-size: 18px; font-weight: 700;">${booking.name}</p>
-                <p style="margin: 5px 0 0 0; font-size: 14px; color: #57534e;">${booking.email} | ${booking.phone}</p>
-              </div>
-              <div style="margin-bottom: 40px;">
-                <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 2px;">Equipment & Training</p>
-                <ul style="margin: 0; padding: 0; list-style: none;">
-                  <li style="padding: 10px 0; border-bottom: 1px solid #f5f5f4; font-size: 14px; font-weight: 600;">Dates: ${booking.startDate} to ${booking.endDate}</li>
-                  <li style="padding: 10px 0; border-bottom: 1px solid #f5f5f4; font-size: 14px; font-weight: 600;">Fleet: ${booking.numLlamas} Pack Animals</li>
-                  <li style="padding: 10px 0; border-bottom: 1px solid #f5f5f4; font-size: 14px; font-weight: 600;">Trailer Needed: ${booking.trailerNeeded ? '✅ Yes' : '❌ No'}</li>
-                  <li style="padding: 10px 0; border-bottom: 1px solid #f5f5f4; font-size: 14px; font-weight: 600;">First Timer Clinic: ${booking.isFirstTimer ? '✅ Yes' : '❌ No'}</li>
-                </ul>
-              </div>
-              <a href="${process.env.APP_URL || 'https://www.helenallamas.com'}" style="display: block; background: #166534; color: white; padding: 20px; text-align: center; text-decoration: none; border-radius: 15px; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Manage in Dashboard</a>
-            </div>
-          `,
-        };
-        transporter.sendMail(mailOptions).catch(err => console.error("Email failed:", err));
+          subject: `NEW BOOKING: ${booking.name}`,
+          text: `New booking from ${booking.name} for ${booking.startDate}. View in dashboard.`
+        }).catch(e => console.error("Email fail:", e));
       }
 
       res.status(201).json(booking);
     } catch (error) {
-      console.error("Booking Error:", error);
       res.status(500).json({ error: "Failed to process booking" });
     }
   });
 
-  // Legacy route support
-  app.post("/api/bookings", (req, res) => {
-    res.redirect(307, "/api/create-booking");
-  });
-  app.get("/api/bookings", (req, res) => {
-    res.redirect(301, "/api/get-bookings");
-  });
-
-  // Specific POST catch-all for debugging
-  app.post("/api/*", (req, res) => {
-    console.warn(`[${new Date().toISOString()}] Unmatched API POST: ${req.url}`);
-    res.status(404).json({
-      error: "Unmatched API POST",
-      method: req.method,
-      url: req.url,
-      msg: "This request reached Express but matched no POST route"
-    });
-  });
-
-  // API: Update booking status
-  app.post("/api/update-booking", (req, res) => {
+  app.post(["/update-booking", "/api/update-booking"], (req, res) => {
     const { id, ...updates } = req.body;
-    console.log(`[${new Date().toISOString()}] Server: Updating booking ${id}`, updates);
-
-    if (!id) {
-      console.error(`[${new Date().toISOString()}] Server: Update failed - Missing ID`);
-      return res.status(400).json({ error: "Missing booking ID" });
-    }
-
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
       let bookings = JSON.parse(data);
       const index = bookings.findIndex((b: any) => b.id === id);
-      
-      if (index === -1) {
-        console.warn(`[${new Date().toISOString()}] Server: Booking ${id} not found for update`);
-        return res.status(404).json({ error: "Booking not found" });
+      if (index !== -1) {
+        bookings[index] = { ...bookings[index], ...updates };
+        fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Not found" });
       }
-
-      bookings[index] = { ...bookings[index], ...updates };
-      fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
-      console.log(`[${new Date().toISOString()}] Server: Booking ${id} updated successfully`);
-      res.json({ success: true });
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Server: Update Error:`, error);
-      res.status(500).json({ error: "Failed to update booking" });
+      res.status(500).json({ error: "Update failed" });
     }
   });
 
-  // API: Delete booking
-  app.post("/api/delete-booking", (req, res) => {
+  app.post(["/delete-booking", "/api/delete-booking"], (req, res) => {
     const { id } = req.body;
-    console.log(`[${new Date().toISOString()}] Server: Deleting booking ${id}`);
-
-    if (!id) {
-      console.error(`[${new Date().toISOString()}] Server: Delete failed - Missing ID`);
-      return res.status(400).json({ error: "Missing booking ID" });
-    }
-
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
       let bookings = JSON.parse(data);
       const initialLength = bookings.length;
       bookings = bookings.filter((b: any) => b.id !== id);
-      
-      if (bookings.length === initialLength) {
-        console.warn(`[${new Date().toISOString()}] Server: Booking ${id} not found for delete`);
-        return res.status(404).json({ error: "Booking not found" });
+      if (bookings.length !== initialLength) {
+        fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Not found" });
       }
-
-      fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
-      console.log(`[${new Date().toISOString()}] Server: Booking ${id} deleted successfully`);
-      res.json({ success: true });
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Server: Delete Error:`, error);
-      res.status(500).json({ error: "Failed to delete booking" });
+      res.status(500).json({ error: "Delete failed" });
     }
+  });
+
+  // 2. MIDDLEWARES & STATIC ASSETS
+  
+  app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
   });
 
   // API Catch-all (JSON 404)
