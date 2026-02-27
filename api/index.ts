@@ -154,6 +154,44 @@ api.post("/update-booking", async (req, res) => {
   }
 });
 
+api.get("/get-gallery", async (req, res) => {
+  try {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('gallery')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      res.json(data || []);
+    } else {
+      res.json([]);
+    }
+  } catch (e: any) {
+    console.error("Gallery fetch error:", e);
+    res.status(500).json({ error: "Failed to load gallery", details: e.message });
+  }
+});
+
+api.post("/save-gallery", async (req, res) => {
+  try {
+    const { gallery } = req.body;
+    if (supabase) {
+      // For simplicity, we'll replace the gallery content
+      // In a real app, we'd do incremental updates, but this matches the current localStorage logic
+      await supabase.from('gallery').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+      const { error } = await supabase.from('gallery').insert(gallery.map((img: any) => ({
+        url: img.url,
+        caption: img.caption
+      })));
+      if (error) throw error;
+    }
+    res.json({ success: true });
+  } catch (e: any) {
+    console.error("Gallery save error:", e);
+    res.status(500).json({ error: "Failed to save gallery", details: e.message });
+  }
+});
+
 app.use("/api", api);
 app.use("/", api);
 

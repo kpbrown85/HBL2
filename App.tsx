@@ -218,8 +218,21 @@ const App: React.FC = () => {
       }
     };
 
+    const loadGallery = async () => {
+      try {
+        const response = await fetch(`${window.location.origin}/api/get-gallery`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.length > 0) setGallery(data);
+        }
+      } catch (err) {
+        console.error("Failed to load gallery:", err);
+      }
+    };
+
     checkApi();
     loadLogs();
+    loadGallery();
     window.addEventListener('hbl_new_booking', loadLogs);
     
     const checkApiKey = async () => {
@@ -238,7 +251,19 @@ const App: React.FC = () => {
     document.title = branding.siteName + " | Montana Pack Strings"; 
   }, [branding]);
   useEffect(() => { localStorage.setItem('hbl_llamas', JSON.stringify(llamas)); }, [llamas]);
-  useEffect(() => { localStorage.setItem('hbl_gallery', JSON.stringify(gallery)); }, [gallery]);
+  
+  useEffect(() => { 
+    localStorage.setItem('hbl_gallery', JSON.stringify(gallery));
+    // Sync to database if admin
+    if (isAdmin) {
+      fetch(`${window.location.origin}/api/save-gallery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gallery })
+      }).catch(err => console.error("Failed to sync gallery:", err));
+    }
+  }, [gallery, isAdmin]);
+
   useEffect(() => { sessionStorage.setItem('hbl_isAdmin', isAdmin.toString()); }, [isAdmin]);
 
   const handleAuth = (e: React.FormEvent) => {
