@@ -1,4 +1,5 @@
 import express from "express";
+console.log("SERVER.TS: STARTING...");
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -12,8 +13,8 @@ const PORT = 3000;
 
 // 1. GLOBAL MIDDLEWARE
 app.use((req, res, next) => {
-  res.setHeader("X-HBL-Server", "Express-V5-Active");
-  console.log(`[${new Date().toISOString()}] INCOMING: ${req.method} ${req.url}`);
+  res.setHeader("X-HBL-Server", "Express-V7-Active");
+  console.log(`[${new Date().toISOString()}] V7-INCOMING: ${req.method} ${req.url}`);
   next();
 });
 
@@ -21,11 +22,13 @@ app.use(express.json());
 
 // 2. DIRECT API ROUTES (Bypass router for debugging)
 app.get("/api/ping", (req, res) => {
-  res.json({ status: "ok", v: "V6-DIRECT", time: new Date().toISOString() });
+  console.log("V7: /api/ping HIT");
+  res.json({ status: "ok", v: "V7-DIRECT", time: new Date().toISOString() });
 });
 
 app.get("/ping", (req, res) => {
-  res.json({ status: "ok", v: "V6-ROOT", time: new Date().toISOString() });
+  console.log("V7: /ping HIT");
+  res.json({ status: "ok", v: "V7-ROOT", time: new Date().toISOString() });
 });
 
 // 3. ROUTER API

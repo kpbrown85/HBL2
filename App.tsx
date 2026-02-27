@@ -352,7 +352,7 @@ const App: React.FC = () => {
         }
       }
 
-      alert(`DIAGNOSTIC RESULTS (V6)\n\n${JSON.stringify(results, null, 2)}`);
+      alert(`DIAGNOSTIC RESULTS (V7.1)\n\n${JSON.stringify(results, null, 2)}`);
     } catch (err: any) {
       alert(`DIAGNOSTIC ERROR\n\n${err.message || String(err)}`);
     }
