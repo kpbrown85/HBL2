@@ -1,5 +1,4 @@
 import express from "express";
-console.log("SERVER.TS: STARTING UP...");
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -16,31 +15,37 @@ if (!fs.existsSync(BOOKINGS_FILE)) {
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
-
-// 1. IMMEDIATE LOGGING & DEBUGGING
+// Add a custom header to identify our server
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] REQUEST: ${req.method} ${req.url}`);
-  if (req.url === '/debug-test') {
-    return res.json({ status: "Express is alive", time: new Date().toISOString() });
-  }
+  res.setHeader("X-HBL-Server", "Express-Active");
   next();
 });
 
-// 2. API ROUTES
-app.get(["/ping", "/api/ping"], (req, res) => {
-  res.json({ status: "ok", path: req.url });
+app.use(express.json());
+
+// 1. API ROUTES
+app.get("/api/ping", (req, res) => {
+  res.json({ status: "ok", source: "HBL-Express-Server", time: new Date().toISOString() });
 });
 
-app.post(["/create-booking", "/api/create-booking"], async (req, res) => {
+app.get("/debug-test", (req, res) => {
+  res.json({ status: "Express is reachable", path: req.url });
+});
+
+app.post("/api/create-booking", async (req, res) => {
   try {
-    const booking = { ...req.body, id: Math.random().toString(36).substr(2, 9), timestamp: Date.now(), status: "pending" };
+    const booking = { 
+      ...req.body, 
+      id: Math.random().toString(36).substr(2, 9), 
+      timestamp: Date.now(), 
+      status: "pending" 
+    };
     const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
     const bookings = JSON.parse(data);
     bookings.unshift(booking);
     fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
     
-    // Simple email notification
+    // Email (Non-blocking)
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
       const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com", port: 465, secure: true,
@@ -49,28 +54,28 @@ app.post(["/create-booking", "/api/create-booking"], async (req, res) => {
       transporter.sendMail({
         from: `"HBL" <${process.env.SMTP_USER}>`,
         to: "kevin.paul.brown@gmail.com",
-        subject: "New Booking",
-        text: `New booking from ${booking.name}`
-      }).catch(console.error);
+        subject: "New Booking Request",
+        text: `New booking from ${booking.name}.`
+      }).catch(err => console.error("Email error:", err));
     }
     
     res.status(201).json(booking);
   } catch (e) {
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Booking failed on server" });
   }
 });
 
-app.get(["/get-bookings", "/api/get-bookings"], (req, res) => {
+app.get("/api/get-bookings", (req, res) => {
   try {
     const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
     res.json(JSON.parse(data));
   } catch (e) {
-    res.status(500).json({ error: "Read error" });
+    res.status(500).json({ error: "Failed to load bookings" });
   }
 });
 
-// 3. VITE / STATIC ASSETS
-async function setupVite() {
+// 2. VITE / STATIC ASSETS
+async function startApp() {
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
@@ -84,10 +89,10 @@ async function setupVite() {
       res.sendFile(path.join(__dirname, "dist", "index.html"));
     });
   }
-  
+
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`[${new Date().toISOString()}] HBL Server listening on port ${PORT}`);
   });
 }
 
-setupVite();
+startApp();
