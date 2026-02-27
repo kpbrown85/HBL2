@@ -338,21 +338,23 @@ const App: React.FC = () => {
 
       for (const path of paths) {
         try {
-          const res = await fetch(path);
-          const hblHeader = res.headers.get("X-HBL-Server");
-          const apiHeader = res.headers.get("X-HBL-API");
+          const url = window.location.origin + path + "?cb=" + Date.now();
+          const res = await fetch(url);
+          const headers: any = {};
+          res.headers.forEach((v, k) => { headers[k] = v; });
+          
           const data = res.ok ? await res.json() : `FAILED (${res.status})`;
           results[path] = {
             data,
-            server: hblHeader || "NONE",
-            api: apiHeader || "NONE"
+            status: res.status,
+            headers
           };
         } catch (e: any) {
           results[path] = `ERROR: ${e.message}`;
         }
       }
 
-      alert(`DIAGNOSTIC RESULTS (V7.1)\n\n${JSON.stringify(results, null, 2)}`);
+      alert(`DIAGNOSTIC RESULTS (V8.2)\n\nLOCATION: ${window.location.href}\n\n${JSON.stringify(results, null, 2)}`);
     } catch (err: any) {
       alert(`DIAGNOSTIC ERROR\n\n${err.message || String(err)}`);
     }

@@ -16,9 +16,14 @@ export default defineConfig({
       name: 'api-server',
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
-          if (req.url === '/vite-ping') {
+          res.setHeader('X-Vite-Global', 'V8.1-Active');
+          const url = req.url || '';
+          if (url.includes('/vite-ping')) {
             res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ status: 'Vite CLI is active', v: 'V6', timestamp: new Date().toISOString() }));
+            res.end(JSON.stringify({ status: 'Vite CLI is active', v: 'V8.1', timestamp: new Date().toISOString() }));
+          } else if (url.includes('/api/ping')) {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ status: 'Vite API Bypass', v: 'V8.1' }));
           } else {
             next();
           }

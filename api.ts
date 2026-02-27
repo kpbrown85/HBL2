@@ -16,12 +16,12 @@ const api = express.Router();
 
 // Middleware to identify the API
 api.use((req, res, next) => {
-  res.setHeader("X-HBL-API", "Active-V5");
+  res.setHeader("X-HBL-API", "Active-V8");
   next();
 });
 
 api.get("/ping", (req, res) => {
-  res.json({ status: "ok", version: "V6", timestamp: new Date().toISOString() });
+  res.json({ status: "ok", version: "V8", timestamp: new Date().toISOString() });
 });
 
 api.get("/debug-test", (req, res) => {
