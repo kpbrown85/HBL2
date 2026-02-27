@@ -15,15 +15,15 @@ export default defineConfig({
     {
       name: 'api-server',
       configureServer(server) {
-        server.middlewares.use(app);
         server.middlewares.use((req, res, next) => {
           if (req.url === '/vite-ping') {
             res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ status: 'Vite CLI is active', timestamp: new Date().toISOString() }));
+            res.end(JSON.stringify({ status: 'Vite CLI is active', v: 'V6', timestamp: new Date().toISOString() }));
           } else {
             next();
           }
         });
+        server.middlewares.use(app);
       }
     }
   ],

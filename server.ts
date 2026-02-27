@@ -19,11 +19,20 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// 2. API ROUTES
-app.use("/api", api);
-app.use(api); // Aliases
+// 2. DIRECT API ROUTES (Bypass router for debugging)
+app.get("/api/ping", (req, res) => {
+  res.json({ status: "ok", v: "V6-DIRECT", time: new Date().toISOString() });
+});
 
-// 3. VITE / STATIC ASSETS
+app.get("/ping", (req, res) => {
+  res.json({ status: "ok", v: "V6-ROOT", time: new Date().toISOString() });
+});
+
+// 3. ROUTER API
+app.use("/api", api);
+app.use(api); 
+
+// 4. VITE / STATIC ASSETS
 async function startApp() {
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");

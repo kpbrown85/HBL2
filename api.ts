@@ -21,7 +21,7 @@ api.use((req, res, next) => {
 });
 
 api.get("/ping", (req, res) => {
-  res.json({ status: "ok", version: "V5", timestamp: new Date().toISOString() });
+  res.json({ status: "ok", version: "V6", timestamp: new Date().toISOString() });
 });
 
 api.get("/debug-test", (req, res) => {
