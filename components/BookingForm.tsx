@@ -94,11 +94,10 @@ export const BookingForm: React.FC = () => {
         let errorDetail = text;
         try {
           const json = JSON.parse(text);
-          // Handle cases where error might be an object or a string
-          const rawError = json.error || text;
-          errorDetail = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
+          // If it's a JSON object, show the whole thing for debugging
+          errorDetail = JSON.stringify(json, null, 2);
         } catch {}
-        throw new Error(`Server rejected request (${response.status}): ${errorDetail.substring(0, 100)}`);
+        throw new Error(`Server rejected request (${response.status}): ${errorDetail}`);
       }
       
       const savedBooking = await response.json();

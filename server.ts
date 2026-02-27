@@ -41,17 +41,28 @@ async function startServer() {
 
   // Health Check / Ping
   app.get("/api/ping", (req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString(), env: process.env.NODE_ENV });
+    console.log(`[${new Date().toISOString()}] GET Ping received from ${req.ip}`);
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(), 
+      env: process.env.NODE_ENV,
+      url: req.url,
+      method: req.method
+    });
   });
 
-  // Test POST endpoint
-  app.post("/api/test-post", (req, res) => {
-    console.log(`[${new Date().toISOString()}] Server: Test POST received`, req.body);
-    res.json({ success: true, received: req.body });
+  app.post("/api/ping", (req, res) => {
+    console.log(`[${new Date().toISOString()}] POST Ping received from ${req.ip}`, req.body);
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(), 
+      method: req.method,
+      receivedBody: req.body
+    });
   });
 
   // API: Get all bookings
-  app.get(["/api/bookings", "/api/get-bookings"], (req, res) => {
+  app.get("/api/get-bookings", (req, res) => {
     try {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
       res.json(JSON.parse(data));
@@ -61,30 +72,27 @@ async function startServer() {
   });
 
   // API: Create a booking
-  app.post(["/api/bookings", "/api/create-booking"], async (req, res) => {
+  app.post("/api/create-booking", async (req, res) => {
     const booking = req.body;
     booking.id = Math.random().toString(36).substr(2, 9);
     booking.timestamp = Date.now();
     booking.status = "pending";
     booking.isRead = false;
 
-    console.log(`[${new Date().toISOString()}] Server: New booking request from ${booking.name} (${booking.email})`);
+    console.log(`[${new Date().toISOString()}] Server: New booking request from ${booking.name}`);
 
     try {
-      // 1. Save to file (Logging on the site)
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
       const bookings = JSON.parse(data);
       bookings.unshift(booking);
       fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
-      console.log(`[${new Date().toISOString()}] Server: Booking ${booking.id} saved to database`);
 
-      // 2. Send Email Notification
+      // Send Email Notification
       const adminEmail = "kevin.paul.brown@gmail.com";
       const smtpUser = process.env.SMTP_USER;
       const smtpPass = process.env.SMTP_PASS;
 
       if (smtpUser && smtpPass) {
-        console.log(`[${new Date().toISOString()}] Server: Attempting to send email to ${adminEmail}`);
         const transporter = getTransporter();
         const mailOptions = {
           from: `"HBL Booking System" <${smtpUser}>`,
@@ -98,45 +106,46 @@ async function startServer() {
                 <p style="margin: 0; font-size: 18px; font-weight: 700;">${booking.name}</p>
                 <p style="margin: 5px 0 0 0; font-size: 14px; color: #57534e;">${booking.email} | ${booking.phone}</p>
               </div>
-              
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
-                <div style="background: #f0fdf4; padding: 20px; border-radius: 15px; border: 1px solid #dcfce7;">
-                  <p style="margin: 0 0 5px 0; font-size: 10px; font-weight: 900; color: #166534; text-transform: uppercase; letter-spacing: 1px;">Dates</p>
-                  <p style="margin: 0; font-size: 14px; font-weight: 700;">${booking.startDate} to ${booking.endDate}</p>
-                </div>
-                <div style="background: #f0fdf4; padding: 20px; border-radius: 15px; border: 1px solid #dcfce7;">
-                  <p style="margin: 0 0 5px 0; font-size: 10px; font-weight: 900; color: #166534; text-transform: uppercase; letter-spacing: 1px;">Fleet</p>
-                  <p style="margin: 0; font-size: 14px; font-weight: 700;">${booking.numLlamas} Pack Animals</p>
-                </div>
-              </div>
-
               <div style="margin-bottom: 40px;">
                 <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 2px;">Equipment & Training</p>
                 <ul style="margin: 0; padding: 0; list-style: none;">
+                  <li style="padding: 10px 0; border-bottom: 1px solid #f5f5f4; font-size: 14px; font-weight: 600;">Dates: ${booking.startDate} to ${booking.endDate}</li>
+                  <li style="padding: 10px 0; border-bottom: 1px solid #f5f5f4; font-size: 14px; font-weight: 600;">Fleet: ${booking.numLlamas} Pack Animals</li>
                   <li style="padding: 10px 0; border-bottom: 1px solid #f5f5f4; font-size: 14px; font-weight: 600;">Trailer Needed: ${booking.trailerNeeded ? '✅ Yes' : '❌ No'}</li>
                   <li style="padding: 10px 0; border-bottom: 1px solid #f5f5f4; font-size: 14px; font-weight: 600;">First Timer Clinic: ${booking.isFirstTimer ? '✅ Yes' : '❌ No'}</li>
                 </ul>
               </div>
-
               <a href="${process.env.APP_URL || 'https://www.helenallamas.com'}" style="display: block; background: #166534; color: white; padding: 20px; text-align: center; text-decoration: none; border-radius: 15px; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Manage in Dashboard</a>
-              
-              <p style="margin-top: 40px; font-size: 10px; color: #a8a29e; text-align: center; text-transform: uppercase; letter-spacing: 1px;">Helena Backcountry Llamas - Automated Dispatch</p>
             </div>
           `,
         };
-
-        transporter.sendMail(mailOptions)
-          .then(() => console.log(`[${new Date().toISOString()}] Server: Email sent successfully to ${adminEmail}`))
-          .catch(err => console.error(`[${new Date().toISOString()}] Server: Email failed:`, err));
-      } else {
-        console.warn(`[${new Date().toISOString()}] Server: SMTP credentials missing. Email not sent, but booking was logged.`);
+        transporter.sendMail(mailOptions).catch(err => console.error("Email failed:", err));
       }
 
       res.status(201).json(booking);
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Server: Booking Error:`, error);
+      console.error("Booking Error:", error);
       res.status(500).json({ error: "Failed to process booking" });
     }
+  });
+
+  // Legacy route support
+  app.post("/api/bookings", (req, res) => {
+    res.redirect(307, "/api/create-booking");
+  });
+  app.get("/api/bookings", (req, res) => {
+    res.redirect(301, "/api/get-bookings");
+  });
+
+  // Specific POST catch-all for debugging
+  app.post("/api/*", (req, res) => {
+    console.warn(`[${new Date().toISOString()}] Unmatched API POST: ${req.url}`);
+    res.status(404).json({
+      error: "Unmatched API POST",
+      method: req.method,
+      url: req.url,
+      msg: "This request reached Express but matched no POST route"
+    });
   });
 
   // API: Update booking status
@@ -201,7 +210,13 @@ async function startServer() {
 
   // API Catch-all (JSON 404)
   app.all("/api/*", (req, res) => {
-    res.status(404).json({ error: `API route not found: ${req.method} ${req.url}` });
+    console.warn(`[${new Date().toISOString()}] API 404: ${req.method} ${req.url}`);
+    res.status(404).json({ 
+      error: "API route not found", 
+      method: req.method, 
+      url: req.url,
+      timestamp: new Date().toISOString()
+    });
   });
 
   // Vite middleware for development
@@ -218,6 +233,17 @@ async function startServer() {
       res.sendFile(path.join(__dirname, "dist", "index.html"));
     });
   }
+
+  // Final Fallthrough 404
+  app.use((req, res) => {
+    console.error(`[${new Date().toISOString()}] Global 404 Fallthrough: ${req.method} ${req.url}`);
+    res.status(404).json({ 
+      code: "404", 
+      message: "The page could not be found",
+      detail: "This is the Express final fallthrough 404",
+      path: req.url
+    });
+  });
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);

@@ -333,21 +333,20 @@ const App: React.FC = () => {
 
   const testApiConnectivity = async () => {
     try {
-      const apiPath = `${window.location.origin}/api/test-post`;
-      const response = await fetch(apiPath, {
+      const origin = window.location.origin;
+      const getRes = await fetch(`${origin}/api/ping`);
+      const postRes = await fetch(`${origin}/api/ping`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ test: 'ping', timestamp: new Date().toISOString() })
+        body: JSON.stringify({ test: 'ping', time: new Date().toISOString() })
       });
-      if (response.ok) {
-        const data = await response.json();
-        alert(`API Connection Test: SUCCESS\n\nServer received: ${JSON.stringify(data.received)}`);
-      } else {
-        const text = await response.text();
-        alert(`API Connection Test: FAILED (${response.status})\n\nResponse: ${text.substring(0, 200)}`);
-      }
+
+      const getData = getRes.ok ? await getRes.json() : `FAILED (${getRes.status})`;
+      const postData = postRes.ok ? await postRes.json() : `FAILED (${postRes.status})`;
+
+      alert(`DIAGNOSTIC RESULTS\n\nGET /api/ping: ${getRes.ok ? 'SUCCESS' : 'FAIL'}\n${JSON.stringify(getData, null, 2)}\n\nPOST /api/ping: ${postRes.ok ? 'SUCCESS' : 'FAIL'}\n${JSON.stringify(postData, null, 2)}`);
     } catch (err: any) {
-      alert(`API Connection Test: ERROR\n\n${err.message || String(err)}`);
+      alert(`DIAGNOSTIC ERROR\n\n${err.message || String(err)}`);
     }
   };
 
@@ -512,7 +511,7 @@ const App: React.FC = () => {
                     onClick={testApiConnectivity}
                     className="text-[9px] font-bold text-stone-400 hover:text-stone-600 underline decoration-stone-200 underline-offset-2"
                   >
-                    TEST POST
+                    DIAGNOSTIC PING
                   </button>
                 </div>
               </div>
