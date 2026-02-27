@@ -200,16 +200,20 @@ const App: React.FC = () => {
 
     const loadLogs = async () => {
       const logsUrl = `${window.location.origin}/api/get-bookings`;
+      console.log(`[${new Date().toISOString()}] Fetching logs from: ${logsUrl}`);
       try {
         const response = await fetch(logsUrl);
         if (response.ok) {
           const data = await response.json();
+          console.log(`[${new Date().toISOString()}] Logs received:`, data);
           setBookings(data);
           localStorage.setItem('hbl_bookings', JSON.stringify(data));
         } else {
+          console.error(`[${new Date().toISOString()}] Logs fetch failed: ${response.status}`);
           setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
         }
       } catch (error) {
+        console.error(`[${new Date().toISOString()}] Logs fetch error:`, error);
         setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
       }
     };
@@ -793,6 +797,14 @@ const App: React.FC = () => {
                     <div>
                       <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Expedition Logs</h2>
                       <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Review and manage incoming mission requests</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${apiStatus === 'online' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                        System: {apiStatus}
+                      </div>
+                      <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${bookings.length > 0 ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-stone-50 text-stone-400 border-stone-100'}`}>
+                        Sync: {bookings.length} Records
+                      </div>
                     </div>
                   </header>
 
