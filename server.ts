@@ -65,51 +65,76 @@ async function startServer() {
     const booking = req.body;
     booking.id = Math.random().toString(36).substr(2, 9);
     booking.timestamp = Date.now();
-    booking.status = booking.status || "pending";
+    booking.status = "pending";
     booking.isRead = false;
 
-    console.log(`[${new Date().toISOString()}] Server: Creating booking for ${booking.name}`);
+    console.log(`[${new Date().toISOString()}] Server: New booking request from ${booking.name} (${booking.email})`);
 
     try {
-      // Save to file
+      // 1. Save to file (Logging on the site)
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
       const bookings = JSON.parse(data);
       bookings.unshift(booking);
       fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+      console.log(`[${new Date().toISOString()}] Server: Booking ${booking.id} saved to database`);
 
-      // Send Email Notification (Non-blocking)
-      const adminEmail = process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com";
-      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      // 2. Send Email Notification
+      const adminEmail = "kevin.paul.brown@gmail.com";
+      const smtpUser = process.env.SMTP_USER;
+      const smtpPass = process.env.SMTP_PASS;
+
+      if (smtpUser && smtpPass) {
+        console.log(`[${new Date().toISOString()}] Server: Attempting to send email to ${adminEmail}`);
         const transporter = getTransporter();
         const mailOptions = {
-          from: `"HBL Booking System" <${process.env.SMTP_USER}>`,
+          from: `"HBL Booking System" <${smtpUser}>`,
           to: adminEmail,
-          subject: `New Booking Request: ${booking.name}`,
+          subject: `NEW BOOKING: ${booking.name} - ${booking.startDate}`,
           html: `
-            <div style="font-family: sans-serif; padding: 20px; color: #1c1917;">
-              <h2 style="color: #166534;">New Expedition Request</h2>
-              <p><strong>Contact:</strong> ${booking.name}</p>
-              <p><strong>Email:</strong> ${booking.email}</p>
-              <p><strong>Phone:</strong> ${booking.phone}</p>
-              <hr style="border: 1px solid #f5f5f4;" />
-              <p><strong>Dates:</strong> ${booking.startDate} to ${booking.endDate}</p>
-              <p><strong>Llamas:</strong> ${booking.numLlamas}</p>
-              <p><strong>Trailer Needed:</strong> ${booking.trailerNeeded ? 'Yes' : 'No'}</p>
-              <p><strong>First Timer:</strong> ${booking.isFirstTimer ? 'Yes' : 'No'}</p>
-              <br />
-              <a href="${process.env.APP_URL || '#'}" style="background: #166534; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View in Admin Dashboard</a>
+            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #1c1917; max-width: 600px; margin: auto; border: 1px solid #f5f5f4; border-radius: 20px;">
+              <h1 style="color: #166534; font-size: 24px; font-weight: 900; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">New Expedition Request</h1>
+              <div style="background: #fafaf9; padding: 30px; border-radius: 15px; margin-bottom: 30px;">
+                <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 2px;">Lead Contact</p>
+                <p style="margin: 0; font-size: 18px; font-weight: 700;">${booking.name}</p>
+                <p style="margin: 5px 0 0 0; font-size: 14px; color: #57534e;">${booking.email} | ${booking.phone}</p>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                <div style="background: #f0fdf4; padding: 20px; border-radius: 15px; border: 1px solid #dcfce7;">
+                  <p style="margin: 0 0 5px 0; font-size: 10px; font-weight: 900; color: #166534; text-transform: uppercase; letter-spacing: 1px;">Dates</p>
+                  <p style="margin: 0; font-size: 14px; font-weight: 700;">${booking.startDate} to ${booking.endDate}</p>
+                </div>
+                <div style="background: #f0fdf4; padding: 20px; border-radius: 15px; border: 1px solid #dcfce7;">
+                  <p style="margin: 0 0 5px 0; font-size: 10px; font-weight: 900; color: #166534; text-transform: uppercase; letter-spacing: 1px;">Fleet</p>
+                  <p style="margin: 0; font-size: 14px; font-weight: 700;">${booking.numLlamas} Pack Animals</p>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 40px;">
+                <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 2px;">Equipment & Training</p>
+                <ul style="margin: 0; padding: 0; list-style: none;">
+                  <li style="padding: 10px 0; border-bottom: 1px solid #f5f5f4; font-size: 14px; font-weight: 600;">Trailer Needed: ${booking.trailerNeeded ? '✅ Yes' : '❌ No'}</li>
+                  <li style="padding: 10px 0; border-bottom: 1px solid #f5f5f4; font-size: 14px; font-weight: 600;">First Timer Clinic: ${booking.isFirstTimer ? '✅ Yes' : '❌ No'}</li>
+                </ul>
+              </div>
+
+              <a href="${process.env.APP_URL || 'https://www.helenallamas.com'}" style="display: block; background: #166534; color: white; padding: 20px; text-align: center; text-decoration: none; border-radius: 15px; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Manage in Dashboard</a>
+              
+              <p style="margin-top: 40px; font-size: 10px; color: #a8a29e; text-align: center; text-transform: uppercase; letter-spacing: 1px;">Helena Backcountry Llamas - Automated Dispatch</p>
             </div>
           `,
         };
 
-        transporter.sendMail(mailOptions).catch(err => {
-          console.error("Email Sending Error:", err);
-        });
+        transporter.sendMail(mailOptions)
+          .then(() => console.log(`[${new Date().toISOString()}] Server: Email sent successfully to ${adminEmail}`))
+          .catch(err => console.error(`[${new Date().toISOString()}] Server: Email failed:`, err));
+      } else {
+        console.warn(`[${new Date().toISOString()}] Server: SMTP credentials missing. Email not sent, but booking was logged.`);
       }
 
       res.status(201).json(booking);
     } catch (error) {
-      console.error("Booking Error:", error);
+      console.error(`[${new Date().toISOString()}] Server: Booking Error:`, error);
       res.status(500).json({ error: "Failed to process booking" });
     }
   });

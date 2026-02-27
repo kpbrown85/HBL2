@@ -14,7 +14,8 @@ import {
   ArrowRight,
   CheckCircle2,
   Info,
-  Send
+  Send,
+  Loader2
 } from 'lucide-react';
 
 export const BookingForm: React.FC = () => {
@@ -30,6 +31,7 @@ export const BookingForm: React.FC = () => {
   });
 
   const [estimate, setEstimate] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [adminEmail, setAdminEmail] = useState('kevin.paul.brown@gmail.com');
 
@@ -65,6 +67,7 @@ export const BookingForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
     const newBooking: Partial<BookingData> = {
       ...formData,
@@ -73,19 +76,31 @@ export const BookingForm: React.FC = () => {
     };
 
     try {
-      const apiPath = `${window.location.origin}/api/create-booking`;
+      // Use relative path for maximum compatibility behind proxies
+      const apiPath = '/api/create-booking';
+      console.log(`[${new Date().toISOString()}] Client: Submitting booking to ${apiPath}`);
+      
       const response = await fetch(apiPath, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(newBooking),
       });
 
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(`Server error (${response.status}): ${text.substring(0, 100)}`);
+        let errorDetail = text;
+        try {
+          const json = JSON.parse(text);
+          errorDetail = json.error || text;
+        } catch {}
+        throw new Error(`Server rejected request (${response.status}): ${errorDetail.substring(0, 100)}`);
       }
       
       const savedBooking = await response.json();
+      console.log(`[${new Date().toISOString()}] Client: Booking submitted successfully`, savedBooking);
 
       // Redundancy: Save to localStorage as well
       const existing = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
@@ -97,7 +112,9 @@ export const BookingForm: React.FC = () => {
     } catch (error: any) {
       console.error("Submission error:", error);
       const msg = error instanceof Error ? error.message : String(error);
-      alert(`Submission Failed: ${msg}\n\nTarget URL: ${window.location.origin}/api/create-booking`);
+      alert(`SUBMISSION FAILED\n\nError: ${msg}\n\nIf this persists, please contact us at ${adminEmail} or call 801-372-0353.`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -369,9 +386,14 @@ export const BookingForm: React.FC = () => {
 
       <button 
         type="submit"
-        className="w-full bg-green-800 text-white py-6 rounded-2xl font-black text-xl hover:bg-green-900 transition-all shadow-[0_20px_40px_-10px_rgba(22,101,52,0.4)] active:scale-[0.98] flex items-center justify-center gap-3"
+        disabled={isSubmitting}
+        className={`w-full bg-green-800 text-white py-6 rounded-2xl font-black text-xl transition-all shadow-[0_20px_40px_-10px_rgba(22,101,52,0.4)] active:scale-[0.98] flex items-center justify-center gap-3 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-900'}`}
       >
-        Send Expedition Request <ArrowRight className="w-6 h-6" />
+        {isSubmitting ? (
+          <>Processing Request... <Loader2 className="w-6 h-6 animate-spin" /></>
+        ) : (
+          <>Send Expedition Request <ArrowRight className="w-6 h-6" /></>
+        )}
       </button>
     </form>
   );
