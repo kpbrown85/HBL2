@@ -313,10 +313,11 @@ const App: React.FC = () => {
         
         if (contentType && contentType.includes("application/json")) {
           const errData = await response.json();
-          errorMessage = errData.error || errorMessage;
+          const rawError = errData.error || errorMessage;
+          errorMessage = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
         } else {
           const text = await response.text();
-          errorMessage += `: ${text.substring(0, 100)}`;
+          errorMessage += `: ${String(text).substring(0, 100)}`;
         }
         throw new Error(errorMessage);
       }
