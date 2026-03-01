@@ -249,7 +249,7 @@ api.post("/update-booking", async (req, res) => {
             <h3 style="margin-top: 0; color: #166534;">Next Steps:</h3>
             <ol>
               <li>We will call you shortly to finalize the meeting location.</li>
-              <li>Review our "Backcountry Llama Care" guide (attached in next email).</li>
+              <li>Review our <a href="${process.env.APP_URL || 'https://www.helenallamas.com'}/guide" style="color: #166534; font-weight: bold; text-decoration: underline;">Backcountry Llama Care Guide</a> to prepare for your trek.</li>
               <li>Prepare your gear—remember, each llama can carry up to 60-80 lbs!</li>
             </ol>
           </div>

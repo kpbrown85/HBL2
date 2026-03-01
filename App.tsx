@@ -8,6 +8,7 @@ import { GearSection } from './components/GearSection';
 import { FAQSection } from './components/FAQSection';
 import { PackingListGenerator } from './components/PackingListGenerator';
 import { WaiverPage } from './components/WaiverPage';
+import { LlamaGuidePage } from './components/LlamaGuidePage';
 import { generateWelcomeSlogan, generateBackdrop } from './services/geminiService';
 import { GalleryImage, Llama, BookingData } from './types';
 import { 
@@ -487,6 +488,8 @@ const App: React.FC = () => {
     <div className="min-h-screen selection:bg-green-100 selection:text-green-900">
       {waiverBookingId ? (
         <WaiverPage bookingId={waiverBookingId} onComplete={() => navigate('/')} />
+      ) : currentPath === '/guide' ? (
+        <LlamaGuidePage onBack={() => navigate('/')} />
       ) : (
         <>
           {/* Admin Quick Trigger */}
