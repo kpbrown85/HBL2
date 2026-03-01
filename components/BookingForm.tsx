@@ -109,7 +109,13 @@ export const BookingForm: React.FC = () => {
         throw new Error(lastError || "All submission paths failed");
       }
       
-      const savedBooking = await response.json();
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.details || result.error || "Submission failed");
+      }
+
+      const savedBooking = result;
       console.log(`[${new Date().toISOString()}] Client: Booking submitted successfully`, savedBooking);
 
       // Redundancy: Save to localStorage as well

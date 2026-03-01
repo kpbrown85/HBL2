@@ -869,6 +869,13 @@ const App: React.FC = () => {
                         <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${bookings.length > 0 ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-stone-50 text-stone-400 border-stone-100'}`}>
                           Sync: {bookings.length} Records
                         </div>
+                        <button 
+                          onClick={() => window.dispatchEvent(new Event('hbl_new_booking'))}
+                          className="p-2 bg-stone-100 text-stone-600 rounded-full hover:bg-stone-200 transition-colors"
+                          title="Refresh Logs"
+                        >
+                          <RefreshCcw size={14} />
+                        </button>
                       </div>
                     </div>
                   </header>

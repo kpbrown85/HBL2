@@ -5,6 +5,8 @@ import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
 import { createClient } from '@supabase/supabase-js';
 
+import { v4 as uuidv4 } from 'uuid';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const BOOKINGS_FILE = path.join(__dirname, "..", "bookings.json");
@@ -62,7 +64,7 @@ api.post("/sign-waiver", async (req, res) => {
 api.post("/create-booking", async (req, res) => {
   const booking = { 
     ...req.body, 
-    id: Math.random().toString(36).substr(2, 9), 
+    id: uuidv4(), 
     timestamp: Date.now(), 
     status: "pending",
     isRead: false
@@ -77,7 +79,10 @@ api.post("/create-booking", async (req, res) => {
   try {
     if (supabase) {
       const { error } = await supabase.from('bookings').insert([booking]);
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase Insert Error:", error);
+        throw new Error(`Database save failed: ${error.message}. Please ensure your Supabase table has columns: id (text/uuid), name, email, phone, startDate, endDate, numLlamas, trailerNeeded, isFirstTimer, timestamp, status, isRead.`);
+      }
     } else {
       let bookings = [];
       if (fs.existsSync(BOOKINGS_FILE)) {
@@ -95,6 +100,10 @@ api.post("/create-booking", async (req, res) => {
   } catch (err: any) {
     console.error("Database error:", err);
     dbError = err.message || String(err);
+    // If Supabase is configured, we MUST fail if the DB save fails
+    if (supabase) {
+      return res.status(500).json({ error: "Database save failed", details: dbError });
+    }
   }
 
   // 2. Try Email (Always attempt)
