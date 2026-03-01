@@ -13,6 +13,12 @@ export const WaiverPage: React.FC<WaiverPageProps> = ({ bookingId, onComplete })
   const [error, setError] = useState<string | null>(null);
   const sigPad = useRef<SignatureCanvas>(null);
 
+  useEffect(() => {
+    if (!bookingId) {
+      setError("No Booking ID provided. Please use the link from your confirmation email.");
+    }
+  }, [bookingId]);
+
   const clear = () => {
     sigPad.current?.clear();
     setIsSigned(false);
@@ -39,7 +45,8 @@ export const WaiverPage: React.FC<WaiverPageProps> = ({ bookingId, onComplete })
         setIsSigned(true);
         setTimeout(onComplete, 3000);
       } else {
-        throw new Error("Failed to save signature");
+        const data = await response.json();
+        throw new Error(data.details || data.error || "Failed to save signature");
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -155,15 +162,26 @@ export const WaiverPage: React.FC<WaiverPageProps> = ({ bookingId, onComplete })
             </div>
 
             {error && (
-              <div className="p-6 bg-red-50 text-red-600 rounded-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-2">
-                <ShieldAlert size={20} />
-                <p className="text-sm font-bold">{error}</p>
+              <div className="p-8 bg-red-50 text-red-600 rounded-[2rem] border border-red-100 space-y-4 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-4">
+                  <ShieldAlert size={24} />
+                  <p className="text-lg font-black uppercase tracking-tight">Signature Failed</p>
+                </div>
+                <p className="text-sm font-medium leading-relaxed opacity-80">{error}</p>
+                <div className="pt-4 border-t border-red-200/50">
+                  <p className="text-[10px] font-black uppercase tracking-widest">Troubleshooting:</p>
+                  <ul className="list-disc list-inside text-[10px] mt-2 space-y-1 opacity-60">
+                    <li>Ensure you clicked the link from your most recent email</li>
+                    <li>If the server recently restarted, local records may have been cleared</li>
+                    <li>Contact us at 801-372-0353 if you cannot complete signing</li>
+                  </ul>
+                </div>
               </div>
             )}
 
             <button 
               onClick={save}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !!(error && error.includes("No Booking ID"))}
               className="w-full py-8 bg-green-800 text-white rounded-[2rem] font-black text-lg uppercase tracking-[0.2em] shadow-2xl shadow-green-900/20 hover:bg-green-900 transition-all active:scale-95 flex items-center justify-center gap-4 disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 className="animate-spin" /> : <ShieldAlert size={24} />}

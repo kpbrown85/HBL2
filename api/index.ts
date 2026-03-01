@@ -40,12 +40,17 @@ api.post("/sign-waiver", async (req, res) => {
       const { error } = await supabase.from('bookings').update(update).eq('id', id);
       if (error) throw error;
     } else {
+      if (!fs.existsSync(BOOKINGS_FILE)) {
+        throw new Error("No bookings found to sign. Please ensure your booking request was recorded.");
+      }
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
       let bookings = JSON.parse(data);
       const index = bookings.findIndex((b: any) => b.id === id);
       if (index !== -1) {
         bookings[index] = { ...bookings[index], ...update };
         fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+      } else {
+        throw new Error(`Booking ID ${id} not found in local records.`);
       }
     }
     res.json({ success: true });
@@ -74,8 +79,16 @@ api.post("/create-booking", async (req, res) => {
       const { error } = await supabase.from('bookings').insert([booking]);
       if (error) throw error;
     } else {
-      const data = fs.existsSync(BOOKINGS_FILE) ? fs.readFileSync(BOOKINGS_FILE, "utf-8") : "[]";
-      const bookings = JSON.parse(data);
+      let bookings = [];
+      if (fs.existsSync(BOOKINGS_FILE)) {
+        try {
+          const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
+          bookings = JSON.parse(data);
+        } catch (e) {
+          console.error("Error parsing bookings file, resetting:", e);
+          bookings = [];
+        }
+      }
       bookings.unshift(booking);
       fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
     }

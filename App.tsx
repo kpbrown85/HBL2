@@ -58,7 +58,8 @@ import {
   Eye,
   Type,
   Wind,
-  PenTool
+  PenTool,
+  ShieldAlert
 } from 'lucide-react';
 
 const APP_VERSION = "3.7.0-Conditions-Sync";
@@ -190,6 +191,7 @@ const App: React.FC = () => {
 
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [supabaseStatus, setSupabaseStatus] = useState<boolean | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const dailyFact = useMemo(() => {
@@ -205,7 +207,9 @@ const App: React.FC = () => {
       try {
         const response = await fetch(pingUrl);
         if (response.ok) {
+          const data = await response.json();
           setApiStatus('online');
+          setSupabaseStatus(data.supabase);
           setApiError(null);
         } else {
           setApiStatus('offline');
@@ -486,8 +490,8 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen selection:bg-green-100 selection:text-green-900">
-      {waiverBookingId ? (
-        <WaiverPage bookingId={waiverBookingId} onComplete={() => navigate('/')} />
+      {currentPath.startsWith('/sign/') ? (
+        <WaiverPage bookingId={waiverBookingId || ''} onComplete={() => navigate('/')} />
       ) : currentPath === '/guide' ? (
         <LlamaGuidePage onBack={() => navigate('/')} />
       ) : (
@@ -848,12 +852,23 @@ const App: React.FC = () => {
                       <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Expedition Logs</h2>
                       <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Review and manage incoming mission requests</p>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${apiStatus === 'online' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                        System: {apiStatus}
-                      </div>
-                      <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${bookings.length > 0 ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-stone-50 text-stone-400 border-stone-100'}`}>
-                        Sync: {bookings.length} Records
+                    <div className="flex flex-col items-end gap-4">
+                      {supabaseStatus === false && (
+                        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center gap-3 text-amber-800 animate-pulse">
+                          <ShieldAlert size={16} />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Warning: Non-Persistent Storage. Bookings will be lost on server restart. Configure Supabase for live site.</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-4">
+                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${apiStatus === 'online' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                          System: {apiStatus}
+                        </div>
+                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${supabaseStatus ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
+                          Database: {supabaseStatus ? 'Supabase Connected' : 'Local File (Non-Persistent)'}
+                        </div>
+                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${bookings.length > 0 ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-stone-50 text-stone-400 border-stone-100'}`}>
+                          Sync: {bookings.length} Records
+                        </div>
                       </div>
                     </div>
                   </header>
