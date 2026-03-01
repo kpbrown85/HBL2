@@ -64,7 +64,8 @@ api.post("/create-booking", async (req, res) => {
         auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
       });
       
-      const emailHtml = `
+      // ADMIN NOTIFICATION
+      const adminHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
           <h2 style="color: #166534; border-bottom: 2px solid #166534; padding-bottom: 10px;">New Expedition Request</h2>
           <p><strong>Name:</strong> ${booking.name}</p>
@@ -84,8 +85,49 @@ api.post("/create-booking", async (req, res) => {
         from: `"HBL Notifications" <${process.env.SMTP_USER}>`,
         to: "kevin.paul.brown@gmail.com",
         subject: `New Booking: ${booking.name}`,
-        html: emailHtml
+        html: adminHtml
       });
+
+      // CUSTOMER CONFIRMATION
+      const customerHtml = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 30px; border-radius: 15px; color: #333;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #166534; margin: 0;">Helena Backcountry Llamas</h1>
+            <p style="color: #666; font-style: italic;">Your High Country Adventure Starts Here</p>
+          </div>
+          <p>Hi ${booking.name},</p>
+          <p>Thank you for requesting an expedition with our herd! We've received your request and our team is currently reviewing the trail conditions and llama availability for your dates.</p>
+          
+          <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #166534;">Request Summary:</h3>
+            <ul style="list-style: none; padding: 0;">
+              <li><strong>Dates:</strong> ${booking.startDate} to ${booking.endDate}</li>
+              <li><strong>Llamas:</strong> ${booking.numLlamas} Pack Animals</li>
+              <li><strong>Equipment:</strong> ${booking.trailerNeeded ? 'Trailer Rental Requested' : 'Standard Gear'}</li>
+            </ul>
+          </div>
+
+          <p><strong>What's Next?</strong></p>
+          <p>We will review your request and contact you at <strong>${booking.phone}</strong> within 24-48 hours to finalize the details and discuss trail logistics.</p>
+          
+          <p>In the meantime, feel free to check out our <a href="https://www.helenallamas.com/#gallery" style="color: #166534; font-weight: bold;">Journal</a> for inspiration from recent trips.</p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+          <p style="font-size: 12px; color: #999; text-align: center;">
+            Helena Backcountry Llamas<br/>
+            Helena, Montana<br/>
+            <em>"The ultimate backcountry companion."</em>
+          </p>
+        </div>
+      `;
+
+      await transporter.sendMail({
+        from: `"Helena Backcountry Llamas" <${process.env.SMTP_USER}>`,
+        to: booking.email,
+        subject: `Expedition Request Received: ${booking.startDate}`,
+        html: customerHtml
+      });
+
       emailSent = true;
     }
   } catch (err) {
