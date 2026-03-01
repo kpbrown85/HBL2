@@ -347,11 +347,22 @@ const App: React.FC = () => {
   };
 
   const updateBooking = async (id: string, action: 'confirm' | 'cancel' | 'delete') => {
+    if (action === 'delete') {
+      if (!confirm("Are you sure you want to permanently delete this booking? This action cannot be undone.")) {
+        return;
+      }
+    }
+    
     console.log(`Attempting ${action} on booking ${id}`);
-    const apiPath = `${window.location.origin}/api/${action === 'delete' ? 'delete-booking' : 'update-booking'}`;
+    const apiPath = `${window.location.origin}/api/update-booking`;
     
     try {
-      const body = action === 'delete' ? { id } : { id, status: action === 'confirm' ? 'confirmed' : 'canceled', isRead: true };
+      const body = { 
+        id, 
+        action,
+        status: action === 'confirm' ? 'confirmed' : (action === 'cancel' ? 'canceled' : undefined), 
+        isRead: true 
+      };
       
       const response = await fetch(apiPath, { 
         method: 'POST',
