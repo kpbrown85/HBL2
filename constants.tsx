@@ -169,3 +169,42 @@ export const REVIEWS: Review[] = [
     date: 'July 2024'
   }
 ];
+
+export const TRAILHEADS = [
+  {
+    id: 't1',
+    name: 'Mount Helena (Park City)',
+    description: 'The classic Helena experience. Quick access to high ridges with panoramic views of the city and the Elkhorn Mountains.',
+    difficulty: 'Moderate',
+    coordinates: '46.5822° N, 112.0528° W',
+    bestFor: 'Day Treks / Training',
+    image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 't2',
+    name: 'Trout Creek Canyon',
+    description: 'Stunning limestone cliffs and a gentle grade. Perfect for first-time llama packers and families.',
+    difficulty: 'Easy',
+    coordinates: '46.7214° N, 111.7845° W',
+    bestFor: 'Families / Beginners',
+    image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 't3',
+    name: 'Hanging Valley',
+    description: 'A hidden gem in the Big Belt Mountains. Lush meadows and dramatic rock formations await the adventurous.',
+    difficulty: 'Strenuous',
+    coordinates: '46.8122° N, 111.6541° W',
+    bestFor: 'Backpacking / Photography',
+    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 't4',
+    name: 'Refrigerator Canyon',
+    description: 'Deep, narrow canyon that stays cool even in mid-summer. Leads into the heart of the Gates of the Mountains Wilderness.',
+    difficulty: 'Moderate',
+    coordinates: '46.8541° N, 111.7214° W',
+    bestFor: 'Wilderness Access',
+    image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=800'
+  }
+];

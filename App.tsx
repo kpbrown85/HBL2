@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { LLAMAS, GALLERY_IMAGES, BENEFITS, LLAMA_FACTS } from './constants';
+import { LLAMAS, GALLERY_IMAGES, BENEFITS, LLAMA_FACTS, TRAILHEADS } from './constants';
 import { LlamaCard } from './components/LlamaCard';
 import { BookingForm } from './components/BookingForm';
 import { PhotoCarousel } from './components/PhotoCarousel';
@@ -939,7 +939,7 @@ const App: React.FC = () => {
             <div className="max-w-7xl mx-auto px-8 w-full flex justify-between items-center">
               <Logo branding={branding} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
               <div className="hidden md:flex items-center gap-12 font-black uppercase text-[11px] tracking-[0.2em]">
-                {['Benefits', 'About', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(item => (
+                {['Benefits', 'About', 'Trailheads', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(item => (
                   <a key={item} href={`#${item.toLowerCase()}`} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">{item}</a>
                 ))}
                 <a href="#booking" className="bg-green-800 text-white px-10 py-5 rounded-2xl flex items-center gap-2 shadow-2xl shadow-green-900/20 hover:bg-green-900 transition-all active:scale-95">Book Trek <ChevronRight size={14} /></a>
@@ -950,7 +950,7 @@ const App: React.FC = () => {
 
           <div className={`fixed inset-0 z-[110] bg-stone-950 transition-all duration-700 md:hidden ${isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
             <div className="p-16 pt-32 flex flex-col h-full space-y-12">
-              {['Benefits', 'About', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(l => (
+              {['Benefits', 'About', 'Trailheads', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(l => (
                 <a key={l} href={`#${l.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-6xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase">{l}</a>
               ))}
               <a href="#booking" onClick={() => setIsMenuOpen(false)} className="bg-green-600 text-white py-12 rounded-[3rem] text-3xl font-black uppercase tracking-widest text-center shadow-2xl">Plan My Trek</a>
@@ -991,6 +991,62 @@ const App: React.FC = () => {
 
             {/* Gallery Section */}
             <section id="gallery" className="py-64 bg-stone-950 text-white"><div className="max-w-7xl mx-auto px-8"><header className="flex flex-col md:flex-row justify-between items-end mb-32 gap-8"><h2 className="text-9xl font-black tracking-tighter leading-none">Journal.</h2><div className="bg-white/5 border border-white/10 px-12 py-6 rounded-full text-green-400 font-black uppercase tracking-widest text-xs">High Country Field Notes</div></header><PhotoCarousel images={gallery} /></div></section>
+
+            <section id="trailheads" className="py-64 bg-white overflow-hidden">
+              <div className="max-w-7xl mx-auto px-8">
+                <header className="mb-32">
+                  <h2 className="text-9xl font-black tracking-tighter text-stone-900 leading-none mb-12">Trailheads.</h2>
+                  <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-xs">Primary Deployment Zones / Helena National Forest</p>
+                </header>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  {TRAILHEADS.map((trail) => (
+                    <div key={trail.id} className="group relative bg-stone-50 rounded-[4rem] overflow-hidden border border-stone-100 hover:border-green-800/20 transition-all duration-700">
+                      <div className="aspect-[16/10] relative overflow-hidden">
+                        <img 
+                          src={trail.image} 
+                          alt={trail.name} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 grayscale group-hover:grayscale-0" 
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute top-8 left-8">
+                          <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-3 shadow-xl">
+                            <MapPin size={14} className="text-green-800" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-stone-900">{trail.coordinates}</span>
+                          </div>
+                        </div>
+                        <div className="absolute bottom-8 right-8">
+                          <div className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl ${
+                            trail.difficulty === 'Easy' ? 'bg-emerald-500 text-white' : 
+                            trail.difficulty === 'Moderate' ? 'bg-amber-500 text-white' : 
+                            'bg-red-600 text-white'
+                          }`}>
+                            {trail.difficulty}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-16">
+                        <div className="flex justify-between items-start mb-8">
+                          <h3 className="text-4xl font-black tracking-tighter text-stone-900">{trail.name}</h3>
+                          <div className="bg-stone-200/50 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest text-stone-500">
+                            Best For: {trail.bestFor}
+                          </div>
+                        </div>
+                        <p className="text-stone-500 font-medium text-lg leading-relaxed mb-12">{trail.description}</p>
+                        <a 
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trail.name + " Trailhead Helena MT")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-4 text-stone-900 font-black text-xs uppercase tracking-widest group/link"
+                        >
+                          Launch Navigation <ChevronRight size={16} className="group-hover/link:translate-x-2 transition-transform" />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
             
             {/* FAQ Section */}
             <section id="faq" className="py-64 bg-stone-50"><div className="max-w-7xl mx-auto px-8"><FAQSection /></div></section>
@@ -1070,7 +1126,7 @@ const App: React.FC = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-24">
-                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Exploration</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#conditions" className="hover:text-green-500 transition-colors">Conditions</a></li><li><a href="#benefits" className="hover:text-green-500 transition-colors">Benefits</a></li><li><a href="#about" className="hover:text-green-500 transition-colors">The Herd</a></li></ul></div>
+                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Exploration</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#conditions" className="hover:text-green-500 transition-colors">Conditions</a></li><li><a href="#trailheads" className="hover:text-green-500 transition-colors">Trailheads</a></li><li><a href="#benefits" className="hover:text-green-500 transition-colors">Benefits</a></li><li><a href="#about" className="hover:text-green-500 transition-colors">The Herd</a></li></ul></div>
                   <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Intel</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#faq" className="hover:text-green-500 transition-colors">Field Manual</a></li><li><a href="#booking" className="hover:text-green-500 transition-colors">Deployment</a></li><li><a href="#contact" className="hover:text-green-500 transition-colors">Base Camp</a></li></ul></div>
                 </div>
               </div>

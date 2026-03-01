@@ -169,11 +169,17 @@ api.post("/update-booking", async (req, res) => {
     if (action === 'reject' || status === 'canceled') update.status = 'canceled';
     if (action === 'markRead' || isRead) update.isRead = true;
 
+    let booking: any = null;
+
     if (supabase) {
       if (action === 'delete') {
         const { error } = await supabase.from('bookings').delete().eq('id', id);
         if (error) throw error;
       } else {
+        // Fetch booking first to get email for notification
+        const { data: existing } = await supabase.from('bookings').select('*').eq('id', id).single();
+        booking = existing;
+        
         const { error } = await supabase.from('bookings').update(update).eq('id', id);
         if (error) throw error;
       }
@@ -182,6 +188,7 @@ api.post("/update-booking", async (req, res) => {
       let bookings = JSON.parse(data);
       const index = bookings.findIndex((b: any) => b.id === id);
       if (index !== -1) {
+        booking = bookings[index];
         if (action === 'delete') {
           bookings = bookings.filter((b: any) => b.id !== id);
         } else {
@@ -190,6 +197,50 @@ api.post("/update-booking", async (req, res) => {
         fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
       }
     }
+
+    // Send Approval Email if status changed to confirmed
+    if (booking && (action === 'approve' || status === 'confirmed') && process.env.SMTP_USER && process.env.SMTP_PASS) {
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com", port: 465, secure: true,
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+      });
+
+      const approvalHtml = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 30px; border-radius: 15px; color: #333;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #166534; margin: 0;">Expedition Approved!</h1>
+            <p style="color: #666; font-style: italic;">Pack your bags, the herd is ready.</p>
+          </div>
+          <p>Hi ${booking.name},</p>
+          <p>Great news! Your expedition request for <strong>${booking.startDate} to ${booking.endDate}</strong> has been officially approved.</p>
+          
+          <div style="background: #f0fdf4; padding: 20px; border-radius: 10px; margin: 20px 0; border: 1px solid #bbf7d0;">
+            <h3 style="margin-top: 0; color: #166534;">Next Steps:</h3>
+            <ol>
+              <li>We will call you shortly to finalize the meeting location.</li>
+              <li>Review our "Backcountry Llama Care" guide (attached in next email).</li>
+              <li>Prepare your gear—remember, each llama can carry up to 60-80 lbs!</li>
+            </ol>
+          </div>
+
+          <p>If you have any immediate questions, please reply to this email or call us directly.</p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+          <p style="font-size: 12px; color: #999; text-align: center;">
+            Helena Backcountry Llamas<br/>
+            Montana's Premier Llama Packers
+          </p>
+        </div>
+      `;
+
+      await transporter.sendMail({
+        from: `"Helena Backcountry Llamas" <${process.env.SMTP_USER}>`,
+        to: booking.email,
+        subject: `Expedition Approved: ${booking.startDate}`,
+        html: approvalHtml
+      }).catch(err => console.error("Approval email failed:", err));
+    }
+
     res.json({ success: true });
   } catch (e: any) {
     res.status(500).json({ error: "Update failed", details: e.message });
