@@ -7,6 +7,7 @@ import { PhotoCarousel } from './components/PhotoCarousel';
 import { GearSection } from './components/GearSection';
 import { FAQSection } from './components/FAQSection';
 import { PackingListGenerator } from './components/PackingListGenerator';
+import { WaiverPage } from './components/WaiverPage';
 import { generateWelcomeSlogan, generateBackdrop } from './services/geminiService';
 import { GalleryImage, Llama, BookingData } from './types';
 import { 
@@ -55,7 +56,8 @@ import {
   Globe,
   Eye,
   Type,
-  Wind
+  Wind,
+  PenTool
 } from 'lucide-react';
 
 const APP_VERSION = "3.7.0-Conditions-Sync";
@@ -138,6 +140,22 @@ const App: React.FC = () => {
   const [passwordInput, setPasswordInput] = useState("");
   const [editingLlama, setEditingLlama] = useState<Llama | null>(null);
   const [editingGalleryItem, setEditingGalleryItem] = useState<GalleryImage | null>(null);
+
+  // Routing
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const signMatch = currentPath.match(/^\/sign\/([^/]+)$/);
+  const waiverBookingId = signMatch ? signMatch[1] : null;
+
+  useEffect(() => {
+    const handlePopState = () => setCurrentPath(window.location.pathname);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigate = (path: string) => {
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
+  };
 
   const [branding, setBranding] = useState<Branding>(() => {
     const saved = localStorage.getItem('hbl_branding');
@@ -467,7 +485,11 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen selection:bg-green-100 selection:text-green-900">
-      {/* Admin Quick Trigger */}
+      {waiverBookingId ? (
+        <WaiverPage bookingId={waiverBookingId} onComplete={() => navigate('/')} />
+      ) : (
+        <>
+          {/* Admin Quick Trigger */}
       <button 
         onClick={() => isAdmin ? setShowDashboard(true) : setShowAdminLogin(true)}
         className="fixed bottom-8 right-8 z-[150] w-16 h-16 bg-white border border-stone-100 rounded-full shadow-2xl flex flex-col items-center justify-center hover:scale-110 active:scale-95 transition-all group overflow-hidden"
@@ -857,6 +879,15 @@ const App: React.FC = () => {
                                     {!booking.isRead && <span className="px-3 py-1 bg-green-800 text-white text-[9px] font-black uppercase tracking-widest rounded-full">New</span>}
                                     {booking.status === 'confirmed' && <span className="px-3 py-1 bg-blue-100 text-blue-700 text-[9px] font-black uppercase tracking-widest rounded-full">Confirmed</span>}
                                     {booking.status === 'canceled' && <span className="px-3 py-1 bg-red-100 text-red-700 text-[9px] font-black uppercase tracking-widest rounded-full">Canceled</span>}
+                                    {booking.signature_data ? (
+                                      <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-widest rounded-full flex items-center gap-2">
+                                        <CheckCircle2 size={10} /> Signed
+                                      </span>
+                                    ) : (
+                                      <span className="px-3 py-1 bg-amber-100 text-amber-700 text-[9px] font-black uppercase tracking-widest rounded-full flex items-center gap-2">
+                                        <PenTool size={10} /> Pending Signature
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="flex items-center gap-4 text-stone-400 font-bold text-xs">
                                     <span className="flex items-center gap-1.5"><Mail size={12}/> {booking.email}</span>
@@ -882,6 +913,34 @@ const App: React.FC = () => {
                                   <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Timestamp</p>
                                   <p className="font-bold text-stone-900 text-sm">{new Date(booking.timestamp).toLocaleDateString()}</p>
                                 </div>
+                                {booking.signature_data && (
+                                  <div className="space-y-2">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Legal</p>
+                                    <button 
+                                      onClick={() => {
+                                        const win = window.open("", "_blank");
+                                        win?.document.write(`
+                                          <html>
+                                            <body style="margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f5f5f4;font-family:sans-serif;padding:40px;">
+                                              <div style="background:white;padding:40px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.1);max-width:600px;width:100%;">
+                                                <h1 style="margin-top:0;color:#1c1917;">Rental Agreement Signature</h1>
+                                                <p><strong>Lessee:</strong> ${booking.name}</p>
+                                                <p><strong>Date Signed:</strong> ${new Date(booking.signed_at || '').toLocaleString()}</p>
+                                                <p><strong>Booking ID:</strong> ${booking.id}</p>
+                                                <hr style="border:none;border-top:1px solid #eee;margin:20px 0;"/>
+                                                <p style="font-size:12px;color:#666;margin-bottom:10px;">Electronic Signature:</p>
+                                                <img src="${booking.signature_data}" style="border:1px solid #eee;border-radius:10px;max-width:100%;"/>
+                                              </div>
+                                            </body>
+                                          </html>
+                                        `);
+                                      }}
+                                      className="flex items-center gap-2 text-green-800 font-black text-[10px] uppercase tracking-widest hover:text-green-900 transition-colors"
+                                    >
+                                      <Eye size={12} /> View Signed Waiver
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </div>
 
@@ -1165,6 +1224,8 @@ const App: React.FC = () => {
         .input-cms { width: 100%; background-color: #fafaf9; border: 1px solid #f5f5f4; padding: 1.5rem; border-radius: 1.5rem; font-weight: 700; outline: none; transition: all 0.2s; color: #1c1917; }
         .input-cms:focus { background-color: white; border-color: #166534; box-shadow: 0 0 0 6px rgba(22, 101, 52, 0.05); }
       `}</style>
+        </>
+      )}
     </div>
   );
 };

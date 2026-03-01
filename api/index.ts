@@ -28,6 +28,32 @@ api.get("/ping", (req, res) => {
   });
 });
 
+api.post("/sign-waiver", async (req, res) => {
+  try {
+    const { id, signatureData } = req.body;
+    const update = { 
+      signature_data: signatureData, 
+      signed_at: new Date().toISOString() 
+    };
+
+    if (supabase) {
+      const { error } = await supabase.from('bookings').update(update).eq('id', id);
+      if (error) throw error;
+    } else {
+      const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
+      let bookings = JSON.parse(data);
+      const index = bookings.findIndex((b: any) => b.id === id);
+      if (index !== -1) {
+        bookings[index] = { ...bookings[index], ...update };
+        fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+      }
+    }
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(500).json({ error: "Signature failed", details: e.message });
+  }
+});
+
 api.post("/create-booking", async (req, res) => {
   const booking = { 
     ...req.body, 
@@ -36,6 +62,8 @@ api.post("/create-booking", async (req, res) => {
     status: "pending",
     isRead: false
   };
+
+  const waiverUrl = `${process.env.APP_URL || 'https://www.helenallamas.com'}/sign/${booking.id}`;
 
   let dbError = null;
   let emailSent = false;
@@ -98,6 +126,12 @@ api.post("/create-booking", async (req, res) => {
           <p>Hi ${booking.name},</p>
           <p>Thank you for requesting an expedition with our herd! We've received your request and our team is currently reviewing the trail conditions and llama availability for your dates.</p>
           
+          <div style="background: #f0fdf4; padding: 25px; border-radius: 15px; margin: 25px 0; border: 2px dashed #166534; text-align: center;">
+            <h3 style="margin-top: 0; color: #166534;">MANDATORY: Sign Your Waiver</h3>
+            <p>To finalize your booking, please sign the Rental Agreement and Liability Waiver electronically:</p>
+            <a href="${waiverUrl}" style="display: inline-block; background: #166534; color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; margin-top: 10px;">Sign Agreement Now</a>
+          </div>
+
           <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
             <h3 style="margin-top: 0; color: #166534;">Request Summary:</h3>
             <ul style="list-style: none; padding: 0;">
@@ -108,15 +142,12 @@ api.post("/create-booking", async (req, res) => {
           </div>
 
           <p><strong>What's Next?</strong></p>
-          <p>We will review your request and contact you at <strong>${booking.phone}</strong> within 24-48 hours to finalize the details and discuss trail logistics.</p>
-          
-          <p>In the meantime, feel free to check out our <a href="https://www.helenallamas.com/#gallery" style="color: #166534; font-weight: bold;">Journal</a> for inspiration from recent trips.</p>
+          <p>Once your waiver is signed, we will review your request and contact you at <strong>${booking.phone}</strong> within 24-48 hours to finalize the details and discuss trail logistics.</p>
           
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
           <p style="font-size: 12px; color: #999; text-align: center;">
             Helena Backcountry Llamas<br/>
-            Helena, Montana<br/>
-            <em>"The ultimate backcountry companion."</em>
+            Helena, Montana
           </p>
         </div>
       `;

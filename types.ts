@@ -33,6 +33,8 @@ export interface BookingData {
   timestamp: number;
   status: 'pending' | 'confirmed' | 'canceled';
   isRead?: boolean;
+  signature_data?: string;
+  signed_at?: string;
 }
 
 export interface FAQItem {
