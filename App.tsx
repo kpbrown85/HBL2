@@ -9,6 +9,7 @@ import { FAQSection } from './components/FAQSection';
 import { PackingListGenerator } from './components/PackingListGenerator';
 import { WaiverPage } from './components/WaiverPage';
 import { LlamaGuidePage } from './components/LlamaGuidePage';
+import { VideoLibraryPage } from './components/VideoLibraryPage';
 import { generateWelcomeSlogan, generateBackdrop } from './services/geminiService';
 import { GalleryImage, Llama, BookingData } from './types';
 import { 
@@ -59,7 +60,8 @@ import {
   Type,
   Wind,
   PenTool,
-  ShieldAlert
+  ShieldAlert,
+  Play
 } from 'lucide-react';
 
 const APP_VERSION = "3.7.0-Conditions-Sync";
@@ -508,6 +510,8 @@ const App: React.FC = () => {
         <WaiverPage bookingId={waiverBookingId || ''} onComplete={() => navigate('/')} />
       ) : currentPath === '/guide' ? (
         <LlamaGuidePage onBack={() => navigate('/')} />
+      ) : currentPath === '/videos' ? (
+        <VideoLibraryPage onBack={() => navigate('/')} />
       ) : (
         <>
           {/* Admin Quick Trigger */}
@@ -1046,6 +1050,7 @@ const App: React.FC = () => {
                 {['Benefits', 'About', 'Trailheads', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(item => (
                   <a key={item} href={`#${item.toLowerCase()}`} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">{item}</a>
                 ))}
+                <button onClick={() => navigate('/videos')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Videos</button>
                 <a href="#booking" className="bg-green-800 text-white px-10 py-5 rounded-2xl flex items-center gap-2 shadow-2xl shadow-green-900/20 hover:bg-green-900 transition-all active:scale-95">Book Trek <ChevronRight size={14} /></a>
               </div>
               <button className="md:hidden p-3 text-stone-900" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X size={28} /> : <Menu size={28} />}</button>
@@ -1057,6 +1062,7 @@ const App: React.FC = () => {
               {['Benefits', 'About', 'Trailheads', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(l => (
                 <a key={l} href={`#${l.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-6xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase">{l}</a>
               ))}
+              <button onClick={() => { navigate('/videos'); setIsMenuOpen(false); }} className="text-6xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Videos</button>
               <a href="#booking" onClick={() => setIsMenuOpen(false)} className="bg-green-600 text-white py-12 rounded-[3rem] text-3xl font-black uppercase tracking-widest text-center shadow-2xl">Plan My Trek</a>
             </div>
           </div>
@@ -1152,6 +1158,33 @@ const App: React.FC = () => {
               </div>
             </section>
             
+            {/* Video Intel Section */}
+            <section id="videos" className="py-64 bg-white">
+              <div className="max-w-7xl mx-auto px-8">
+                <div className="bg-stone-900 rounded-[4rem] p-16 md:p-32 text-center text-white relative overflow-hidden group">
+                  <div className="absolute inset-0 opacity-10 pointer-events-none">
+                    <img src="https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=1920" className="w-full h-full object-cover" alt="Llama" />
+                  </div>
+                  <div className="relative z-10 space-y-12">
+                    <div className="w-24 h-24 bg-green-800 text-white rounded-3xl flex items-center justify-center mx-auto shadow-2xl group-hover:scale-110 transition-transform duration-500">
+                      <Play size={40} fill="currentColor" />
+                    </div>
+                    <header>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-green-400 mb-4">Educational Resources</h4>
+                      <h2 className="text-7xl md:text-8xl font-black tracking-tighter leading-none mb-8">Video Intel.</h2>
+                      <p className="text-stone-400 text-xl font-medium max-w-2xl mx-auto leading-relaxed">Master the art of high-country packing with our curated library of educational field videos.</p>
+                    </header>
+                    <button 
+                      onClick={() => navigate('/videos')}
+                      className="px-16 py-8 bg-white text-stone-900 rounded-3xl font-black text-xs uppercase tracking-[0.3em] hover:bg-green-400 transition-all shadow-2xl active:scale-95"
+                    >
+                      Launch Video Library
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             {/* FAQ Section */}
             <section id="faq" className="py-64 bg-stone-50"><div className="max-w-7xl mx-auto px-8"><FAQSection /></div></section>
             
@@ -1231,7 +1264,7 @@ const App: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-24">
                   <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Exploration</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#conditions" className="hover:text-green-500 transition-colors">Conditions</a></li><li><a href="#trailheads" className="hover:text-green-500 transition-colors">Trailheads</a></li><li><a href="#benefits" className="hover:text-green-500 transition-colors">Benefits</a></li><li><a href="#about" className="hover:text-green-500 transition-colors">The Herd</a></li></ul></div>
-                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Intel</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#faq" className="hover:text-green-500 transition-colors">Field Manual</a></li><li><a href="#booking" className="hover:text-green-500 transition-colors">Deployment</a></li><li><a href="#contact" className="hover:text-green-500 transition-colors">Base Camp</a></li></ul></div>
+                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Intel</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><button onClick={() => navigate('/videos')} className="hover:text-green-500 transition-colors">Videos</button></li><li><a href="#faq" className="hover:text-green-500 transition-colors">Field Manual</a></li><li><a href="#booking" className="hover:text-green-500 transition-colors">Deployment</a></li><li><a href="#contact" className="hover:text-green-500 transition-colors">Base Camp</a></li></ul></div>
                 </div>
               </div>
               <div className="pt-24 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-12 text-[10px] font-black uppercase tracking-[0.5em]">
