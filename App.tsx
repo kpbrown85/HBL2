@@ -226,17 +226,20 @@ const App: React.FC = () => {
       console.log(`[${new Date().toISOString()}] Fetching logs from: ${logsUrl}`);
       try {
         const response = await fetch(logsUrl);
+        const data = await response.json();
         if (response.ok) {
-          const data = await response.json();
           console.log(`[${new Date().toISOString()}] Logs received:`, data);
           setBookings(data);
           localStorage.setItem('hbl_bookings', JSON.stringify(data));
+          setApiError(null);
         } else {
-          console.error(`[${new Date().toISOString()}] Logs fetch failed: ${response.status}`);
+          console.error(`[${new Date().toISOString()}] Logs fetch failed: ${response.status}`, data);
+          setApiError(data.details || data.error || `HTTP ${response.status}`);
           setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`[${new Date().toISOString()}] Logs fetch error:`, error);
+        setApiError(error.message || 'Connection failed');
         setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
       }
     };
@@ -853,6 +856,12 @@ const App: React.FC = () => {
                       <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Review and manage incoming mission requests</p>
                     </div>
                     <div className="flex flex-col items-end gap-4">
+                      {apiError && (
+                        <div className="bg-red-50 border border-red-200 p-4 rounded-2xl flex items-center gap-3 text-red-800">
+                          <ShieldAlert size={16} />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Error: {apiError}</span>
+                        </div>
+                      )}
                       {supabaseStatus === false && (
                         <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center gap-3 text-amber-800 animate-pulse">
                           <ShieldAlert size={16} />

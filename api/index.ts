@@ -202,7 +202,13 @@ api.get("/get-bookings", async (req, res) => {
         .from('bookings')
         .select('*')
         .order('timestamp', { ascending: false });
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Supabase Fetch Error:", error);
+        return res.status(500).json({ error: "Supabase fetch failed", details: error.message, hint: "Check if Row Level Security (RLS) is blocking access." });
+      }
+      
+      console.log(`[${new Date().toISOString()}] Supabase: Fetched ${data?.length || 0} bookings`);
       res.json(data || []);
     } else {
       const data = fs.existsSync(BOOKINGS_FILE) ? fs.readFileSync(BOOKINGS_FILE, "utf-8") : "[]";
