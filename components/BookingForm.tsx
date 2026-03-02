@@ -18,16 +18,21 @@ import {
   Loader2
 } from 'lucide-react';
 
-export const BookingForm: React.FC = () => {
+interface BookingFormProps {
+  isClinicOnly?: boolean;
+}
+
+export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     startDate: '',
     endDate: '',
-    numLlamas: 2,
+    numLlamas: isClinicOnly ? 0 : 2,
     trailerNeeded: false,
-    isFirstTimer: false
+    isFirstTimer: isClinicOnly ? true : false,
+    bookingType: isClinicOnly ? 'clinic' : 'expedition'
   });
 
   const [estimate, setEstimate] = useState(0);
@@ -42,6 +47,11 @@ export const BookingForm: React.FC = () => {
       if (branding.adminEmail) setAdminEmail(branding.adminEmail);
     } catch {}
     
+    if (isClinicOnly) {
+      setEstimate(PRICING.clinicFee);
+      return;
+    }
+
     if (formData.startDate && formData.endDate) {
       const start = new Date(formData.startDate);
       const end = new Date(formData.endDate);
@@ -141,9 +151,10 @@ export const BookingForm: React.FC = () => {
       phone: '',
       startDate: '',
       endDate: '',
-      numLlamas: 2,
+      numLlamas: isClinicOnly ? 0 : 2,
       trailerNeeded: false,
-      isFirstTimer: false
+      isFirstTimer: isClinicOnly ? true : false,
+      bookingType: isClinicOnly ? 'clinic' : 'expedition'
     });
     setIsSubmitted(false);
   };
@@ -304,101 +315,131 @@ export const BookingForm: React.FC = () => {
             <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-700">
               <Calendar className="w-5 h-5" />
             </div>
-            <h3 className="text-2xl font-black text-stone-900 tracking-tight">Expedition Details</h3>
+            <h3 className="text-2xl font-black text-stone-900 tracking-tight">
+              {isClinicOnly ? 'Clinic Date' : 'Expedition Details'}
+            </h3>
           </div>
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
+            <div className={`grid ${isClinicOnly ? 'grid-cols-1' : 'grid-cols-2'} gap-6`}>
               <div>
-                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">Start Date</label>
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">
+                  {isClinicOnly ? 'Preferred Date' : 'Start Date'}
+                </label>
                 <input 
                   required
                   type="date" 
                   className="w-full px-6 py-4 rounded-2xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-medium"
                   value={formData.startDate}
-                  onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                  onChange={(e) => setFormData({...formData, startDate: e.target.value, endDate: isClinicOnly ? e.target.value : formData.endDate})}
                 />
               </div>
+              {!isClinicOnly && (
+                <div>
+                  <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">End Date</label>
+                  <input 
+                    required
+                    type="date" 
+                    className="w-full px-6 py-4 rounded-2xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-medium"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                  />
+                </div>
+              )}
+            </div>
+            {!isClinicOnly && (
               <div>
-                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">End Date</label>
-                <input 
-                  required
-                  type="date" 
-                  className="w-full px-6 py-4 rounded-2xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-medium"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({...formData, endDate: e.target.value})}
-                />
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">Number of Llamas (Min 2)</label>
+                <div className="flex items-center gap-4">
+                  <input 
+                    type="range"
+                    min="2"
+                    max="12"
+                    className="flex-1 accent-green-800"
+                    value={formData.numLlamas}
+                    onChange={(e) => setFormData({...formData, numLlamas: parseInt(e.target.value) || 2})}
+                  />
+                  <span className="w-16 text-center font-black text-2xl text-stone-900 bg-stone-100 py-2 rounded-xl border border-stone-200">
+                    {formData.numLlamas}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">Number of Llamas (Min 2)</label>
-              <div className="flex items-center gap-4">
-                <input 
-                  type="range"
-                  min="2"
-                  max="12"
-                  className="flex-1 accent-green-800"
-                  value={formData.numLlamas}
-                  onChange={(e) => setFormData({...formData, numLlamas: parseInt(e.target.value) || 2})}
-                />
-                <span className="w-16 text-center font-black text-2xl text-stone-900 bg-stone-100 py-2 rounded-xl border border-stone-200">
-                  {formData.numLlamas}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Expedition Details Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12 bg-stone-50 p-8 rounded-[2rem] border border-stone-100">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-stone-100 hover:border-green-200 transition-all shadow-sm">
-            <div className="flex flex-col text-left">
-              <span className="font-bold text-stone-900 flex items-center gap-2">
-                <Truck className="w-4 h-4 text-green-700" /> Trailer Rental
-              </span>
-              <span className="text-xs text-stone-500 mt-1 leading-relaxed">
-                ${PRICING.trailerDaily}/day transport service
-              </span>
+      {!isClinicOnly && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12 bg-stone-50 p-8 rounded-[2rem] border border-stone-100">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-stone-100 hover:border-green-200 transition-all shadow-sm">
+              <div className="flex flex-col text-left">
+                <span className="font-bold text-stone-900 flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-green-700" /> Trailer Rental
+                </span>
+                <span className="text-xs text-stone-500 mt-1 leading-relaxed">
+                  ${PRICING.trailerDaily}/day transport service
+                </span>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setFormData({ ...formData, trailerNeeded: !formData.trailerNeeded })}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.trailerNeeded ? 'bg-green-700' : 'bg-stone-200'}`}
+              >
+                <span 
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.trailerNeeded ? 'translate-x-5' : 'translate-x-0'}`}
+                />
+              </button>
             </div>
-            <button 
-              type="button"
-              onClick={() => setFormData({ ...formData, trailerNeeded: !formData.trailerNeeded })}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.trailerNeeded ? 'bg-green-700' : 'bg-stone-200'}`}
-            >
-              <span 
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.trailerNeeded ? 'translate-x-5' : 'translate-x-0'}`}
+
+            <label className="flex items-start gap-4 cursor-pointer group bg-white p-6 rounded-2xl border border-stone-100 hover:border-green-200 transition-all shadow-sm">
+              <div className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${formData.isFirstTimer ? 'bg-green-700 border-green-700 shadow-lg shadow-green-900/20' : 'bg-stone-50 border-stone-200'}`}>
+                {formData.isFirstTimer && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+              </div>
+              <input 
+                type="checkbox" 
+                className="hidden"
+                checked={formData.isFirstTimer}
+                onChange={(e) => setFormData({...formData, isFirstTimer: e.target.checked})}
               />
-            </button>
+              <div className="flex flex-col text-left">
+                <span className="font-bold text-stone-900 flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-green-700" /> Llama Clinic (${PRICING.clinicFee})
+                </span>
+              </div>
+            </label>
           </div>
 
-          <label className="flex items-start gap-4 cursor-pointer group bg-white p-6 rounded-2xl border border-stone-100 hover:border-green-200 transition-all shadow-sm">
-            <div className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${formData.isFirstTimer ? 'bg-green-700 border-green-700 shadow-lg shadow-green-900/20' : 'bg-stone-50 border-stone-200'}`}>
-              {formData.isFirstTimer && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+          <div className="bg-white p-8 rounded-[2rem] border border-stone-100 shadow-xl flex flex-col justify-center relative overflow-hidden group">
+            <div className="flex justify-between items-center mb-2 relative z-10">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Estimated Total</span>
             </div>
-            <input 
-              type="checkbox" 
-              className="hidden"
-              checked={formData.isFirstTimer}
-              onChange={(e) => setFormData({...formData, isFirstTimer: e.target.checked})}
-            />
-            <div className="flex flex-col text-left">
-              <span className="font-bold text-stone-900 flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-green-700" /> Llama Clinic (${PRICING.clinicFee})
-              </span>
+            <div className="text-5xl font-black text-stone-900 relative z-10">
+              ${estimate.toLocaleString()}
             </div>
-          </label>
+          </div>
         </div>
+      )}
 
-        <div className="bg-white p-8 rounded-[2rem] border border-stone-100 shadow-xl flex flex-col justify-center relative overflow-hidden group">
-          <div className="flex justify-between items-center mb-2 relative z-10">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Estimated Total</span>
-          </div>
-          <div className="text-5xl font-black text-stone-900 relative z-10">
-            ${estimate.toLocaleString()}
+      {isClinicOnly && (
+        <div className="mb-12 bg-green-50 p-8 rounded-[2rem] border border-green-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-800 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                <GraduationCap size={24} />
+              </div>
+              <div>
+                <h4 className="text-xl font-black text-stone-900 tracking-tight">Llama Packing Clinic</h4>
+                <p className="text-stone-500 text-sm font-medium">Hands-on training session at our Clancy base camp.</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Fixed Rate</p>
+              <p className="text-3xl font-black text-green-800">${PRICING.clinicFee}</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <button 
         type="submit"
@@ -408,7 +449,7 @@ export const BookingForm: React.FC = () => {
         {isSubmitting ? (
           <>Processing Request... <Loader2 className="w-6 h-6 animate-spin" /></>
         ) : (
-          <>Send Expedition Request <ArrowRight className="w-6 h-6" /></>
+          <>{isClinicOnly ? 'Book My Clinic' : 'Send Expedition Request'} <ArrowRight className="w-6 h-6" /></>
         )}
       </button>
     </form>

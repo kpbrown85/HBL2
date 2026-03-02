@@ -3,6 +3,7 @@ import { ArrowLeft, Play, Youtube, BookOpen, Info } from 'lucide-react';
 
 interface VideoLibraryPageProps {
   onBack: () => void;
+  onBookClinic: () => void;
 }
 
 const VIDEOS = [
@@ -17,7 +18,7 @@ const VIDEOS = [
   { id: 'zMl5x62AXQo', title: 'Llama Gear Overview', description: 'A deep dive into the specialized equipment used for llama packing.' }
 ];
 
-export const VideoLibraryPage: React.FC<VideoLibraryPageProps> = ({ onBack }) => {
+export const VideoLibraryPage: React.FC<VideoLibraryPageProps> = ({ onBack, onBookClinic }) => {
   return (
     <div className="min-h-screen bg-stone-50 py-24 px-8">
       <div className="max-w-7xl mx-auto space-y-16">
@@ -68,7 +69,7 @@ export const VideoLibraryPage: React.FC<VideoLibraryPageProps> = ({ onBack }) =>
             </p>
           </div>
           <button 
-            onClick={onBack}
+            onClick={onBookClinic}
             className="px-10 py-6 bg-green-800 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-green-700 transition-all shadow-xl"
           >
             Book a Clinic
