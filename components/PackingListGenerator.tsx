@@ -32,6 +32,83 @@ export const PackingListGenerator: React.FC = () => {
     setIsLoading(false);
   };
 
+  const handlePrint = () => {
+    if (!result) return;
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const formattedContent = result
+      .replace(/\n/g, '<br/>')
+      .replace(/### (.*)/g, '<h2 style="font-family: sans-serif; font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #78716c; margin-top: 24px; margin-bottom: 12px; border-bottom: 1px solid #e7e5e4; padding-bottom: 4px;">$1</h2>')
+      .replace(/- (.*)/g, '<div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: #fff; border: 1px solid #e7e5e4; border-radius: 8px; margin-bottom: 8px; font-family: sans-serif; font-size: 13px; color: #444;"><div style="width: 14px; height: 14px; border: 2px solid #d6d3d1; border-radius: 3px; margin-top: 2px; flex-shrink: 0;"></div><span>$1</span></div>');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Expedition Loadout - ${tripType} (${duration} Days)</title>
+          <style>
+            body { 
+              padding: 40px; 
+              background: #fafaf9; 
+              color: #1c1917;
+              -webkit-print-color-adjust: exact;
+            }
+            .header {
+              margin-bottom: 40px;
+              border-bottom: 4px solid #166534;
+              padding-bottom: 20px;
+            }
+            .site-name {
+              font-family: serif;
+              font-size: 24px;
+              font-weight: 900;
+              color: #166534;
+              margin: 0;
+            }
+            .trip-meta {
+              font-family: sans-serif;
+              font-size: 10px;
+              font-weight: 900;
+              text-transform: uppercase;
+              letter-spacing: 0.2em;
+              color: #a8a29e;
+              margin-top: 8px;
+            }
+            .footer {
+              margin-top: 60px;
+              font-family: sans-serif;
+              font-size: 10px;
+              color: #a8a29e;
+              text-align: center;
+              border-top: 1px solid #e7e5e4;
+              padding-top: 20px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 class="site-name">Helena Backcountry Llamas</h1>
+            <div class="trip-meta">Expedition Loadout: ${tripType} &bull; ${duration} Days &bull; ${weather}</div>
+          </div>
+          <div class="content">
+            ${formattedContent}
+          </div>
+          <div class="footer">
+            &copy; ${new Date().getFullYear()} Helena Backcountry Llamas &bull; Grounding: Helena National Forest
+          </div>
+          <script>
+            window.onload = () => {
+              window.print();
+              window.onafterprint = () => window.close();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const weatherOptions = [
     { label: 'Mild & Dry', icon: Sun },
     { label: 'Wet & Stormy', icon: CloudRain },
@@ -132,7 +209,7 @@ export const PackingListGenerator: React.FC = () => {
                   Your Field List
                 </h4>
                 <button 
-                  onClick={() => window.print()}
+                  onClick={handlePrint}
                   className="p-3 bg-white border border-stone-200 rounded-xl text-stone-400 hover:text-stone-900 hover:border-stone-900 transition-all shadow-sm"
                   title="Print List"
                 >
