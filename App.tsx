@@ -78,6 +78,10 @@ interface Branding {
   seoDescription?: string;
   seoKeywords?: string;
   socialImageUrl?: string;
+  venmoHandle?: string;
+  pricePerLlamaDay?: number;
+  priceTrailerDay?: number;
+  priceClinic?: number;
 }
 
 interface UploadStatus {
@@ -177,7 +181,11 @@ const App: React.FC = () => {
       logoUrl: '',
       seoDescription: 'Elite mountain-trained llama pack strings for backcountry adventures in the Montana Rockies.',
       seoKeywords: 'llama packing, montana hunting, backcountry logistics, helena montana, hiking with llamas',
-      socialImageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=1200'
+      socialImageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=1200',
+      venmoHandle: '@helenallamas',
+      pricePerLlamaDay: 50,
+      priceTrailerDay: 25,
+      priceClinic: 100
     };
     if (saved) {
       try {
@@ -404,7 +412,8 @@ const App: React.FC = () => {
         id, 
         action,
         status: action === 'confirm' ? 'confirmed' : (action === 'cancel' ? 'canceled' : undefined), 
-        isRead: true 
+        isRead: true,
+        branding // Pass branding for invoice generation
       };
       
       const response = await fetch(apiPath, { 
@@ -774,6 +783,35 @@ const App: React.FC = () => {
                                 />
                                 <ImageIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
                               </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Invoicing & Pricing Section */}
+                        <div className="pt-12 border-t border-stone-50 space-y-10">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-green-600 text-white rounded-xl flex items-center justify-center shadow-lg"><CreditCard size={20}/></div>
+                            <h3 className="text-2xl font-black text-stone-900">Invoicing & Pricing</h3>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-3">
+                              <label className="label-cms">Venmo Handle</label>
+                              <div className="relative">
+                                <input className="input-cms pl-14" value={branding.venmoHandle} onChange={e => setBranding({...branding, venmoHandle: e.target.value})} placeholder="@username" />
+                                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300 font-bold">@</span>
+                              </div>
+                            </div>
+                            <div className="space-y-3">
+                              <label className="label-cms">Price Per Llama / Day ($)</label>
+                              <input type="number" className="input-cms" value={branding.pricePerLlamaDay} onChange={e => setBranding({...branding, pricePerLlamaDay: parseFloat(e.target.value)})} />
+                            </div>
+                            <div className="space-y-3">
+                              <label className="label-cms">Trailer Rental / Day ($)</label>
+                              <input type="number" className="input-cms" value={branding.priceTrailerDay} onChange={e => setBranding({...branding, priceTrailerDay: parseFloat(e.target.value)})} />
+                            </div>
+                            <div className="space-y-3">
+                              <label className="label-cms">Pack Clinic Fee ($)</label>
+                              <input type="number" className="input-cms" value={branding.priceClinic} onChange={e => setBranding({...branding, priceClinic: parseFloat(e.target.value)})} />
                             </div>
                           </div>
                         </div>

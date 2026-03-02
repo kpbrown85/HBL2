@@ -280,39 +280,96 @@ api.post("/update-booking", async (req, res) => {
         auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
       });
 
-      const approvalHtml = `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 30px; border-radius: 15px; color: #333;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #166534; margin: 0;">Expedition Approved!</h1>
-            <p style="color: #666; font-style: italic;">Pack your bags, the herd is ready.</p>
-          </div>
-          <p>Hi ${booking.name},</p>
-          <p>Great news! Your expedition request for <strong>${booking.startDate} to ${booking.endDate}</strong> has been officially approved.</p>
-          
-          <div style="background: #f0fdf4; padding: 20px; border-radius: 10px; margin: 20px 0; border: 1px solid #bbf7d0;">
-            <h3 style="margin-top: 0; color: #166534;">Next Steps:</h3>
-            <ol>
-              <li>We will call you shortly to finalize the meeting location.</li>
-              <li>Review our <a href="${process.env.APP_URL || 'https://www.helenallamas.com'}/guide" style="color: #166534; font-weight: bold; text-decoration: underline;">Backcountry Llama Care Guide</a> to prepare for your trek.</li>
-              <li>Prepare your gear—remember, each llama can carry up to 60-80 lbs!</li>
-            </ol>
-          </div>
+      const branding = req.body.branding || {};
+      const venmoHandle = branding.venmoHandle || "@helenallamas";
+      const venmoLink = `https://venmo.com/u/${venmoHandle.replace('@', '')}`;
+      
+      // Pricing logic (matching client-side)
+      const priceLlama = branding.pricePerLlamaDay || 65;
+      const priceTrailer = branding.priceTrailerDay || 25;
+      const priceClinic = branding.priceClinic || 75;
+      
+      const start = new Date(booking.startDate);
+      const end = new Date(booking.endDate);
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+      
+      let dailyRate = priceLlama;
+      if (diffDays > 5) dailyRate *= 0.85; // 15% discount for long trips
 
-          <p>If you have any immediate questions, please reply to this email or call us directly.</p>
+      const llamaTotal = booking.numLlamas * dailyRate * diffDays;
+      const trailerTotal = booking.trailerNeeded ? (priceTrailer * diffDays) : 0;
+      const clinicTotal = booking.isFirstTimer ? priceClinic : 0;
+      const grandTotal = llamaTotal + trailerTotal + clinicTotal;
+
+      const invoiceHtml = `
+        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e7e5e4; border-radius: 16px; overflow: hidden; background: #fff;">
+          <div style="background: #166534; padding: 40px; text-align: center; color: white;">
+            ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 20px; border-radius: 8px;" />` : ''}
+            <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -0.02em;">Booking Confirmed</h1>
+            <p style="margin: 10px 0 0; opacity: 0.8; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">Invoice #${booking.id.slice(0,8).toUpperCase()}</p>
+          </div>
           
-          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
-          <p style="font-size: 12px; color: #999; text-align: center;">
-            Helena Backcountry Llamas<br/>
-            Montana's Premier Llama Packers
-          </p>
+          <div style="padding: 40px;">
+            <p style="font-size: 16px; color: #444; margin-bottom: 30px;">Hello <strong>${booking.name}</strong>, your expedition into the Montana high country is officially scheduled. Below is your invoice and payment instructions.</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+              <thead>
+                <tr style="border-bottom: 2px solid #f5f5f4;">
+                  <th style="text-align: left; padding: 12px 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #a8a29e;">Description</th>
+                  <th style="text-align: right; padding: 12px 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #a8a29e;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid #f5f5f4;">
+                  <td style="padding: 16px 0;">
+                    <div style="font-weight: bold; color: #1c1917;">Llama String (${booking.numLlamas} animals)</div>
+                    <div style="font-size: 12px; color: #78716c;">${diffDays} days @ $${dailyRate.toFixed(2)}/day</div>
+                  </td>
+                  <td style="text-align: right; font-weight: bold; color: #1c1917;">$${llamaTotal.toFixed(2)}</td>
+                </tr>
+                ${booking.trailerNeeded ? `
+                <tr style="border-bottom: 1px solid #f5f5f4;">
+                  <td style="padding: 16px 0;">
+                    <div style="font-weight: bold; color: #1c1917;">Stock Trailer Rental</div>
+                    <div style="font-size: 12px; color: #78716c;">${diffDays} days @ $${priceTrailer.toFixed(2)}/day</div>
+                  </td>
+                  <td style="text-align: right; font-weight: bold; color: #1c1917;">$${trailerTotal.toFixed(2)}</td>
+                </tr>` : ''}
+                ${booking.isFirstTimer ? `
+                <tr style="border-bottom: 1px solid #f5f5f4;">
+                  <td style="padding: 16px 0;">
+                    <div style="font-weight: bold; color: #1c1917;">Backcountry Pack Clinic</div>
+                    <div style="font-size: 12px; color: #78716c;">Mandatory for first-time packers</div>
+                  </td>
+                  <td style="text-align: right; font-weight: bold; color: #1c1917;">$${priceClinic.toFixed(2)}</td>
+                </tr>` : ''}
+                <tr>
+                  <td style="padding: 24px 0; font-size: 18px; font-weight: 900; color: #1c1917;">Total Due</td>
+                  <td style="padding: 24px 0; text-align: right; font-size: 24px; font-weight: 900; color: #166534;">$${grandTotal.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style="background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 12px; padding: 24px; text-align: center;">
+              <h3 style="margin: 0 0 12px; color: #166534; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">Payment via Venmo</h3>
+              <p style="margin: 0 0 20px; font-size: 14px; color: #166534;">Please send payment to <strong>${venmoHandle}</strong> to secure your dates.</p>
+              <a href="${venmoLink}" style="display: inline-block; background: #008CFF; color: white; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: 900; font-size: 16px; box-shadow: 0 4px 12px rgba(0,140,255,0.3);">Pay with Venmo</a>
+            </div>
+          </div>
+          
+          <div style="background: #fafaf9; padding: 30px; text-align: center; border-top: 1px solid #e7e5e4;">
+            <p style="margin: 0; font-size: 12px; color: #a8a29e;">&copy; ${new Date().getFullYear()} ${branding.siteName || 'Helena Backcountry Llamas'}</p>
+            <p style="margin: 5px 0 0; font-size: 10px; color: #d6d3d1; text-transform: uppercase; letter-spacing: 0.1em;">Grounding: Helena National Forest, Montana</p>
+          </div>
         </div>
       `;
 
       await transporter.sendMail({
         from: `"Helena Backcountry Llamas" <${process.env.SMTP_USER}>`,
         to: booking.email,
-        subject: `Expedition Approved: ${booking.startDate}`,
-        html: approvalHtml
+        subject: `Booking Confirmed & Invoice: ${booking.startDate} Expedition`,
+        html: invoiceHtml
       }).catch(err => console.error("Approval email failed:", err));
     }
 

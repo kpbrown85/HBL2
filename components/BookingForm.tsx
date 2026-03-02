@@ -41,14 +41,18 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
   const [adminEmail, setAdminEmail] = useState('kevin.paul.brown@gmail.com');
 
   useEffect(() => {
-    // Sync with branding email if available
+    let currentPricing = { ...PRICING };
+    // Sync with branding if available
     try {
       const branding = JSON.parse(localStorage.getItem('hbl_branding') || '{}');
       if (branding.adminEmail) setAdminEmail(branding.adminEmail);
+      if (branding.pricePerLlamaDay) currentPricing.dailyPerLlama = branding.pricePerLlamaDay;
+      if (branding.priceTrailerDay) currentPricing.trailerDaily = branding.priceTrailerDay;
+      if (branding.priceClinic) currentPricing.clinicFee = branding.priceClinic;
     } catch {}
     
     if (isClinicOnly) {
-      setEstimate(PRICING.clinicFee);
+      setEstimate(currentPricing.clinicFee);
       return;
     }
 
@@ -59,14 +63,14 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 0;
 
       if (diffDays >= 0) {
-        let dailyRate = PRICING.dailyPerLlama;
-        if (diffDays > PRICING.longTripDiscountDays) {
-          dailyRate *= (1 - PRICING.longTripDiscountRate);
+        let dailyRate = currentPricing.dailyPerLlama;
+        if (diffDays > currentPricing.longTripDiscountDays) {
+          dailyRate *= (1 - currentPricing.longTripDiscountRate);
         }
 
         let total = (formData.numLlamas * dailyRate * diffDays);
-        if (formData.trailerNeeded) total += (PRICING.trailerDaily * diffDays);
-        if (formData.isFirstTimer) total += PRICING.clinicFee;
+        if (formData.trailerNeeded) total += (currentPricing.trailerDaily * diffDays);
+        if (formData.isFirstTimer) total += currentPricing.clinicFee;
 
         setEstimate(total);
       }

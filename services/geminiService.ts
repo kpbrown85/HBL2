@@ -50,7 +50,8 @@ export async function generatePackingList(tripType: string, duration: number, we
     1. Essential Personal Gear
     2. Clothing (appropriate for the weather)
     3. Expedition Food Recommendations
-    4. Llama-specific items (saddles, panniers, etc. are provided, but mention weight distribution)`;
+    4. Llama-specific items (saddles, panniers, etc. are provided, but mention weight distribution)
+    5. Llama Breed & Herd Recommendation: Suggest the type of llama (e.g., Classic Ccara, Suri, etc.) and the ideal temperament/animal profile needed for this specific ${duration}-day ${tripType} trip.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',

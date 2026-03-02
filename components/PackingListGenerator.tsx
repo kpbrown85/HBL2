@@ -217,7 +217,7 @@ export const PackingListGenerator: React.FC = () => {
                 </button>
               </div>
               <div className="prose prose-stone prose-sm max-w-none text-stone-700 font-medium leading-relaxed prose-headings:font-black prose-headings:text-stone-900 prose-ul:list-none prose-ul:p-0 prose-li:mb-4 prose-li:p-4 prose-li:bg-white prose-li:rounded-xl prose-li:shadow-sm prose-li:border prose-li:border-stone-100">
-                <div dangerouslySetInnerHTML={{ __html: result.replace(/\n/g, '<br/>').replace(/### (.*)/g, '<h5 class="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mt-8 mb-4">$1</h5>').replace(/- (.*)/g, '<div class="flex items-start gap-3 p-4 bg-white rounded-xl mb-2 shadow-sm border border-stone-100"><div class="w-4 h-4 rounded border-2 border-stone-200 mt-0.5 shrink-0"></div><span>$1</span></div>') }} />
+                <div dangerouslySetInnerHTML={{ __html: result.replace(/\n/g, '<br/>').replace(/### (.*)/g, '<h5 class="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mt-8 mb-4">$1</h5>').replace(/- (.*)/g, '<div class="flex items-start gap-3 p-4 bg-white rounded-xl mb-2 shadow-sm border border-stone-100"><div class="w-4 h-4 rounded border-2 border-stone-200 mt-0.5 shrink-0"></div><span>$1</span></div>').replace(/Llama Breed & Herd Recommendation/g, '<span class="text-green-800 font-black flex items-center gap-2 mb-2"><Mountain size={14}/> Llama Breed & Herd Recommendation</span>') }} />
               </div>
             </div>
           ) : (
