@@ -11,6 +11,8 @@ import { WaiverPage } from './components/WaiverPage';
 import { LlamaGuidePage } from './components/LlamaGuidePage';
 import { VideoLibraryPage } from './components/VideoLibraryPage';
 import { ClinicBookingPage } from './components/ClinicBookingPage';
+import { TrailMap } from './components/TrailMap';
+import { BlogSection } from './components/BlogSection';
 import { generateWelcomeSlogan, generateBackdrop } from './services/geminiService';
 import { GalleryImage, Llama, BookingData } from './types';
 import { 
@@ -1198,14 +1200,37 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <main>
+          <main className="relative z-10">
             {/* Hero Section */}
             <section className="relative h-screen flex items-center justify-center text-center overflow-hidden">
               <div className="absolute inset-0 -z-10"><img src={branding.heroImageUrl} className="w-full h-full object-cover brightness-[0.4] scale-105 animate-in zoom-in duration-[10000ms]" alt="Landscape" /></div>
               <div className="max-w-5xl px-8 text-white">
                 <h1 className="text-7xl md:text-9xl font-black mb-12 leading-[0.85] tracking-tighter animate-in slide-in-from-top-12 duration-1000">Master the Montana Peaks. <br /><span className="italic text-green-400 font-light font-display">Elite Strings for the High Country.</span></h1>
                 <p className="text-2xl md:text-4xl text-stone-200 mb-20 max-w-4xl mx-auto font-medium leading-relaxed tracking-tight">{slogan}</p>
-                <a href="#booking" className="bg-green-600 px-20 py-8 rounded-3xl text-3xl font-black shadow-2xl shadow-green-900/40 hover:bg-green-500 transition-all active:scale-95 inline-block">Secure Your String</a>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                  <a href="#booking" className="bg-green-600 px-16 py-8 rounded-3xl text-2xl font-black shadow-2xl shadow-green-900/40 hover:bg-green-500 transition-all active:scale-95 inline-block">Secure Your String</a>
+                  <a href="#trails" className="bg-white/10 backdrop-blur-md border border-white/20 px-16 py-8 rounded-3xl text-2xl font-black hover:bg-white/20 transition-all active:scale-95 inline-block">Explore Trails</a>
+                </div>
+              </div>
+            </section>
+
+            {/* Trail Map Section */}
+            <section id="trails" className="py-64 bg-stone-50 overflow-hidden">
+              <div className="max-w-7xl mx-auto px-8">
+                <div className="flex flex-col md:flex-row items-end justify-between gap-8 mb-32">
+                  <div className="max-w-2xl text-left">
+                    <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-green-100 text-green-800 rounded-full text-[10px] font-black uppercase tracking-widest mb-6">
+                      <MapPin size={12} /> High Country Intel
+                    </div>
+                    <h2 className="text-8xl font-black text-stone-900 tracking-tighter leading-none">
+                      Interactive <br/> <span className="text-stone-300 italic">Trail Map</span>
+                    </h2>
+                  </div>
+                  <p className="text-stone-400 font-bold text-xl max-w-sm leading-relaxed text-left">
+                    Explore our curated list of llama-friendly trailheads across Montana's premier wilderness areas.
+                  </p>
+                </div>
+                <TrailMap />
               </div>
             </section>
 
@@ -1361,6 +1386,26 @@ const App: React.FC = () => {
             {/* FAQ Section */}
             <section id="faq" className="py-64 bg-stone-50"><div className="max-w-7xl mx-auto px-8"><FAQSection /></div></section>
             
+            {/* Blog Section */}
+            <section id="blog" className="py-64 bg-stone-900 overflow-hidden">
+              <div className="max-w-7xl mx-auto px-8">
+                <div className="flex flex-col md:flex-row items-end justify-between gap-8 mb-32">
+                  <div className="max-w-2xl text-left">
+                    <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-green-900/50 text-green-400 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 border border-green-800/30">
+                      <PenTool size={12} /> Expedition Logs
+                    </div>
+                    <h2 className="text-8xl font-black text-white tracking-tighter leading-none">
+                      Trip <br/> <span className="text-stone-600 italic">Reports</span>
+                    </h2>
+                  </div>
+                  <p className="text-stone-500 font-bold text-xl max-w-sm leading-relaxed text-left">
+                    Stories from the trail, wildlife encounters, and high-country wisdom from our community.
+                  </p>
+                </div>
+                <BlogSection />
+              </div>
+            </section>
+
             {/* Booking Section */}
             <section id="booking" className="py-64 bg-white"><div className="max-w-5xl mx-auto px-8 text-center"><h2 className="text-8xl font-black mb-32 tracking-tighter leading-none">Logistics.</h2><BookingForm /></div></section>
             
@@ -1436,8 +1481,8 @@ const App: React.FC = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-24">
-                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Exploration</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#conditions" className="hover:text-green-500 transition-colors">Conditions</a></li><li><a href="#trailheads" className="hover:text-green-500 transition-colors">Trailheads</a></li><li><a href="#benefits" className="hover:text-green-500 transition-colors">Benefits</a></li><li><a href="#about" className="hover:text-green-500 transition-colors">The Herd</a></li></ul></div>
-                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Intel</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><button onClick={() => navigate('/videos')} className="hover:text-green-500 transition-colors">Videos</button></li><li><button onClick={() => navigate('/book-clinic')} className="hover:text-green-500 transition-colors">Book Clinic</button></li><li><a href="#faq" className="hover:text-green-500 transition-colors">Field Manual</a></li><li><a href="#booking" className="hover:text-green-500 transition-colors">Deployment</a></li><li><a href="#contact" className="hover:text-green-500 transition-colors">Base Camp</a></li></ul></div>
+                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Exploration</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#conditions" className="hover:text-green-500 transition-colors">Conditions</a></li><li><a href="#trails" className="hover:text-green-500 transition-colors">Trail Map</a></li><li><a href="#benefits" className="hover:text-green-500 transition-colors">Benefits</a></li><li><a href="#about" className="hover:text-green-500 transition-colors">The Herd</a></li></ul></div>
+                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Intel</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#blog" className="hover:text-green-500 transition-colors">Trip Reports</a></li><li><button onClick={() => navigate('/videos')} className="hover:text-green-500 transition-colors">Videos</button></li><li><button onClick={() => navigate('/book-clinic')} className="hover:text-green-500 transition-colors">Book Clinic</button></li><li><a href="#faq" className="hover:text-green-500 transition-colors">Field Manual</a></li><li><a href="#booking" className="hover:text-green-500 transition-colors">Deployment</a></li></ul></div>
                 </div>
               </div>
               <div className="pt-24 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-12 text-[10px] font-black uppercase tracking-[0.5em]">
