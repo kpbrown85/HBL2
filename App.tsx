@@ -57,6 +57,7 @@ import {
   Settings,
   RefreshCcw,
   Layout,
+  Search,
   Globe,
   Eye,
   Type,
@@ -74,6 +75,9 @@ interface Branding {
   heroImageUrl: string;
   adminEmail: string;
   logoUrl?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+  socialImageUrl?: string;
 }
 
 interface UploadStatus {
@@ -170,7 +174,10 @@ const App: React.FC = () => {
       accentName: "Llamas",
       heroImageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=2400",
       adminEmail: 'kevin.paul.brown@gmail.com',
-      logoUrl: ''
+      logoUrl: '',
+      seoDescription: 'Elite mountain-trained llama pack strings for backcountry adventures in the Montana Rockies.',
+      seoKeywords: 'llama packing, montana hunting, backcountry logistics, helena montana, hiking with llamas',
+      socialImageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=1200'
     };
     if (saved) {
       try {
@@ -280,6 +287,31 @@ const App: React.FC = () => {
   useEffect(() => { 
     localStorage.setItem('hbl_branding', JSON.stringify(branding)); 
     document.title = branding.siteName + " | Montana Pack Strings"; 
+    
+    // Update Meta Tags for SEO
+    const updateMeta = (name: string, content: string, attr: 'name' | 'property' = 'name') => {
+      let el = document.querySelector(`meta[${attr}="${name}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, name);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+
+    if (branding.seoDescription) {
+      updateMeta('description', branding.seoDescription);
+      updateMeta('og:description', branding.seoDescription, 'property');
+    }
+    if (branding.seoKeywords) {
+      updateMeta('keywords', branding.seoKeywords);
+    }
+    if (branding.socialImageUrl) {
+      updateMeta('og:image', branding.socialImageUrl, 'property');
+    }
+    updateMeta('og:title', branding.siteName, 'property');
+    updateMeta('og:type', 'website', 'property');
+    updateMeta('og:url', window.location.origin, 'property');
   }, [branding]);
   useEffect(() => { localStorage.setItem('hbl_llamas', JSON.stringify(llamas)); }, [llamas]);
   
@@ -703,6 +735,46 @@ const App: React.FC = () => {
                               {isProcessing ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />}
                               <span className="font-black text-xs uppercase tracking-[0.2em]">Generate High-Country Backdrop</span>
                             </button>
+                          </div>
+                        </div>
+
+                        {/* SEO Settings Section */}
+                        <div className="pt-12 border-t border-stone-50 space-y-10">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg"><Search size={20}/></div>
+                            <h3 className="text-2xl font-black text-stone-900">SEO & Social Discovery</h3>
+                          </div>
+                          <div className="space-y-8">
+                            <div className="space-y-3">
+                              <label className="label-cms">Meta Description (Search Results)</label>
+                              <textarea 
+                                className="input-cms h-32 resize-none" 
+                                value={branding.seoDescription} 
+                                onChange={e => setBranding({...branding, seoDescription: e.target.value})}
+                                placeholder="A brief summary of your business for search engines..."
+                              />
+                            </div>
+                            <div className="space-y-3">
+                              <label className="label-cms">Keywords (Comma Separated)</label>
+                              <input 
+                                className="input-cms" 
+                                value={branding.seoKeywords} 
+                                onChange={e => setBranding({...branding, seoKeywords: e.target.value})}
+                                placeholder="e.g. llamas, montana, hunting, packing"
+                              />
+                            </div>
+                            <div className="space-y-3">
+                              <label className="label-cms">Social Share Image URL (OpenGraph)</label>
+                              <div className="relative">
+                                <input 
+                                  className="input-cms pl-14" 
+                                  value={branding.socialImageUrl} 
+                                  onChange={e => setBranding({...branding, socialImageUrl: e.target.value})}
+                                  placeholder="URL for the image shown when sharing the link"
+                                />
+                                <ImageIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
