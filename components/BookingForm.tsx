@@ -32,7 +32,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
     numLlamas: isClinicOnly ? 0 : 2,
     trailerNeeded: false,
     isFirstTimer: isClinicOnly ? true : false,
-    bookingType: isClinicOnly ? 'clinic' : 'expedition'
+    bookingType: (isClinicOnly ? 'clinic' : 'expedition') as 'clinic' | 'expedition'
   });
 
   const [estimate, setEstimate] = useState(0);

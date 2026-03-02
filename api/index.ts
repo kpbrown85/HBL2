@@ -78,7 +78,20 @@ api.post("/create-booking", async (req, res) => {
   // 1. Try Database
   try {
     if (supabase) {
-      const { error } = await supabase.from('bookings').insert([booking]);
+      const { error } = await supabase.from('bookings').insert([{
+        id: booking.id,
+        name: booking.name,
+        email: booking.email,
+        phone: booking.phone,
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+        numLlamas: booking.numLlamas,
+        trailerNeeded: booking.trailerNeeded,
+        isFirstTimer: booking.isFirstTimer,
+        timestamp: booking.timestamp,
+        status: booking.status,
+        isRead: booking.isRead
+      }]);
       if (error) {
         console.error("Supabase Insert Error:", error);
         throw new Error(`Database save failed: ${error.message}. Please ensure your Supabase table has columns: id (text/uuid), name, email, phone, startDate, endDate, numLlamas, trailerNeeded, isFirstTimer, timestamp, status, isRead.`);
@@ -117,14 +130,14 @@ api.post("/create-booking", async (req, res) => {
       // ADMIN NOTIFICATION
       const adminHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-          <h2 style="color: #166534; border-bottom: 2px solid #166534; padding-bottom: 10px;">New Expedition Request</h2>
+          <h2 style="color: #166534; border-bottom: 2px solid #166534; padding-bottom: 10px;">New ${booking.bookingType === 'clinic' ? 'Clinic' : 'Expedition'} Request</h2>
           <p><strong>Name:</strong> ${booking.name}</p>
           <p><strong>Email:</strong> ${booking.email}</p>
           <p><strong>Phone:</strong> ${booking.phone}</p>
-          <p><strong>Dates:</strong> ${booking.startDate} to ${booking.endDate}</p>
-          <p><strong>Llamas:</strong> ${booking.numLlamas}</p>
-          <p><strong>Trailer:</strong> ${booking.trailerNeeded ? 'Yes' : 'No'}</p>
-          <p><strong>Clinic:</strong> ${booking.isFirstTimer ? 'Yes' : 'No'}</p>
+          <p><strong>Dates:</strong> ${booking.startDate} ${booking.bookingType === 'clinic' ? '' : `to ${booking.endDate}`}</p>
+          ${booking.bookingType === 'clinic' ? '' : `<p><strong>Llamas:</strong> ${booking.numLlamas}</p>`}
+          ${booking.bookingType === 'clinic' ? '' : `<p><strong>Trailer:</strong> ${booking.trailerNeeded ? 'Yes' : 'No'}</p>`}
+          <p><strong>Clinic Required:</strong> ${booking.isFirstTimer ? 'Yes' : 'No'}</p>
           ${dbError ? `<p style="color: red;"><strong>Note:</strong> Database save failed, but request was captured via email.</p>` : ''}
           <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
           <a href="https://www.helenallamas.com/admin" style="display: inline-block; background: #166534; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Dashboard</a>
@@ -146,7 +159,7 @@ api.post("/create-booking", async (req, res) => {
             <p style="color: #666; font-style: italic;">Your High Country Adventure Starts Here</p>
           </div>
           <p>Hi ${booking.name},</p>
-          <p>Thank you for requesting an expedition with our herd! We've received your request and our team is currently reviewing the trail conditions and llama availability for your dates.</p>
+          <p>Thank you for requesting a ${booking.bookingType === 'clinic' ? 'Llama Packing Clinic' : 'expedition'} with our herd! We've received your request and our team is currently reviewing the ${booking.bookingType === 'clinic' ? 'clinic schedule' : 'trail conditions and llama availability'} for your dates.</p>
           
           <div style="background: #f0fdf4; padding: 25px; border-radius: 15px; margin: 25px 0; border: 2px dashed #166534; text-align: center;">
             <h3 style="margin-top: 0; color: #166534;">MANDATORY: Sign Your Waiver</h3>
@@ -157,9 +170,11 @@ api.post("/create-booking", async (req, res) => {
           <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
             <h3 style="margin-top: 0; color: #166534;">Request Summary:</h3>
             <ul style="list-style: none; padding: 0;">
-              <li><strong>Dates:</strong> ${booking.startDate} to ${booking.endDate}</li>
+              <li><strong>Dates:</strong> ${booking.startDate} ${booking.bookingType === 'clinic' ? '' : `to ${booking.endDate}`}</li>
+              ${booking.bookingType === 'clinic' ? '<li><strong>Type:</strong> Llama Packing Clinic Training</li>' : `
               <li><strong>Llamas:</strong> ${booking.numLlamas} Pack Animals</li>
               <li><strong>Equipment:</strong> ${booking.trailerNeeded ? 'Trailer Rental Requested' : 'Standard Gear'}</li>
+              `}
             </ul>
           </div>
 

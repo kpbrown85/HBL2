@@ -30,6 +30,7 @@ export interface BookingData {
   numLlamas: number;
   trailerNeeded: boolean;
   isFirstTimer: boolean;
+  bookingType?: 'expedition' | 'clinic';
   timestamp: number;
   status: 'pending' | 'confirmed' | 'canceled';
   isRead?: boolean;
