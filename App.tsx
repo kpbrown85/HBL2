@@ -197,6 +197,7 @@ const App: React.FC = () => {
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [supabaseStatus, setSupabaseStatus] = useState<boolean | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [storageWarning, setStorageWarning] = useState(false);
 
   const dailyFact = useMemo(() => {
     const day = new Date().getDate();
@@ -283,7 +284,13 @@ const App: React.FC = () => {
   useEffect(() => { localStorage.setItem('hbl_llamas', JSON.stringify(llamas)); }, [llamas]);
   
   useEffect(() => { 
-    localStorage.setItem('hbl_gallery', JSON.stringify(gallery));
+    try {
+      localStorage.setItem('hbl_gallery', JSON.stringify(gallery));
+      setStorageWarning(false);
+    } catch (e) {
+      console.warn("Gallery too large for local storage, syncing to database only.");
+      setStorageWarning(true);
+    }
     // Sync to database if admin
     if (isAdmin) {
       fetch(`${window.location.origin}/api/save-gallery`, {
@@ -569,6 +576,14 @@ const App: React.FC = () => {
                     </span>
                   </span>
                 </div>
+                {storageWarning && (
+                  <div className="hidden lg:flex items-center gap-4 bg-amber-50 px-4 py-2 rounded-full border border-amber-100">
+                    <ShieldAlert size={14} className="text-amber-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">
+                      Local Quota Full - Syncing to DB Only
+                    </span>
+                  </div>
+                )}
               </div>
             <nav className="flex items-center gap-2 bg-stone-50 p-2 rounded-3xl border border-stone-100">
               {[
