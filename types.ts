@@ -36,37 +36,6 @@ export interface BookingData {
   isRead?: boolean;
   signature_data?: string;
   signed_at?: string;
-  addons?: string[]; // IDs of gear addons
-  totalPrice?: number;
-}
-
-export interface Trail {
-  id: string;
-  name: string;
-  region: 'Helena' | 'Butte' | 'Bozeman' | 'Missoula';
-  description: string;
-  difficulty: 'Easy' | 'Moderate' | 'Strenuous';
-  coordinates: { lat: number; lng: number };
-  bestFor: string;
-  imageUrl: string;
-}
-
-export interface BlogEntry {
-  id: string;
-  title: string;
-  date: string;
-  excerpt: string;
-  content: string;
-  imageUrl: string;
-  author: string;
-}
-
-export interface GearAddon {
-  id: string;
-  name: string;
-  pricePerDay: number;
-  icon: string; // Lucide icon name
-  description: string;
 }
 
 export interface FAQItem {

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { PRICING, GEAR_ADDONS } from '../constants';
-import { BookingData, GearAddon } from '../types';
+import { PRICING } from '../constants';
+import { BookingData } from '../types';
 import { 
   Calendar, 
   Users, 
@@ -15,16 +15,8 @@ import {
   CheckCircle2,
   Info,
   Send,
-  Loader2,
-  Package,
-  ShieldCheck,
-  Zap,
-  Tent,
-  Bed,
-  ChevronLeft,
-  ChevronRight
+  Loader2
 } from 'lucide-react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, isSameDay, addDays, eachDayOfInterval, isPast, isWithinInterval } from 'date-fns';
 
 interface BookingFormProps {
   isClinicOnly?: boolean;
@@ -40,31 +32,13 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
     numLlamas: isClinicOnly ? 0 : 2,
     trailerNeeded: false,
     isFirstTimer: isClinicOnly ? true : false,
-    bookingType: (isClinicOnly ? 'clinic' : 'expedition') as 'clinic' | 'expedition',
-    addons: [] as string[]
+    bookingType: (isClinicOnly ? 'clinic' : 'expedition') as 'clinic' | 'expedition'
   });
 
   const [estimate, setEstimate] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [adminEmail, setAdminEmail] = useState('kevin.paul.brown@gmail.com');
-  const [existingBookings, setExistingBookings] = useState<BookingData[]>([]);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-
-  useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const res = await fetch('/api/bookings');
-        if (res.ok) {
-          const data = await res.json();
-          setExistingBookings(data.filter((b: any) => b.status === 'confirmed'));
-        }
-      } catch (err) {
-        console.error("Failed to fetch bookings:", err);
-      }
-    };
-    fetchBookings();
-  }, []);
 
   useEffect(() => {
     let currentPricing = { ...PRICING };
@@ -98,124 +72,12 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
         if (formData.trailerNeeded) total += (currentPricing.trailerDaily * diffDays);
         if (formData.isFirstTimer) total += currentPricing.clinicFee;
 
-        // Add Gear Addons
-        formData.addons.forEach(addonId => {
-          const addon = GEAR_ADDONS.find(a => a.id === addonId);
-          if (addon) total += (addon.pricePerDay * diffDays);
-        });
-
         setEstimate(total);
       }
     } else {
       setEstimate(0);
     }
-  }, [formData, isClinicOnly]);
-
-  const toggleAddon = (id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      addons: prev.addons.includes(id) 
-        ? prev.addons.filter(a => a !== id) 
-        : [...prev.addons, id]
-    }));
-  };
-
-  const isDateBooked = (date: Date) => {
-    return existingBookings.some(booking => {
-      const start = new Date(booking.startDate);
-      const end = new Date(booking.endDate);
-      return isWithinInterval(date, { start, end });
-    });
-  };
-
-  const renderHeader = () => {
-    return (
-      <div className="flex items-center justify-between mb-8">
-        <button type="button" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-4 hover:bg-stone-100 rounded-full transition-colors">
-          <ChevronLeft size={20} />
-        </button>
-        <h3 className="text-xl font-black tracking-tight text-stone-900 uppercase tracking-widest">
-          {format(currentMonth, 'MMMM yyyy')}
-        </h3>
-        <button type="button" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-4 hover:bg-stone-100 rounded-full transition-colors">
-          <ChevronRight size={20} />
-        </button>
-      </div>
-    );
-  };
-
-  const renderDays = () => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return (
-      <div className="grid grid-cols-7 mb-4">
-        {days.map(day => (
-          <div key={day} className="text-center text-[10px] font-black uppercase tracking-widest text-stone-400">
-            {day}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderCells = () => {
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart);
-    const endDate = endOfWeek(monthEnd);
-
-    const rows = [];
-    let days = [];
-    let day = startDate;
-
-    while (day <= endDate) {
-      for (let i = 0; i < 7; i++) {
-        const formattedDate = format(day, 'yyyy-MM-dd');
-        const isBooked = isDateBooked(day);
-        const isSelected = formData.startDate === formattedDate || formData.endDate === formattedDate;
-        const isInRange = formData.startDate && formData.endDate && isWithinInterval(day, { start: new Date(formData.startDate), end: new Date(formData.endDate) });
-        const isPastDate = isPast(day) && !isSameDay(day, new Date());
-        const isCurrentMonth = isSameMonth(day, monthStart);
-
-        days.push(
-          <div
-            key={day.toString()}
-            onClick={() => {
-              if (isBooked || isPastDate || !isCurrentMonth) return;
-              if (!formData.startDate || (formData.startDate && formData.endDate)) {
-                setFormData({ ...formData, startDate: formattedDate, endDate: '' });
-              } else {
-                const start = new Date(formData.startDate);
-                if (day < start) {
-                  setFormData({ ...formData, startDate: formattedDate, endDate: '' });
-                } else {
-                  setFormData({ ...formData, endDate: formattedDate });
-                }
-              }
-            }}
-            className={`relative h-14 flex items-center justify-center text-xs font-black cursor-pointer transition-all rounded-xl border-2 ${
-              !isCurrentMonth ? 'text-stone-200 border-transparent cursor-default' :
-              isBooked ? 'bg-red-50 text-red-300 border-red-50 cursor-not-allowed' :
-              isPastDate ? 'text-stone-300 border-transparent cursor-default' :
-              isSelected ? 'bg-stone-900 text-white border-stone-900 shadow-lg scale-110 z-10' :
-              isInRange ? 'bg-green-100 text-green-800 border-green-100' :
-              'bg-white text-stone-600 border-stone-50 hover:border-stone-200'
-            }`}
-          >
-            {format(day, 'd')}
-            {isBooked && isCurrentMonth && <div className="absolute bottom-1.5 w-1 h-1 bg-red-400 rounded-full" />}
-          </div>
-        );
-        day = addDays(day, 1);
-      }
-      rows.push(
-        <div className="grid grid-cols-7 gap-2 mb-2" key={day.toString()}>
-          {days}
-        </div>
-      );
-      days = [];
-    }
-    return <div className="mb-8">{rows}</div>;
-  };
+  }, [formData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,12 +90,14 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
     };
 
     try {
+      // Try multiple paths for maximum compatibility
       const paths = ['/create-booking', '/api/create-booking'];
       let response: Response | null = null;
       let lastError: any = null;
 
       for (const path of paths) {
         try {
+          console.log(`[${new Date().toISOString()}] Client: Attempting submission to ${path}`);
           const res = await fetch(path, {
             method: 'POST',
             headers: { 
@@ -266,8 +130,13 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
       }
 
       const savedBooking = result;
+      console.log(`[${new Date().toISOString()}] Client: Booking submitted successfully`, savedBooking);
+
+      // Redundancy: Save to localStorage as well
       const existing = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
       localStorage.setItem('hbl_bookings', JSON.stringify([savedBooking, ...existing]));
+      
+      // Notify app of new booking
       window.dispatchEvent(new Event('hbl_new_booking'));
       setIsSubmitted(true);
     } catch (error: any) {
@@ -289,48 +158,60 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
       numLlamas: isClinicOnly ? 0 : 2,
       trailerNeeded: false,
       isFirstTimer: isClinicOnly ? true : false,
-      bookingType: isClinicOnly ? 'clinic' : 'expedition',
-      addons: []
+      bookingType: isClinicOnly ? 'clinic' : 'expedition'
     });
     setIsSubmitted(false);
   };
 
   if (isSubmitted) {
     return (
-      <div className="bg-white p-12 lg:p-20 rounded-[4rem] shadow-2xl border border-stone-100 text-center max-w-4xl mx-auto overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-2 bg-green-800" />
-        <div className="space-y-12">
-          <div className="w-24 h-24 bg-green-50 text-green-700 rounded-[2rem] flex items-center justify-center mx-auto shadow-xl shadow-green-900/5">
-            <CheckCircle2 size={48} />
-          </div>
-          
-          <div className="space-y-6">
-            <h2 className="text-5xl lg:text-7xl font-black text-stone-900 tracking-tighter leading-none">
-              Expedition <br/> <span className="text-stone-300 italic">Requested</span>
-            </h2>
-            <p className="text-stone-400 font-medium text-xl max-w-xl mx-auto leading-relaxed">
-              We've received your high-country request. Our team will review the dates and herd availability before confirming your trek.
-            </p>
-          </div>
-
-          <div className="bg-stone-50 p-10 rounded-[3rem] border border-stone-100 text-left space-y-8">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-stone-400">
-                  <Calendar className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Schedule</p>
-                  <p className="font-bold text-stone-900">{formData.startDate} to {formData.endDate}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Status</p>
-                <span className="px-4 py-1.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-black uppercase tracking-widest">Pending Review</span>
-              </div>
+      <div className="bg-white p-8 md:p-16 rounded-[3rem] shadow-2xl border border-stone-100 animate-in fade-in zoom-in duration-500">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="w-24 h-24 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-900/10">
+              <CheckCircle2 className="w-12 h-12" />
             </div>
+            <h3 className="text-4xl font-black text-stone-900 mb-4">Request Confirmed</h3>
+            <p className="text-stone-500 text-lg mb-4">
+              We've received your expedition request, <span className="text-stone-900 font-bold">{formData.name.split(' ')[0]}</span>.
+            </p>
+            <div className="inline-flex items-center gap-2 px-6 py-2 bg-green-50 text-green-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-100">
+               <Send size={12} /> Notification dispatched to {adminEmail}
+            </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="bg-stone-50 rounded-[2rem] p-8 mb-10 border border-stone-100">
+            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-stone-400 mb-8 flex items-center gap-2">
+              <Calculator className="w-4 h-4" /> Request Summary
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12 text-left">
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-stone-400">
+                    <User className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Contact</p>
+                    <p className="font-bold text-stone-900">{formData.name}</p>
+                    <div className="flex flex-col text-sm text-stone-500 mt-1">
+                      <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {formData.email}</span>
+                      <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {formData.phone}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-stone-400">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Trip Dates</p>
+                    <p className="font-bold text-stone-900">{formData.startDate} <ArrowRight className="inline w-3 h-3 mx-1 text-stone-300" /> {formData.endDate}</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-stone-400">
@@ -359,27 +240,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                   </div>
                 </div>
               </div>
-
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-stone-400">
-                    <Package className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Gear Add-ons</p>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.addons.length > 0 ? formData.addons.map(id => {
-                        const addon = GEAR_ADDONS.find(a => a.id === id);
-                        return (
-                          <span key={id} className="px-3 py-1 bg-stone-100 text-stone-600 rounded-lg text-[10px] font-bold uppercase tracking-widest">
-                            {addon?.name}
-                          </span>
-                        );
-                      }) : <span className="text-stone-300 font-bold">None Selected</span>}
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div className="mt-10 pt-8 border-t border-stone-200 flex justify-between items-end">
@@ -394,7 +254,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
-              type="button"
               onClick={resetForm}
               className="px-10 py-4 bg-stone-900 text-white rounded-2xl font-black hover:bg-stone-800 transition-all shadow-xl active:scale-95"
             >
@@ -407,119 +266,94 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-8 md:p-12 lg:p-20 rounded-[4rem] shadow-2xl border border-stone-100 text-left space-y-24">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
-        <div className="space-y-20">
-          {/* Step 1: Expedition Details */}
-          <div className="space-y-12">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-stone-900 text-white rounded-2xl flex items-center justify-center shadow-xl">
-                <Calendar size={24} />
-              </div>
-              <div>
-                <h3 className="text-2xl font-black text-stone-900">Expedition Schedule</h3>
-                <p className="text-stone-400 font-bold text-[10px] uppercase tracking-widest mt-1">Select your high-country dates</p>
-              </div>
+    <form onSubmit={handleSubmit} className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-stone-100 text-left">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+        <div className="space-y-8">
+          <div className="flex items-center gap-3 border-b border-stone-50 pb-4 mb-8">
+            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-700">
+              <Users className="w-5 h-5" />
             </div>
-
-            <div className="bg-stone-50 p-8 lg:p-12 rounded-[3rem] border border-stone-100">
-              {renderHeader()}
-              {renderDays()}
-              {renderCells()}
-              
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex-1 space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-4">Start Date</label>
-                  <input 
-                    type="date" 
-                    className="w-full bg-white border border-stone-100 p-6 rounded-2xl outline-none focus:ring-4 focus:ring-green-500/10 font-bold text-stone-900" 
-                    value={formData.startDate} 
-                    readOnly
-                  />
-                </div>
-                <div className="flex-1 space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-4">End Date</label>
-                  <input 
-                    type="date" 
-                    className="w-full bg-white border border-stone-100 p-6 rounded-2xl outline-none focus:ring-4 focus:ring-green-500/10 font-bold text-stone-900" 
-                    value={formData.endDate} 
-                    readOnly
-                  />
-                </div>
-              </div>
-            </div>
+            <h3 className="text-2xl font-black text-stone-900 tracking-tight">Lead Contact</h3>
           </div>
-
-          {/* Step 2: Gear Rental Add-ons */}
-          <div className="space-y-12">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-800 text-white rounded-2xl flex items-center justify-center shadow-xl">
-                <Package size={24} />
+          <div className="space-y-6">
+            <div>
+              <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">Full Name</label>
+              <input 
+                required
+                type="text" 
+                className="w-full px-6 py-4 rounded-2xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-medium"
+                placeholder="John Muir"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">Email Address</label>
+                <input 
+                  required
+                  type="email" 
+                  className="w-full px-6 py-4 rounded-2xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-medium"
+                  placeholder="john@example.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                />
               </div>
               <div>
-                <h3 className="text-2xl font-black text-stone-900">Gear Rental Shop</h3>
-                <p className="text-stone-400 font-bold text-[10px] uppercase tracking-widest mt-1">Enhance your expedition loadout</p>
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">Phone Number</label>
+                <input 
+                  required
+                  type="tel" 
+                  className="w-full px-6 py-4 rounded-2xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-medium"
+                  placeholder="(406) 555-0123"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {GEAR_ADDONS.map(addon => (
-                <button
-                  key={addon.id}
-                  type="button"
-                  onClick={() => toggleAddon(addon.id)}
-                  className={`flex items-start gap-6 p-8 rounded-[2.5rem] border-2 transition-all text-left ${
-                    formData.addons.includes(addon.id)
-                      ? 'bg-green-800 border-green-800 text-white shadow-2xl shadow-green-900/20'
-                      : 'bg-white border-stone-100 text-stone-900 hover:border-stone-200'
-                  }`}
-                >
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
-                    formData.addons.includes(addon.id) ? 'bg-white/20' : 'bg-stone-50'
-                  }`}>
-                    {addon.icon === 'Tent' && <Tent size={24} />}
-                    {addon.icon === 'ShieldCheck' && <ShieldCheck size={24} />}
-                    {addon.icon === 'Zap' && <Zap size={24} />}
-                    {addon.icon === 'Bed' && <Bed size={24} />}
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-black text-lg tracking-tight">{addon.name}</h4>
-                      <span className={`text-xs font-black uppercase tracking-widest ${
-                        formData.addons.includes(addon.id) ? 'text-green-200' : 'text-green-600'
-                      }`}>
-                        +${addon.pricePerDay}/day
-                      </span>
-                    </div>
-                    <p className={`text-sm font-medium leading-relaxed ${
-                      formData.addons.includes(addon.id) ? 'text-white/70' : 'text-stone-400'
-                    }`}>
-                      {addon.description}
-                    </p>
-                  </div>
-                </button>
-              ))}
             </div>
           </div>
         </div>
 
-        <div className="space-y-20">
-          {/* Step 3: Logistics */}
-          <div className="space-y-12">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-stone-900 text-white rounded-2xl flex items-center justify-center shadow-xl">
-                <Users size={24} />
-              </div>
-              <div>
-                <h3 className="text-2xl font-black text-stone-900">Expedition Logistics</h3>
-                <p className="text-stone-400 font-bold text-[10px] uppercase tracking-widest mt-1">Configure your pack string</p>
-              </div>
+        <div className="space-y-8">
+          <div className="flex items-center gap-3 border-b border-stone-50 pb-4 mb-8">
+            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-700">
+              <Calendar className="w-5 h-5" />
             </div>
-
-            <div className="space-y-8">
+            <h3 className="text-2xl font-black text-stone-900 tracking-tight">
+              {isClinicOnly ? 'Clinic Date' : 'Expedition Details'}
+            </h3>
+          </div>
+          <div className="space-y-6">
+            <div className={`grid ${isClinicOnly ? 'grid-cols-1' : 'grid-cols-2'} gap-6`}>
               <div>
-                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-4 text-left">Number of Llamas (Min 2)</label>
-                <div className="flex items-center gap-6 bg-stone-50 p-6 rounded-3xl border border-stone-100">
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">
+                  {isClinicOnly ? 'Preferred Date' : 'Start Date'}
+                </label>
+                <input 
+                  required
+                  type="date" 
+                  className="w-full px-6 py-4 rounded-2xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-medium"
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({...formData, startDate: e.target.value, endDate: isClinicOnly ? e.target.value : formData.endDate})}
+                />
+              </div>
+              {!isClinicOnly && (
+                <div>
+                  <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">End Date</label>
+                  <input 
+                    required
+                    type="date" 
+                    className="w-full px-6 py-4 rounded-2xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-medium"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                  />
+                </div>
+              )}
+            </div>
+            {!isClinicOnly && (
+              <div>
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 text-left">Number of Llamas (Min 2)</label>
+                <div className="flex items-center gap-4">
                   <input 
                     type="range"
                     min="2"
@@ -528,120 +362,100 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                     value={formData.numLlamas}
                     onChange={(e) => setFormData({...formData, numLlamas: parseInt(e.target.value) || 2})}
                   />
-                  <span className="w-20 text-center font-black text-3xl text-stone-900 bg-white py-4 rounded-2xl border border-stone-200 shadow-sm">
+                  <span className="w-16 text-center font-black text-2xl text-stone-900 bg-stone-100 py-2 rounded-xl border border-stone-200">
                     {formData.numLlamas}
                   </span>
                 </div>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, trailerNeeded: !formData.trailerNeeded })}
-                  className={`flex flex-col p-8 rounded-[2.5rem] border-2 transition-all text-left ${
-                    formData.trailerNeeded 
-                      ? 'bg-stone-900 border-stone-900 text-white shadow-xl' 
-                      : 'bg-white border-stone-100 text-stone-900 hover:border-stone-200'
-                  }`}
-                >
-                  <Truck className={`mb-4 ${formData.trailerNeeded ? 'text-green-400' : 'text-stone-300'}`} size={32} />
-                  <h4 className="font-black text-lg tracking-tight mb-1">Trailer Rental</h4>
-                  <p className={`text-xs font-bold uppercase tracking-widest ${formData.trailerNeeded ? 'text-stone-400' : 'text-stone-400'}`}>
-                    ${PRICING.trailerDaily}/day
-                  </p>
-                </button>
-
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, isFirstTimer: !formData.isFirstTimer })}
-                  className={`flex flex-col p-8 rounded-[2.5rem] border-2 transition-all text-left ${
-                    formData.isFirstTimer 
-                      ? 'bg-stone-900 border-stone-900 text-white shadow-xl' 
-                      : 'bg-white border-stone-100 text-stone-900 hover:border-stone-200'
-                  }`}
-                >
-                  <GraduationCap className={`mb-4 ${formData.isFirstTimer ? 'text-green-400' : 'text-stone-300'}`} size={32} />
-                  <h4 className="font-black text-lg tracking-tight mb-1">Pack Clinic</h4>
-                  <p className={`text-xs font-bold uppercase tracking-widest ${formData.isFirstTimer ? 'text-stone-400' : 'text-stone-400'}`}>
-                    ${PRICING.clinicFee} One-time
-                  </p>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 4: Contact */}
-          <div className="space-y-12">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-stone-900 text-white rounded-2xl flex items-center justify-center shadow-xl">
-                <Mail size={24} />
-              </div>
-              <div>
-                <h3 className="text-2xl font-black text-stone-900">Contact Information</h3>
-                <p className="text-stone-400 font-bold text-[10px] uppercase tracking-widest mt-1">Where should we send the intel?</p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <input 
-                required
-                type="text" 
-                className="w-full px-8 py-6 rounded-3xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-bold text-lg"
-                placeholder="Full Name"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-              />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <input 
-                  required
-                  type="email" 
-                  className="w-full px-8 py-6 rounded-3xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-bold text-lg"
-                  placeholder="Email Address"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                />
-                <input 
-                  required
-                  type="tel" 
-                  className="w-full px-8 py-6 rounded-3xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-bold text-lg"
-                  placeholder="Phone Number"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Summary & Submit */}
-          <div className="bg-stone-900 p-12 rounded-[4rem] text-white shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-3xl -mr-32 -mt-32" />
-            <div className="relative z-10">
-              <div className="flex justify-between items-end mb-12">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-500 mb-2">Estimated Investment</p>
-                  <div className="text-6xl font-black tracking-tighter">${estimate.toLocaleString()}</div>
-                </div>
-                <Calculator className="text-stone-700" size={48} />
-              </div>
-              
-              <button 
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full bg-white text-stone-900 py-8 rounded-3xl font-black text-xl transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-stone-100'}`}
-              >
-                {isSubmitting ? (
-                  <>Processing... <Loader2 className="w-6 h-6 animate-spin" /></>
-                ) : (
-                  <>Send Expedition Request <ArrowRight className="w-6 h-6" /></>
-                )}
-              </button>
-              <p className="text-center text-stone-500 text-[10px] font-black uppercase tracking-widest mt-8">
-                No payment required until dates are confirmed
-              </p>
-            </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Expedition Details Section */}
+      {!isClinicOnly && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12 bg-stone-50 p-8 rounded-[2rem] border border-stone-100">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-stone-100 hover:border-green-200 transition-all shadow-sm">
+              <div className="flex flex-col text-left">
+                <span className="font-bold text-stone-900 flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-green-700" /> Trailer Rental
+                </span>
+                <span className="text-xs text-stone-500 mt-1 leading-relaxed">
+                  ${PRICING.trailerDaily}/day transport service
+                </span>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setFormData({ ...formData, trailerNeeded: !formData.trailerNeeded })}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.trailerNeeded ? 'bg-green-700' : 'bg-stone-200'}`}
+              >
+                <span 
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.trailerNeeded ? 'translate-x-5' : 'translate-x-0'}`}
+                />
+              </button>
+            </div>
+
+            <label className="flex items-start gap-4 cursor-pointer group bg-white p-6 rounded-2xl border border-stone-100 hover:border-green-200 transition-all shadow-sm">
+              <div className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${formData.isFirstTimer ? 'bg-green-700 border-green-700 shadow-lg shadow-green-900/20' : 'bg-stone-50 border-stone-200'}`}>
+                {formData.isFirstTimer && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+              </div>
+              <input 
+                type="checkbox" 
+                className="hidden"
+                checked={formData.isFirstTimer}
+                onChange={(e) => setFormData({...formData, isFirstTimer: e.target.checked})}
+              />
+              <div className="flex flex-col text-left">
+                <span className="font-bold text-stone-900 flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-green-700" /> Llama Clinic (${PRICING.clinicFee})
+                </span>
+              </div>
+            </label>
+          </div>
+
+          <div className="bg-white p-8 rounded-[2rem] border border-stone-100 shadow-xl flex flex-col justify-center relative overflow-hidden group">
+            <div className="flex justify-between items-center mb-2 relative z-10">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Estimated Total</span>
+            </div>
+            <div className="text-5xl font-black text-stone-900 relative z-10">
+              ${estimate.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isClinicOnly && (
+        <div className="mb-12 bg-green-50 p-8 rounded-[2rem] border border-green-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-800 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                <GraduationCap size={24} />
+              </div>
+              <div>
+                <h4 className="text-xl font-black text-stone-900 tracking-tight">Llama Packing Clinic</h4>
+                <p className="text-stone-500 text-sm font-medium">Hands-on training session at our Clancy base camp.</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Fixed Rate</p>
+              <p className="text-3xl font-black text-green-800">${PRICING.clinicFee}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <button 
+        type="submit"
+        disabled={isSubmitting}
+        className={`w-full bg-green-800 text-white py-6 rounded-2xl font-black text-xl transition-all shadow-[0_20px_40px_-10px_rgba(22,101,52,0.4)] active:scale-[0.98] flex items-center justify-center gap-3 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-900'}`}
+      >
+        {isSubmitting ? (
+          <>Processing Request... <Loader2 className="w-6 h-6 animate-spin" /></>
+        ) : (
+          <>{isClinicOnly ? 'Book My Clinic' : 'Send Expedition Request'} <ArrowRight className="w-6 h-6" /></>
+        )}
+      </button>
     </form>
   );
 };

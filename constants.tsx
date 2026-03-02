@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Llama, FAQItem, GalleryImage, GearItem, Review, Trail, BlogEntry, GearAddon } from './types';
+import { Llama, FAQItem, GalleryImage, GearItem, Review } from './types';
 import { 
   Leaf, 
   ShieldCheck, 
@@ -170,103 +170,41 @@ export const REVIEWS: Review[] = [
   }
 ];
 
-export const TRAILHEADS: Trail[] = [
+export const TRAILHEADS = [
   {
     id: 't1',
     name: 'Mount Helena (Park City)',
-    region: 'Helena',
     description: 'The classic Helena experience. Quick access to high ridges with panoramic views of the city and the Elkhorn Mountains.',
     difficulty: 'Moderate',
-    coordinates: { lat: 46.5822, lng: -112.0528 },
+    coordinates: '46.5822° N, 112.0528° W',
     bestFor: 'Day Treks / Training',
-    imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=800'
+    image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 't2',
     name: 'Trout Creek Canyon',
-    region: 'Helena',
     description: 'Stunning limestone cliffs and a gentle grade. Perfect for first-time llama packers and families.',
     difficulty: 'Easy',
-    coordinates: { lat: 46.7214, lng: -111.7845 },
+    coordinates: '46.7214° N, 111.7845° W',
     bestFor: 'Families / Beginners',
-    imageUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=800'
+    image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 't3',
     name: 'Hanging Valley',
-    region: 'Helena',
     description: 'A hidden gem in the Big Belt Mountains. Lush meadows and dramatic rock formations await the adventurous.',
     difficulty: 'Strenuous',
-    coordinates: { lat: 46.8122, lng: -111.6541 },
+    coordinates: '46.8122° N, 111.6541° W',
     bestFor: 'Backpacking / Photography',
-    imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=800'
+    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 't4',
     name: 'Refrigerator Canyon',
-    region: 'Helena',
     description: 'Deep, narrow canyon that stays cool even in mid-summer. Leads into the heart of the Gates of the Mountains Wilderness.',
     difficulty: 'Moderate',
-    coordinates: { lat: 46.8541, lng: -111.7214 },
+    coordinates: '46.8541° N, 111.7214° W',
     bestFor: 'Wilderness Access',
-    imageUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=800'
-  },
-  {
-    id: 't5',
-    name: 'Thompson Park',
-    region: 'Butte',
-    description: 'A unique landscape of granite boulders and Douglas fir. Excellent trails for llama training near the Continental Divide.',
-    difficulty: 'Moderate',
-    coordinates: { lat: 45.9123, lng: -112.4567 },
-    bestFor: 'Day Treks / Training',
-    imageUrl: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=800'
-  },
-  {
-    id: 't6',
-    name: 'Hyalite Canyon',
-    region: 'Bozeman',
-    description: 'The crown jewel of Bozeman. High alpine lakes and rugged peaks. Perfect for multi-day llama expeditions.',
-    difficulty: 'Strenuous',
-    coordinates: { lat: 45.4856, lng: -110.9654 },
-    bestFor: 'Multi-day Expeditions',
-    imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=800'
-  },
-  {
-    id: 't7',
-    name: 'Rattlesnake Wilderness',
-    region: 'Missoula',
-    description: 'A massive wilderness area right in Missoula\'s backyard. Endless trails through dense forest and high ridges.',
-    difficulty: 'Moderate',
-    coordinates: { lat: 46.9543, lng: -113.9654 },
-    bestFor: 'Backpacking / Solitude',
-    imageUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=800'
-  }
-];
-
-export const GEAR_ADDONS: GearAddon[] = [
-  { id: 'a1', name: '4-Season Expedition Tent', pricePerDay: 15, icon: 'Tent', description: 'Heavy-duty protection for high-altitude camps.' },
-  { id: 'a2', name: 'Bear-Proof Canisters', pricePerDay: 5, icon: 'ShieldCheck', description: 'Mandatory in many Montana wilderness areas.' },
-  { id: 'a3', name: 'Solar Power Kit', pricePerDay: 10, icon: 'Zap', description: 'Keep your GPS and phone charged on long treks.' },
-  { id: 'a4', name: 'Premium Sleeping Pad', pricePerDay: 8, icon: 'Bed', description: 'Extra comfort for those cold mountain nights.' }
-];
-
-export const BLOG_ENTRIES: BlogEntry[] = [
-  {
-    id: 'b1',
-    title: 'Sunrise Over the Scapegoat',
-    date: 'Sept 12, 2025',
-    excerpt: 'A 5-day journey into the heart of the Scapegoat Wilderness with Wookie and Boulder.',
-    content: 'The Scapegoat Wilderness is a place of raw beauty and silence. Our 5-day expedition took us through some of the most rugged terrain in Montana...',
-    imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200',
-    author: 'Kevin Brown'
-  },
-  {
-    id: 'b2',
-    title: 'Packing Out: A Successful Harvest',
-    date: 'Oct 24, 2024',
-    excerpt: 'How Everett and the team handled a double-digit elk pack-out in the Elkhorns.',
-    content: 'Hunting in the Elkhorns is a challenge, but packing out a harvest is where the llamas truly shine. Everett proved his worth once again...',
-    imageUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=1200',
-    author: 'Kevin Brown'
+    image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=800'
   }
 ];

@@ -4,7 +4,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
 import { createClient } from '@supabase/supabase-js';
-import twilio from 'twilio';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -16,30 +15,6 @@ const BOOKINGS_FILE = path.join(__dirname, "..", "bookings.json");
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
 const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
-
-// Twilio Setup
-const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
-const adminPhone = process.env.ADMIN_PHONE || '+18013720353';
-const twilioClient = (twilioSid && twilioToken) ? twilio(twilioSid, twilioToken) : null;
-
-const sendSMS = async (message: string) => {
-  if (!twilioClient || !twilioFrom) {
-    console.log("SMS Alert (Simulated):", message);
-    return;
-  }
-  try {
-    await twilioClient.messages.create({
-      body: message,
-      from: twilioFrom,
-      to: adminPhone
-    });
-    console.log("SMS Alert Sent Successfully");
-  } catch (err) {
-    console.error("Twilio SMS Error:", err);
-  }
-};
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -226,14 +201,6 @@ api.post("/create-booking", async (req, res) => {
     }
   } catch (err) {
     console.error("Email error:", err);
-  }
-
-  // 3. Try SMS Alert
-  try {
-    const smsMessage = `🦙 New HBL Booking: ${booking.name} for ${booking.startDate}. View: https://www.helenallamas.com/admin`;
-    await sendSMS(smsMessage);
-  } catch (err) {
-    console.error("SMS error:", err);
   }
 
   // Respond with success if at least one method worked
