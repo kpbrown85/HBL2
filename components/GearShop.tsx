@@ -46,8 +46,16 @@ const GEAR_ITEMS: GearItem[] = [
   }
 ];
 
-export const GearShop: React.FC = () => {
+import { ShopItem } from '../types';
+
+interface GearShopProps {
+  items?: ShopItem[];
+}
+
+export const GearShop: React.FC<GearShopProps> = ({ items }) => {
   const [cart, setCart] = useState<Record<string, number>>({});
+  
+  const displayItems = items && items.length > 0 ? items : GEAR_ITEMS;
 
   const updateCart = (id: string, delta: number) => {
     setCart(prev => {
@@ -62,7 +70,7 @@ export const GearShop: React.FC = () => {
   };
 
   const total = Object.entries(cart).reduce((acc, [id, qty]) => {
-    const item = GEAR_ITEMS.find(i => i.id === id);
+    const item = displayItems.find(i => i.id === id);
     return acc + (item?.price || 0) * qty;
   }, 0);
 
@@ -95,7 +103,7 @@ export const GearShop: React.FC = () => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
-        {GEAR_ITEMS.map((item) => (
+        {displayItems.map((item) => (
           <div key={item.id} className="group bg-white rounded-[2.5rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all border border-stone-100 flex flex-col">
             <div className="h-56 overflow-hidden relative">
               <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />

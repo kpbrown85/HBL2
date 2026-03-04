@@ -16,13 +16,14 @@ import { AvailabilityCalendar } from './components/AvailabilityCalendar';
 import { GearShop } from './components/GearShop';
 import { ExpeditionBlog } from './components/ExpeditionBlog';
 import { generateWelcomeSlogan, generateBackdrop } from './services/geminiService';
-import { GalleryImage, Llama, BookingData } from './types';
+import { GalleryImage, Llama, BookingData, ShopItem } from './types';
 import { 
   Menu, 
   X, 
   ChevronRight, 
   Mountain,
   Plus,
+  Package,
   Target,
   Upload,
   Loader2,
@@ -154,10 +155,12 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('hbl_isAdmin') === 'true');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showDashboard, setShowDashboard] = useState(isAdmin);
-  const [adminTab, setAdminTab] = useState<'branding' | 'fleet' | 'gallery' | 'bookings' | 'billing'>('branding');
+  const [adminTab, setAdminTab] = useState<'branding' | 'fleet' | 'gallery' | 'bookings' | 'billing' | 'gear'>('branding');
   const [passwordInput, setPasswordInput] = useState("");
   const [editingLlama, setEditingLlama] = useState<Llama | null>(null);
   const [editingGalleryItem, setEditingGalleryItem] = useState<GalleryImage | null>(null);
+  const [editingShopItem, setEditingShopItem] = useState<ShopItem | null>(null);
+  const [gearItems, setGearItems] = useState<ShopItem[]>([]);
 
   // Routing
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -280,9 +283,22 @@ const App: React.FC = () => {
       }
     };
 
+    const loadGear = async () => {
+      try {
+        const response = await fetch(`${window.location.origin}/api/get-gear`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.length > 0) setGearItems(data);
+        }
+      } catch (err) {
+        console.error("Failed to load gear:", err);
+      }
+    };
+
     checkApi();
     loadLogs();
     loadGallery();
+    loadGear();
     window.addEventListener('hbl_new_booking', loadLogs);
     
     const checkApiKey = async () => {
@@ -346,6 +362,42 @@ const App: React.FC = () => {
   }, [gallery, isAdmin]);
 
   useEffect(() => { sessionStorage.setItem('hbl_isAdmin', isAdmin.toString()); }, [isAdmin]);
+
+  const saveGear = async (items: ShopItem[]) => {
+    try {
+      const response = await fetch(`${window.location.origin}/api/save-gear`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gear: items })
+      });
+      if (response.ok) {
+        setGearItems(items);
+        setEditingShopItem(null);
+      }
+    } catch (err) {
+      console.error("Failed to save gear:", err);
+      alert("Failed to save gear items.");
+    }
+  };
+
+  const deleteShopItem = (id: string) => {
+    if (confirm("Are you sure you want to remove this item from the shop?")) {
+      const updated = gearItems.filter(item => item.id !== id);
+      saveGear(updated);
+    }
+  };
+
+  const handleShopImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingShopItem) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const compressed = await compressImage(reader.result as string);
+        setEditingShopItem({ ...editingShopItem, imageUrl: compressed });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
@@ -591,7 +643,7 @@ const App: React.FC = () => {
           <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
             <ChevronLeft size={16} /> Back to Base Camp
           </button>
-          <GearShop />
+          <GearShop items={gearItems} />
         </div>
       ) : currentPath === '/blog' ? (
         <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
@@ -667,6 +719,7 @@ const App: React.FC = () => {
                 { id: 'branding' as const, icon: Palette, label: 'Branding' },
                 { id: 'fleet' as const, icon: Users, label: 'Herd' },
                 { id: 'gallery' as const, icon: ImageIcon, label: 'Journal' },
+                { id: 'gear' as const, icon: Package, label: 'Shop' },
                 { id: 'bookings' as const, icon: ClipboardList, label: 'Logs' },
                 { id: 'billing' as const, icon: CreditCard, label: 'API' }
               ].map(t => (
@@ -871,6 +924,120 @@ const App: React.FC = () => {
               )}
 
               {/* Other tabs fleet, gallery, bookings, billing implementation... */}
+              {adminTab === 'gear' && (
+                <div className="space-y-16 animate-in slide-in-from-bottom-8">
+                  <header className="flex justify-between items-end">
+                    <div>
+                      <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Gear Shop</h2>
+                      <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Manage rental inventory and pricing</p>
+                    </div>
+                    {!editingShopItem && (
+                      <button 
+                        onClick={() => setEditingShopItem({ id: Date.now().toString(), name: 'New Gear Item', category: 'Other', price: 10, description: 'A high-quality rental item.', imageUrl: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=400' })} 
+                        className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
+                      >
+                        <Plus size={20}/> New Item
+                      </button>
+                    )}
+                  </header>
+
+                  {editingShopItem ? (
+                    <div className="bg-white p-12 rounded-[4rem] shadow-2xl border border-stone-100 grid grid-cols-1 lg:grid-cols-2 gap-16">
+                      <div className="space-y-10">
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 block">Item Name</label>
+                          <input 
+                            type="text" 
+                            value={editingShopItem.name} 
+                            onChange={e => setEditingShopItem({...editingShopItem, name: e.target.value})}
+                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-2xl font-black tracking-tight focus:ring-2 focus:ring-green-800 outline-none"
+                            placeholder="Item Name"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-8">
+                          <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 block">Category</label>
+                            <select 
+                              value={editingShopItem.category}
+                              onChange={e => setEditingShopItem({...editingShopItem, category: e.target.value as any})}
+                              className="w-full bg-stone-50 border-none rounded-3xl p-6 text-lg font-bold focus:ring-2 focus:ring-green-800 outline-none"
+                            >
+                              <option value="Camping">Camping</option>
+                              <option value="Kitchen">Kitchen</option>
+                              <option value="Safety">Safety</option>
+                              <option value="Other">Other</option>
+                            </select>
+                          </div>
+                          <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 block">Price ($/Trip)</label>
+                            <input 
+                              type="number" 
+                              value={editingShopItem.price} 
+                              onChange={e => setEditingShopItem({...editingShopItem, price: parseFloat(e.target.value)})}
+                              className="w-full bg-stone-50 border-none rounded-3xl p-6 text-xl font-black focus:ring-2 focus:ring-green-800 outline-none"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 block">Description</label>
+                          <textarea 
+                            value={editingShopItem.description} 
+                            onChange={e => setEditingShopItem({...editingShopItem, description: e.target.value})}
+                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-lg font-medium leading-relaxed focus:ring-2 focus:ring-green-800 outline-none h-40 resize-none"
+                            placeholder="Describe the gear item..."
+                          />
+                        </div>
+                        <div className="flex gap-4 pt-8">
+                          <button 
+                            onClick={() => {
+                              const updated = editingShopItem.id && gearItems.some(i => i.id === editingShopItem.id)
+                                ? gearItems.map(i => i.id === editingShopItem.id ? editingShopItem : i)
+                                : [...gearItems, editingShopItem];
+                              saveGear(updated);
+                            }} 
+                            className="flex-1 bg-green-800 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-xl hover:bg-green-900 transition-all active:scale-95"
+                          >
+                            Save Item
+                          </button>
+                          <button onClick={() => setEditingShopItem(null)} className="flex-1 bg-stone-100 text-stone-900 py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest hover:bg-stone-200 transition-all active:scale-95">Cancel</button>
+                        </div>
+                      </div>
+                      <div className="space-y-10">
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 block">Item Image</label>
+                          <div className="relative group aspect-square rounded-[3rem] overflow-hidden bg-stone-100 border-4 border-stone-50 shadow-inner">
+                            <img src={editingShopItem.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                            <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white gap-4">
+                              <Upload size={48} />
+                              <span className="font-black uppercase tracking-widest text-xs">Replace Photo</span>
+                              <input type="file" accept="image/*" className="hidden" onChange={handleShopImageUpload} />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                      {gearItems.map(item => (
+                        <div key={item.id} className="bg-white p-8 rounded-[3rem] shadow-xl border border-stone-100 flex items-center gap-8 group hover:border-green-200 transition-all">
+                          <div className="w-24 h-24 rounded-3xl overflow-hidden bg-stone-100 flex-shrink-0">
+                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xl font-black tracking-tight truncate">{item.name}</h4>
+                            <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mt-1">{item.category} • ${item.price}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => setEditingShopItem(item)} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-green-50 hover:text-green-800 transition-all"><Edit3 size={18}/></button>
+                            <button onClick={() => deleteShopItem(item.id)} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all"><Trash2 size={18}/></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {adminTab === 'fleet' && (
                 <div className="space-y-16 animate-in slide-in-from-bottom-8">
                    <header className="flex justify-between items-end">

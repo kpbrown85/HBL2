@@ -80,6 +80,15 @@ export interface GalleryImage {
   caption: string;
 }
 
+export interface ShopItem {
+  id: string;
+  name: string;
+  category: 'Camping' | 'Kitchen' | 'Safety' | 'Other';
+  price: number;
+  description: string;
+  imageUrl: string;
+}
+
 export interface Review {
   id: string;
   name: string;

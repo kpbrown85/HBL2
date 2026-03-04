@@ -4,17 +4,24 @@ import path from "path";
 import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
 import { createClient } from '@supabase/supabase-js';
+import twilio from 'twilio';
 
 import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const BOOKINGS_FILE = path.join(__dirname, "..", "bookings.json");
+const GEAR_FILE = path.join(__dirname, "..", "gear.json");
 
 // Direct Supabase client setup to avoid path issues
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
 const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
+
+// Twilio Setup
+const twilioClient = (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) 
+  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN) 
+  : null;
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -199,6 +206,19 @@ api.post("/create-booking", async (req, res) => {
 
       emailSent = true;
     }
+
+    // 3. Try SMS (Twilio)
+    if (twilioClient && process.env.TWILIO_PHONE_NUMBER && booking.phone) {
+      try {
+        await twilioClient.messages.create({
+          body: `HBL: Expedition request received for ${booking.startDate}. Please check your email to sign the mandatory waiver.`,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to: booking.phone
+        });
+      } catch (smsErr) {
+        console.error("SMS Alert failed:", smsErr);
+      }
+    }
   } catch (err) {
     console.error("Email error:", err);
   }
@@ -371,6 +391,19 @@ api.post("/update-booking", async (req, res) => {
         subject: `Booking Confirmed & Invoice: ${booking.startDate} Expedition`,
         html: invoiceHtml
       }).catch(err => console.error("Approval email failed:", err));
+
+      // Send SMS Approval Alert
+      if (twilioClient && process.env.TWILIO_PHONE_NUMBER && booking.phone) {
+        try {
+          await twilioClient.messages.create({
+            body: `HBL: Your expedition for ${booking.startDate} is CONFIRMED! Check your email for the invoice and payment link.`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: booking.phone
+          });
+        } catch (smsErr) {
+          console.error("SMS Approval Alert failed:", smsErr);
+        }
+      }
     }
 
     res.json({ success: true });
@@ -398,24 +431,67 @@ api.get("/get-gallery", async (req, res) => {
 });
 
 api.post("/save-gallery", async (req, res) => {
-  try {
-    const { gallery } = req.body;
-    if (supabase) {
-      // For simplicity, we'll replace the gallery content
-      // In a real app, we'd do incremental updates, but this matches the current localStorage logic
-      await supabase.from('gallery').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
-      const { error } = await supabase.from('gallery').insert(gallery.map((img: any) => ({
-        url: img.url,
-        caption: img.caption
-      })));
-      if (error) throw error;
+    try {
+      const { gallery } = req.body;
+      if (supabase) {
+        // For simplicity, we'll replace the gallery content
+        // In a real app, we'd do incremental updates, but this matches the current localStorage logic
+        await supabase.from('gallery').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+        const { error } = await supabase.from('gallery').insert(gallery.map((img: any) => ({
+          url: img.url,
+          caption: img.caption
+        })));
+        if (error) throw error;
+      }
+      res.json({ success: true });
+    } catch (e: any) {
+      console.error("Gallery save error:", e);
+      res.status(500).json({ error: "Failed to save gallery", details: e.message });
     }
-    res.json({ success: true });
-  } catch (e: any) {
-    console.error("Gallery save error:", e);
-    res.status(500).json({ error: "Failed to save gallery", details: e.message });
-  }
-});
+  });
+  
+  api.get("/get-gear", async (req, res) => {
+    try {
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('gear')
+          .select('*')
+          .order('name', { ascending: true });
+        if (error) throw error;
+        res.json(data || []);
+      } else {
+        const data = fs.existsSync(GEAR_FILE) ? fs.readFileSync(GEAR_FILE, "utf-8") : "[]";
+        res.json(JSON.parse(data));
+      }
+    } catch (e: any) {
+      console.error("Gear fetch error:", e);
+      res.status(500).json({ error: "Failed to load gear", details: e.message });
+    }
+  });
+  
+  api.post("/save-gear", async (req, res) => {
+    try {
+      const { gear } = req.body;
+      if (supabase) {
+        await supabase.from('gear').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        const { error } = await supabase.from('gear').insert(gear.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          category: item.category,
+          price: item.price,
+          description: item.description,
+          imageUrl: item.imageUrl
+        })));
+        if (error) throw error;
+      } else {
+        fs.writeFileSync(GEAR_FILE, JSON.stringify(gear, null, 2));
+      }
+      res.json({ success: true });
+    } catch (e: any) {
+      console.error("Gear save error:", e);
+      res.status(500).json({ error: "Failed to save gear", details: e.message });
+    }
+  });
 
 app.use("/api", api);
 app.use("/", api);
