@@ -564,6 +564,42 @@ const App: React.FC = () => {
         <WaiverPage bookingId={waiverBookingId || ''} onComplete={() => navigate('/')} />
       ) : currentPath === '/guide' ? (
         <LlamaGuidePage onBack={() => navigate('/')} />
+      ) : currentPath === '/videos' ? (
+        <VideoLibraryPage onBack={() => navigate('/')} onBookClinic={() => navigate('/book-clinic')} />
+      ) : currentPath === '/book-clinic' ? (
+        <ClinicBookingPage onBack={() => navigate('/')} />
+      ) : currentPath === '/map' ? (
+        <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
+          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
+            <ChevronLeft size={16} /> Back to Base Camp
+          </button>
+          <header className="mb-24 text-center">
+            <h2 className="text-8xl font-black tracking-tighter leading-none mb-8">Interactive Trail Intel.</h2>
+            <p className="text-stone-500 text-xl font-medium max-w-2xl mx-auto">Real-time trail conditions and deployment zones across the Montana Rockies.</p>
+          </header>
+          <TrailMap />
+        </div>
+      ) : currentPath === '/availability' ? (
+        <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
+          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
+            <ChevronLeft size={16} /> Back to Base Camp
+          </button>
+          <AvailabilityCalendar />
+        </div>
+      ) : currentPath === '/gear-shop' ? (
+        <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
+          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
+            <ChevronLeft size={16} /> Back to Base Camp
+          </button>
+          <GearShop />
+        </div>
+      ) : currentPath === '/blog' ? (
+        <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
+          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
+            <ChevronLeft size={16} /> Back to Base Camp
+          </button>
+          <ExpeditionBlog />
+        </div>
       ) : (
         <>
           {/* Admin Quick Trigger */}
@@ -1179,9 +1215,10 @@ const App: React.FC = () => {
                 {['Benefits', 'About', 'Trailheads', 'FAQ', 'Contact'].map(item => (
                   <a key={item} href={`#${item.toLowerCase()}`} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">{item}</a>
                 ))}
-                <a href="#gear" className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Gear Shop</a>
-                <a href="#journal" className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Journal</a>
                 <button onClick={() => navigate('/map')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Map</button>
+                <button onClick={() => navigate('/availability')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Availability</button>
+                <button onClick={() => navigate('/gear-shop')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Gear Shop</button>
+                <button onClick={() => navigate('/blog')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Journal</button>
                 <button onClick={() => navigate('/videos')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Videos</button>
                 <a href="#booking" className="bg-green-800 text-white px-10 py-5 rounded-2xl flex items-center gap-2 shadow-2xl shadow-green-900/20 hover:bg-green-900 transition-all active:scale-95">Book Trek <ChevronRight size={14} /></a>
               </div>
@@ -1205,53 +1242,15 @@ const App: React.FC = () => {
           </div>
 
           <main>
-            {currentPath === '/map' ? (
-              <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
-                <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
-                  <ChevronLeft size={16} /> Back to Base Camp
-                </button>
-                <header className="mb-24 text-center">
-                  <h2 className="text-8xl font-black tracking-tighter leading-none mb-8">Interactive Trail Intel.</h2>
-                  <p className="text-stone-500 text-xl font-medium max-w-2xl mx-auto">Real-time trail conditions and deployment zones across the Montana Rockies.</p>
-                </header>
-                <TrailMap />
+            {/* Hero Section */}
+            <section className="relative h-screen flex items-center justify-center text-center overflow-hidden">
+              <div className="absolute inset-0 -z-10"><img src={branding.heroImageUrl} className="w-full h-full object-cover brightness-[0.4] scale-105 animate-in zoom-in duration-[10000ms]" alt="Landscape" /></div>
+              <div className="max-w-5xl px-8 text-white">
+                <h1 className="text-7xl md:text-9xl font-black mb-12 leading-[0.85] tracking-tighter animate-in slide-in-from-top-12 duration-1000">Master the Montana Peaks. <br /><span className="italic text-green-400 font-light font-display">Elite Strings for the High Country.</span></h1>
+                <p className="text-2xl md:text-4xl text-stone-200 mb-20 max-w-4xl mx-auto font-medium leading-relaxed tracking-tight">{slogan}</p>
+                <a href="#booking" className="bg-green-600 px-20 py-8 rounded-3xl text-3xl font-black shadow-2xl shadow-green-900/40 hover:bg-green-500 transition-all active:scale-95 inline-block">Secure Your String</a>
               </div>
-            ) : currentPath === '/videos' ? (
-              <VideoLibraryPage onBack={() => navigate('/')} onBookClinic={() => navigate('/book-clinic')} />
-            ) : currentPath === '/book-clinic' ? (
-              <ClinicBookingPage onBack={() => navigate('/')} />
-            ) : currentPath === '/availability' ? (
-              <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
-                <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
-                  <ChevronLeft size={16} /> Back to Base Camp
-                </button>
-                <AvailabilityCalendar />
-              </div>
-            ) : currentPath === '/gear-shop' ? (
-              <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
-                <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
-                  <ChevronLeft size={16} /> Back to Base Camp
-                </button>
-                <GearShop />
-              </div>
-            ) : currentPath === '/blog' ? (
-              <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
-                <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
-                  <ChevronLeft size={16} /> Back to Base Camp
-                </button>
-                <ExpeditionBlog />
-              </div>
-            ) : (
-              <>
-                {/* Hero Section */}
-                <section className="relative h-screen flex items-center justify-center text-center overflow-hidden">
-                  <div className="absolute inset-0 -z-10"><img src={branding.heroImageUrl} className="w-full h-full object-cover brightness-[0.4] scale-105 animate-in zoom-in duration-[10000ms]" alt="Landscape" /></div>
-                  <div className="max-w-5xl px-8 text-white">
-                    <h1 className="text-7xl md:text-9xl font-black mb-12 leading-[0.85] tracking-tighter animate-in slide-in-from-top-12 duration-1000">Master the Montana Peaks. <br /><span className="italic text-green-400 font-light font-display">Elite Strings for the High Country.</span></h1>
-                    <p className="text-2xl md:text-4xl text-stone-200 mb-20 max-w-4xl mx-auto font-medium leading-relaxed tracking-tight">{slogan}</p>
-                    <a href="#booking" className="bg-green-600 px-20 py-8 rounded-3xl text-3xl font-black shadow-2xl shadow-green-900/40 hover:bg-green-500 transition-all active:scale-95 inline-block">Secure Your String</a>
-                  </div>
-                </section>
+            </section>
 
             {/* Benefits Section */}
             <section id="benefits" className="py-64 bg-white overflow-hidden">
@@ -1294,17 +1293,7 @@ const App: React.FC = () => {
             <section id="about" className="py-64 bg-stone-100"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">The Herd.</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">{llamas.map(l=><LlamaCard key={l.id} llama={l} />)}</div></div></section>
             
             {/* Gear Section */}
-            <section id="gear" className="py-64 bg-white">
-              <div className="max-w-7xl mx-auto px-8">
-                <h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">Expedition Assets.</h2>
-                <div className="space-y-32">
-                  <GearSection />
-                  <div className="pt-32 border-t border-stone-100">
-                    <GearShop />
-                  </div>
-                </div>
-              </div>
-            </section>
+            <section id="gear" className="py-64 bg-white"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">Expedition Assets.</h2><GearSection /></div></section>
             
             {/* Packing List Section */}
             <section id="packing" className="py-64 bg-stone-50">
@@ -1318,21 +1307,8 @@ const App: React.FC = () => {
               </div>
             </section>
 
-            {/* Journal Section */}
-            <section id="journal" className="py-64 bg-stone-950 text-white">
-              <div className="max-w-7xl mx-auto px-8">
-                <header className="flex flex-col md:flex-row justify-between items-end mb-32 gap-8">
-                  <h2 className="text-9xl font-black tracking-tighter leading-none">Journal.</h2>
-                  <div className="bg-white/5 border border-white/10 px-12 py-6 rounded-full text-green-400 font-black uppercase tracking-widest text-xs">High Country Field Notes</div>
-                </header>
-                <div className="space-y-32">
-                  <PhotoCarousel images={gallery} />
-                  <div className="pt-32 border-t border-white/10">
-                    <ExpeditionBlog />
-                  </div>
-                </div>
-              </div>
-            </section>
+            {/* Gallery Section */}
+            <section id="gallery" className="py-64 bg-stone-950 text-white"><div className="max-w-7xl mx-auto px-8"><header className="flex flex-col md:flex-row justify-between items-end mb-32 gap-8"><h2 className="text-9xl font-black tracking-tighter leading-none">Journal.</h2><div className="bg-white/5 border border-white/10 px-12 py-6 rounded-full text-green-400 font-black uppercase tracking-widest text-xs">High Country Field Notes</div></header><PhotoCarousel images={gallery} /></div></section>
 
             <section id="trailheads" className="py-64 bg-white overflow-hidden">
               <div className="max-w-7xl mx-auto px-8">
@@ -1346,7 +1322,7 @@ const App: React.FC = () => {
                     <div key={trail.id} className="group relative bg-stone-50 rounded-[4rem] overflow-hidden border border-stone-100 hover:border-green-800/20 transition-all duration-700">
                       <div className="aspect-[16/10] relative overflow-hidden">
                         <img 
-                          src={trail.image} 
+                          src={trail.imageUrl} 
                           alt={trail.name} 
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 grayscale group-hover:grayscale-0" 
                           referrerPolicy="no-referrer"
@@ -1354,7 +1330,7 @@ const App: React.FC = () => {
                         <div className="absolute top-8 left-8">
                           <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-3 shadow-xl">
                             <MapPin size={14} className="text-green-800" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-stone-900">{trail.coordinates}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-stone-900">{trail.coordinates.lat}, {trail.coordinates.lng}</span>
                           </div>
                         </div>
                         <div className="absolute bottom-8 right-8">
@@ -1429,15 +1405,7 @@ const App: React.FC = () => {
             <section id="faq" className="py-64 bg-stone-50"><div className="max-w-7xl mx-auto px-8"><FAQSection /></div></section>
             
             {/* Booking Section */}
-            <section id="booking" className="py-64 bg-white">
-              <div className="max-w-5xl mx-auto px-8 text-center">
-                <h2 className="text-8xl font-black mb-32 tracking-tighter leading-none">Logistics.</h2>
-                <div className="space-y-32">
-                  <AvailabilityCalendar />
-                  <BookingForm />
-                </div>
-              </div>
-            </section>
+            <section id="booking" className="py-64 bg-white"><div className="max-w-5xl mx-auto px-8 text-center"><h2 className="text-8xl font-black mb-32 tracking-tighter leading-none">Logistics.</h2><BookingForm /></div></section>
             
             {/* Contact Section */}
             <section id="contact" className="py-64 bg-stone-50 relative overflow-hidden">
@@ -1482,9 +1450,7 @@ const App: React.FC = () => {
                  </div>
                </div>
             </section>
-          </>
-        )}
-      </main>
+          </main>
 
           {/* Footer */}
           <footer className="bg-stone-950 text-stone-500 pt-48 pb-24 border-t border-white/5 relative">
