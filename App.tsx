@@ -11,6 +11,10 @@ import { WaiverPage } from './components/WaiverPage';
 import { LlamaGuidePage } from './components/LlamaGuidePage';
 import { VideoLibraryPage } from './components/VideoLibraryPage';
 import { ClinicBookingPage } from './components/ClinicBookingPage';
+import { TrailMap } from './components/TrailMap';
+import { AvailabilityCalendar } from './components/AvailabilityCalendar';
+import { GearShop } from './components/GearShop';
+import { ExpeditionBlog } from './components/ExpeditionBlog';
 import { generateWelcomeSlogan, generateBackdrop } from './services/geminiService';
 import { GalleryImage, Llama, BookingData } from './types';
 import { 
@@ -564,6 +568,38 @@ const App: React.FC = () => {
         <VideoLibraryPage onBack={() => navigate('/')} onBookClinic={() => navigate('/book-clinic')} />
       ) : currentPath === '/book-clinic' ? (
         <ClinicBookingPage onBack={() => navigate('/')} />
+      ) : currentPath === '/map' ? (
+        <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
+          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
+            <ChevronLeft size={16} /> Back to Base Camp
+          </button>
+          <header className="mb-24 text-center">
+            <h2 className="text-8xl font-black tracking-tighter leading-none mb-8">Interactive Trail Intel.</h2>
+            <p className="text-stone-500 text-xl font-medium max-w-2xl mx-auto">Real-time trail conditions and deployment zones across the Montana Rockies.</p>
+          </header>
+          <TrailMap />
+        </div>
+      ) : currentPath === '/availability' ? (
+        <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
+          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
+            <ChevronLeft size={16} /> Back to Base Camp
+          </button>
+          <AvailabilityCalendar />
+        </div>
+      ) : currentPath === '/gear-shop' ? (
+        <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
+          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
+            <ChevronLeft size={16} /> Back to Base Camp
+          </button>
+          <GearShop />
+        </div>
+      ) : currentPath === '/blog' ? (
+        <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
+          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
+            <ChevronLeft size={16} /> Back to Base Camp
+          </button>
+          <ExpeditionBlog />
+        </div>
       ) : (
         <>
           {/* Admin Quick Trigger */}
@@ -1176,11 +1212,14 @@ const App: React.FC = () => {
             <div className="max-w-7xl mx-auto px-8 w-full flex justify-between items-center">
               <Logo branding={branding} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
               <div className="hidden md:flex items-center gap-12 font-black uppercase text-[11px] tracking-[0.2em]">
-                {['Benefits', 'About', 'Trailheads', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(item => (
+                {['Benefits', 'About', 'Trailheads', 'FAQ', 'Contact'].map(item => (
                   <a key={item} href={`#${item.toLowerCase()}`} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">{item}</a>
                 ))}
+                <button onClick={() => navigate('/map')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Map</button>
+                <button onClick={() => navigate('/availability')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Availability</button>
+                <button onClick={() => navigate('/gear-shop')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Gear Shop</button>
+                <button onClick={() => navigate('/blog')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Journal</button>
                 <button onClick={() => navigate('/videos')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Videos</button>
-                <button onClick={() => navigate('/book-clinic')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Book Clinic</button>
                 <a href="#booking" className="bg-green-800 text-white px-10 py-5 rounded-2xl flex items-center gap-2 shadow-2xl shadow-green-900/20 hover:bg-green-900 transition-all active:scale-95">Book Trek <ChevronRight size={14} /></a>
               </div>
               <button className="md:hidden p-3 text-stone-900" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X size={28} /> : <Menu size={28} />}</button>
@@ -1188,13 +1227,17 @@ const App: React.FC = () => {
           </nav>
 
           <div className={`fixed inset-0 z-[110] bg-stone-950 transition-all duration-700 md:hidden ${isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
-            <div className="p-16 pt-32 flex flex-col h-full space-y-12">
-              {['Benefits', 'About', 'Trailheads', 'Gear', 'Gallery', 'FAQ', 'Contact'].map(l => (
-                <a key={l} href={`#${l.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-6xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase">{l}</a>
+            <div className="p-16 pt-32 flex flex-col h-full space-y-8 overflow-y-auto">
+              {['Benefits', 'About', 'Trailheads', 'FAQ', 'Contact'].map(l => (
+                <a key={l} href={`#${l.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase">{l}</a>
               ))}
-              <button onClick={() => { navigate('/videos'); setIsMenuOpen(false); }} className="text-6xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Videos</button>
-              <button onClick={() => { navigate('/book-clinic'); setIsMenuOpen(false); }} className="text-6xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Book Clinic</button>
-              <a href="#booking" onClick={() => setIsMenuOpen(false)} className="bg-green-600 text-white py-12 rounded-[3rem] text-3xl font-black uppercase tracking-widest text-center shadow-2xl">Plan My Trek</a>
+              <button onClick={() => { navigate('/map'); setIsMenuOpen(false); }} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Map</button>
+              <button onClick={() => { navigate('/availability'); setIsMenuOpen(false); }} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Availability</button>
+              <button onClick={() => { navigate('/gear-shop'); setIsMenuOpen(false); }} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Gear Shop</button>
+              <button onClick={() => { navigate('/blog'); setIsMenuOpen(false); }} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Journal</button>
+              <button onClick={() => { navigate('/videos'); setIsMenuOpen(false); }} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Videos</button>
+              <button onClick={() => { navigate('/book-clinic'); setIsMenuOpen(false); }} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Book Clinic</button>
+              <a href="#booking" onClick={() => setIsMenuOpen(false)} className="bg-green-600 text-white py-10 rounded-[2rem] text-2xl font-black uppercase tracking-widest text-center shadow-2xl">Plan My Trek</a>
             </div>
           </div>
 
