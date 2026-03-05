@@ -23,11 +23,13 @@ const twilioClient = (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_
   ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN) 
   : null;
 
-const app = express();
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
 const api = express.Router();
+
+// Middleware to log all API requests
+api.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] API Request: ${req.method} ${req.url}`);
+  next();
+});
 
 api.get("/ping", (req, res) => {
   res.json({ 
@@ -36,6 +38,34 @@ api.get("/ping", (req, res) => {
     smtp: !!(process.env.SMTP_USER && process.env.SMTP_PASS),
     timestamp: new Date().toISOString() 
   });
+});
+
+api.get("/test-api", (req, res) => {
+  res.json({ ok: true, message: "API Router is working" });
+});
+
+api.get("/test-api", (req, res) => {
+  res.json({ ok: true, message: "API Router is working" });
+});
+
+api.get("/test-api", (req, res) => {
+  res.json({ ok: true, message: "API Router is working" });
+});
+
+api.get("/test-api", (req, res) => {
+  res.json({ ok: true, message: "API Router is working" });
+});
+
+api.get("/test-api", (req, res) => {
+  res.json({ ok: true, message: "API Router is working" });
+});
+
+api.get("/test-api", (req, res) => {
+  res.json({ ok: true, message: "API Router is working" });
+});
+
+api.get("/test-api", (req, res) => {
+  res.json({ ok: true, message: "API Router is working" });
 });
 
 api.post("/sign-waiver", async (req, res) => {
@@ -232,6 +262,7 @@ api.post("/create-booking", async (req, res) => {
 });
 
 api.get("/get-bookings", async (req, res) => {
+  console.log(`[${new Date().toISOString()}] GET /get-bookings hit`);
   try {
     if (supabase) {
       const { data, error } = await supabase
@@ -493,7 +524,5 @@ api.post("/save-gallery", async (req, res) => {
     }
   });
 
-app.use("/api", api);
-app.use("/", api);
-
-export default app;
+export { api };
+export default api;

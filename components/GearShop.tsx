@@ -1,17 +1,9 @@
 
 import React, { useState } from 'react';
 import { ShoppingBag, Plus, Minus, Check, Info, Package } from 'lucide-react';
+import { ShopItem } from '../types';
 
-interface GearItem {
-  id: string;
-  name: string;
-  category: 'Camping' | 'Kitchen' | 'Safety';
-  price: number;
-  description: string;
-  imageUrl: string;
-}
-
-const GEAR_ITEMS: GearItem[] = [
+export const DEFAULT_GEAR_ITEMS: ShopItem[] = [
   {
     id: 'tent-1',
     name: '4-Season Alpine Tent',
@@ -46,8 +38,6 @@ const GEAR_ITEMS: GearItem[] = [
   }
 ];
 
-import { ShopItem } from '../types';
-
 interface GearShopProps {
   items?: ShopItem[];
 }
@@ -55,7 +45,7 @@ interface GearShopProps {
 export const GearShop: React.FC<GearShopProps> = ({ items }) => {
   const [cart, setCart] = useState<Record<string, number>>({});
   
-  const displayItems = items && items.length > 0 ? items : GEAR_ITEMS;
+  const displayItems = items && items.length > 0 ? items : DEFAULT_GEAR_ITEMS;
 
   const updateCart = (id: string, delta: number) => {
     setCart(prev => {

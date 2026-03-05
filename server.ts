@@ -2,17 +2,31 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import app from "./api/index.js";
+import * as apiModule from "./api/index.js";
+const api = (apiModule as any).default || (apiModule as any).api;
+console.log(`[${new Date().toISOString()}] API Router loaded: ${!!api}`);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = 3000;
 
+const app = express();
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
 // GLOBAL MIDDLEWARE
 app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   res.setHeader("X-HBL-Server", "Vercel-Ready-V3");
   next();
 });
+
+app.get("/api/test", (req, res) => {
+  res.json({ message: "API is working", timestamp: new Date().toISOString() });
+});
+
+app.use("/api", api);
+app.use("/", api);
 
 async function startApp() {
   if (process.env.NODE_ENV !== "production") {

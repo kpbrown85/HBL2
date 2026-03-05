@@ -13,7 +13,7 @@ import { VideoLibraryPage } from './components/VideoLibraryPage';
 import { ClinicBookingPage } from './components/ClinicBookingPage';
 import { TrailMap } from './components/TrailMap';
 import { AvailabilityCalendar } from './components/AvailabilityCalendar';
-import { GearShop } from './components/GearShop';
+import { GearShop, DEFAULT_GEAR_ITEMS } from './components/GearShop';
 import { ExpeditionBlog } from './components/ExpeditionBlog';
 import { generateWelcomeSlogan, generateBackdrop } from './services/geminiService';
 import { GalleryImage, Llama, BookingData, ShopItem } from './types';
@@ -160,7 +160,7 @@ const App: React.FC = () => {
   const [editingLlama, setEditingLlama] = useState<Llama | null>(null);
   const [editingGalleryItem, setEditingGalleryItem] = useState<GalleryImage | null>(null);
   const [editingShopItem, setEditingShopItem] = useState<ShopItem | null>(null);
-  const [gearItems, setGearItems] = useState<ShopItem[]>([]);
+  const [gearItems, setGearItems] = useState<ShopItem[]>(DEFAULT_GEAR_ITEMS);
 
   // Routing
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -288,7 +288,14 @@ const App: React.FC = () => {
         const response = await fetch(`${window.location.origin}/api/get-gear`);
         if (response.ok) {
           const data = await response.json();
-          if (data && data.length > 0) setGearItems(data);
+          if (data && data.length > 0) {
+            setGearItems(data);
+          } else {
+            // If backend is empty but we have defaults, we might want to keep defaults
+            // or if the user explicitly cleared it, we should respect that.
+            // For now, let's just set it to what the backend says if it's a valid array.
+            if (Array.isArray(data)) setGearItems(data.length > 0 ? data : DEFAULT_GEAR_ITEMS);
+          }
         }
       } catch (err) {
         console.error("Failed to load gear:", err);
