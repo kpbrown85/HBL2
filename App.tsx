@@ -282,8 +282,17 @@ const App: React.FC = () => {
         setApiError(null);
       } else {
         const text = await response.text();
+        let errorDetail = `HTTP ${response.status}`;
+        
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            const errData = JSON.parse(text);
+            errorDetail = errData.message || errData.error || errorDetail;
+          } catch (e) {}
+        }
+        
         console.error(`[${new Date().toISOString()}] Logs fetch failed: ${response.status}`, text.substring(0, 100));
-        setApiError(response.ok ? 'Not JSON' : `HTTP ${response.status}`);
+        setApiError(errorDetail);
         setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
       }
     } catch (error: any) {
