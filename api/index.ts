@@ -30,8 +30,24 @@ const twilioClient = (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_
   ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN) 
   : null;
 
-const api = express.Router();
-console.log(`[${new Date().toISOString()}] API Router Module Initialized`);
+const api = express();
+api.use(express.json({ limit: '50mb' }));
+api.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Version for deployment verification
+const API_VERSION = "1.0.5";
+
+// Path normalization for Vercel rewrites
+api.use((req, res, next) => {
+  res.setHeader("X-API-Version", API_VERSION);
+  console.log(`[${new Date().toISOString()}] API Request: ${req.method} ${req.url} (v${API_VERSION})`);
+  if (req.url.startsWith('/api')) {
+    req.url = req.url.replace('/api', '') || '/';
+  }
+  next();
+});
+
+console.log(`[${new Date().toISOString()}] API App Initialized`);
 
 // Debug state to track initialization
 const debugInfo = {

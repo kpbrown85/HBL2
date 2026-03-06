@@ -221,6 +221,7 @@ const App: React.FC = () => {
   const [lastApiCheck, setLastApiCheck] = useState<Date | null>(null);
   const [supabaseStatus, setSupabaseStatus] = useState<boolean | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [apiVersion, setApiVersion] = useState<string | null>(null);
   const [storageWarning, setStorageWarning] = useState(false);
 
   const dailyFact = useMemo(() => {
@@ -243,6 +244,7 @@ const App: React.FC = () => {
         setApiStatus('online');
         setSupabaseStatus(data.supabase);
         setApiError(null);
+        setApiVersion(response.headers.get("X-API-Version"));
         return;
       } else if (response.ok) {
         // It's 200 OK but not JSON (likely the SPA catch-all)
@@ -761,7 +763,7 @@ const App: React.FC = () => {
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 flex items-center gap-2">
                         API Status: <span className={apiStatus === 'online' ? 'text-green-600' : 'text-red-600'}>
-                          {apiStatus.toUpperCase()}
+                          {apiStatus.toUpperCase()} {apiVersion && `(v${apiVersion})`}
                         </span>
                         <button 
                           onClick={() => { setApiStatus('checking'); checkApi(); }}
