@@ -607,19 +607,88 @@ const App: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const response = await fetch(`${window.location.origin}/api/get-config`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.gear && data.gear.length > 0) setGearItems(data.gear);
+          if (data.llamas && data.llamas.length > 0) setLlamas(data.llamas);
+          if (data.branding) setBranding(prev => ({ ...prev, ...data.branding }));
+          if (data.gallery && data.gallery.length > 0) setGallery(data.gallery);
+        }
+      } catch (err) {
+        console.error("Failed to load config:", err);
+      }
+    };
+    loadConfig();
+  }, []);
+
+  const saveLlamas = async (updatedLlamas: Llama[]) => {
+    try {
+      const response = await fetch(`${window.location.origin}/api/save-llamas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ llamas: updatedLlamas })
+      });
+      if (response.ok) {
+        setLlamas(updatedLlamas);
+        setEditingLlama(null);
+      }
+    } catch (err) {
+      console.error("Failed to save llamas:", err);
+      alert("Failed to save llamas.");
+    }
+  };
+
+  const saveBranding = async (updatedBranding: Branding) => {
+    try {
+      const response = await fetch(`${window.location.origin}/api/save-branding`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branding: updatedBranding })
+      });
+      if (response.ok) {
+        setBranding(updatedBranding);
+        alert("Branding saved successfully!");
+      }
+    } catch (err) {
+      console.error("Failed to save branding:", err);
+      alert("Failed to save branding.");
+    }
+  };
+
+  const saveGallery = async (updatedGallery: GalleryImage[]) => {
+    try {
+      const response = await fetch(`${window.location.origin}/api/save-gallery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gallery: updatedGallery })
+      });
+      if (response.ok) {
+        setGallery(updatedGallery);
+      }
+    } catch (err) {
+      console.error("Failed to save gallery:", err);
+    }
+  };
+
   const saveLlama = (llama: Llama) => {
     const exists = llamas.find(l => l.id === llama.id);
+    let updated;
     if (exists) {
-      setLlamas(llamas.map(l => l.id === llama.id ? llama : l));
+      updated = llamas.map(l => l.id === llama.id ? llama : l);
     } else {
-      setLlamas([...llamas, llama]);
+      updated = [...llamas, llama];
     }
-    setEditingLlama(null);
+    saveLlamas(updated);
   };
 
   const deleteLlama = (id: string) => {
     if (confirm("Are you sure you want to remove this llama from the herd?")) {
-      setLlamas(llamas.filter(l => l.id !== id));
+      const updated = llamas.filter(l => l.id !== id);
+      saveLlamas(updated);
     }
   };
 
@@ -833,6 +902,12 @@ const App: React.FC = () => {
                       <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Branding & Assets</h2>
                       <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Control site-wide identity for {branding.siteName}</p>
                     </div>
+                    <button 
+                      onClick={() => saveBranding(branding)} 
+                      className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
+                    >
+                      <Save size={20}/> Save Branding
+                    </button>
                   </header>
                   
                   <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
@@ -1015,13 +1090,33 @@ const App: React.FC = () => {
                       <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Gear Shop</h2>
                       <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Manage rental inventory and pricing</p>
                     </div>
-                    {!editingShopItem && (
+                    {!editingShopItem ? (
                       <button 
                         onClick={() => setEditingShopItem({ id: Date.now().toString(), name: 'New Gear Item', category: 'Other', price: 10, description: 'A high-quality rental item.', imageUrl: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=400' })} 
                         className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
                       >
                         <Plus size={20}/> New Item
                       </button>
+                    ) : (
+                      <div className="flex gap-4">
+                        <button 
+                          onClick={() => setEditingShopItem(null)} 
+                          className="bg-stone-100 text-stone-900 px-8 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest hover:bg-stone-200 transition-all active:scale-95"
+                        >
+                          Cancel
+                        </button>
+                        <button 
+                          onClick={() => {
+                            const updated = editingShopItem.id && gearItems.some(i => i.id === editingShopItem.id)
+                              ? gearItems.map(i => i.id === editingShopItem.id ? editingShopItem : i)
+                              : [...gearItems, editingShopItem];
+                            saveGear(updated);
+                          }} 
+                          className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
+                        >
+                          <Save size={20}/> Save Changes
+                        </button>
+                      </div>
                     )}
                   </header>
 
@@ -1126,7 +1221,29 @@ const App: React.FC = () => {
                 <div className="space-y-16 animate-in slide-in-from-bottom-8">
                    <header className="flex justify-between items-end">
                     <div><h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">The Herd</h2><p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Manage active pack animal string</p></div>
-                    {!editingLlama && <button onClick={() => setEditingLlama({ id: Date.now().toString(), name: 'New Llama', age: 4, personality: 'A fresh recruit to the mountain string.', maxLoad: 75, imageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=800', specialty: 'Backpacking' })} className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"><Plus size={20}/> New Recruit</button>}
+                    {!editingLlama ? (
+                      <button 
+                        onClick={() => setEditingLlama({ id: Date.now().toString(), name: 'New Llama', age: 4, personality: 'A fresh recruit to the mountain string.', maxLoad: 75, imageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=800', specialty: 'Backpacking' })} 
+                        className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
+                      >
+                        <Plus size={20}/> New Recruit
+                      </button>
+                    ) : (
+                      <div className="flex gap-4">
+                        <button 
+                          onClick={() => setEditingLlama(null)} 
+                          className="bg-stone-100 text-stone-900 px-8 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest hover:bg-stone-200 transition-all active:scale-95"
+                        >
+                          Cancel
+                        </button>
+                        <button 
+                          onClick={() => saveLlama(editingLlama)} 
+                          className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
+                        >
+                          <Save size={20}/> Save Changes
+                        </button>
+                      </div>
+                    )}
                   </header>
                   
                   {editingLlama ? (

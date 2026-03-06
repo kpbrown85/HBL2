@@ -12,6 +12,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const BOOKINGS_FILE = path.join(__dirname, "..", "bookings.json");
 const GEAR_FILE = path.join(__dirname, "..", "gear.json");
+const LLAMAS_FILE = path.join(__dirname, "..", "llamas.json");
+const BRANDING_FILE = path.join(__dirname, "..", "branding.json");
+const GALLERY_FILE = path.join(__dirname, "..", "gallery.json");
 
 // Direct Supabase client setup to avoid path issues
 const supabaseUrl = process.env.SUPABASE_URL || '';
@@ -548,6 +551,80 @@ api.post("/save-gallery", async (req, res) => {
     } catch (e: any) {
       console.error("Gear save error:", e);
       res.status(500).json({ error: "Failed to save gear", details: e.message });
+    }
+  });
+
+  api.post("/save-llamas", async (req, res) => {
+    try {
+      const { llamas } = req.body;
+      if (supabase) {
+        await supabase.from('llamas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        const { error } = await supabase.from('llamas').insert(llamas.map((l: any) => ({
+          id: l.id,
+          name: l.name,
+          age: l.age,
+          personality: l.personality,
+          maxLoad: l.maxLoad,
+          imageUrl: l.imageUrl,
+          specialty: l.specialty
+        })));
+        if (error) throw error;
+      } else {
+        fs.writeFileSync(LLAMAS_FILE, JSON.stringify(llamas, null, 2));
+      }
+      res.json({ success: true });
+    } catch (e: any) {
+      console.error("Llamas save error:", e);
+      res.status(500).json({ error: "Failed to save llamas", details: e.message });
+    }
+  });
+
+  api.post("/save-branding", async (req, res) => {
+    try {
+      const { branding } = req.body;
+      if (supabase) {
+        const { error } = await supabase.from('branding').upsert({
+          id: 'site-config', // Single record for branding
+          ...branding
+        });
+        if (error) throw error;
+      } else {
+        fs.writeFileSync(BRANDING_FILE, JSON.stringify(branding, null, 2));
+      }
+      res.json({ success: true });
+    } catch (e: any) {
+      console.error("Branding save error:", e);
+      res.status(500).json({ error: "Failed to save branding", details: e.message });
+    }
+  });
+
+  api.get("/get-config", async (req, res) => {
+    try {
+      let gear = [];
+      let llamas = [];
+      let branding = null;
+      let gallery = [];
+
+      if (supabase) {
+        const { data: gearData } = await supabase.from('gear').select('*');
+        const { data: llamaData } = await supabase.from('llamas').select('*');
+        const { data: brandingData } = await supabase.from('branding').select('*').eq('id', 'site-config').single();
+        const { data: galleryData } = await supabase.from('gallery').select('*');
+        gear = gearData || [];
+        llamas = llamaData || [];
+        branding = brandingData || null;
+        gallery = galleryData || [];
+      } else {
+        if (fs.existsSync(GEAR_FILE)) gear = JSON.parse(fs.readFileSync(GEAR_FILE, 'utf-8'));
+        if (fs.existsSync(LLAMAS_FILE)) llamas = JSON.parse(fs.readFileSync(LLAMAS_FILE, 'utf-8'));
+        if (fs.existsSync(BRANDING_FILE)) branding = JSON.parse(fs.readFileSync(BRANDING_FILE, 'utf-8'));
+        if (fs.existsSync(GALLERY_FILE)) gallery = JSON.parse(fs.readFileSync(GALLERY_FILE, 'utf-8'));
+      }
+
+      res.json({ gear, llamas, branding, gallery });
+    } catch (e: any) {
+      console.error("Config fetch error:", e);
+      res.status(500).json({ error: "Failed to fetch config", details: e.message });
     }
   });
 
