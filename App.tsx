@@ -217,6 +217,7 @@ const App: React.FC = () => {
 
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [lastApiCheck, setLastApiCheck] = useState<Date | null>(null);
   const [supabaseStatus, setSupabaseStatus] = useState<boolean | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const [storageWarning, setStorageWarning] = useState(false);
@@ -226,63 +227,64 @@ const App: React.FC = () => {
     return LLAMA_FACTS[day % LLAMA_FACTS.length];
   }, []);
 
+  const checkApi = async () => {
+    const pingUrl = `${window.location.origin}/api/ping`;
+    const healthUrl = `${window.location.origin}/api/health`;
+    
+    try {
+      // Try the main API ping first
+      const response = await fetch(pingUrl);
+      setLastApiCheck(new Date());
+      if (response.ok) {
+        const data = await response.json();
+        setApiStatus('online');
+        setSupabaseStatus(data.supabase);
+        setApiError(null);
+        return;
+      }
+      
+      // If ping fails, try the direct health check
+      const healthResponse = await fetch(healthUrl);
+      if (healthResponse.ok) {
+        setApiStatus('online');
+        setApiError('API Router issue, but Server is OK');
+      } else {
+        setApiStatus('offline');
+        setApiError(`API: ${response.status}, Health: ${healthResponse.status}`);
+      }
+    } catch (err: any) {
+      setApiStatus('offline');
+      setApiError(err.message || 'Connection failed');
+      console.error("API Check Error:", err);
+    }
+  };
+
+  const loadLogs = async () => {
+    const logsUrl = `${window.location.origin}/api/get-bookings`;
+    console.log(`[${new Date().toISOString()}] Fetching logs from: ${logsUrl}`);
+    try {
+      const response = await fetch(logsUrl);
+      const data = await response.json();
+      if (response.ok) {
+        console.log(`[${new Date().toISOString()}] Logs received:`, data);
+        setBookings(data);
+        localStorage.setItem('hbl_bookings', JSON.stringify(data));
+        setApiError(null);
+      } else {
+        console.error(`[${new Date().toISOString()}] Logs fetch failed: ${response.status}`, data);
+        setApiError(data.details || data.error || `HTTP ${response.status}`);
+        setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
+      }
+    } catch (error: any) {
+      console.error(`[${new Date().toISOString()}] Logs fetch error:`, error);
+      setApiError(error.message || 'Connection failed');
+      setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
+    }
+  };
+
   useEffect(() => {
     generateWelcomeSlogan().then(val => { if (val) setSlogan(val); });
     
-    const checkApi = async () => {
-      const pingUrl = `${window.location.origin}/api/ping`;
-      const healthUrl = `${window.location.origin}/api/health`;
-      
-      try {
-        // Try the main API ping first
-        const response = await fetch(pingUrl);
-        if (response.ok) {
-          const data = await response.json();
-          setApiStatus('online');
-          setSupabaseStatus(data.supabase);
-          setApiError(null);
-          return;
-        }
-        
-        // If ping fails, try the direct health check
-        const healthResponse = await fetch(healthUrl);
-        if (healthResponse.ok) {
-          setApiStatus('online');
-          setApiError('API Router issue, but Server is OK');
-        } else {
-          setApiStatus('offline');
-          setApiError(`API: ${response.status}, Health: ${healthResponse.status}`);
-        }
-      } catch (err: any) {
-        setApiStatus('offline');
-        setApiError(err.message || 'Connection failed');
-        console.error("API Check Error:", err);
-      }
-    };
-
-    const loadLogs = async () => {
-      const logsUrl = `${window.location.origin}/api/get-bookings`;
-      console.log(`[${new Date().toISOString()}] Fetching logs from: ${logsUrl}`);
-      try {
-        const response = await fetch(logsUrl);
-        const data = await response.json();
-        if (response.ok) {
-          console.log(`[${new Date().toISOString()}] Logs received:`, data);
-          setBookings(data);
-          localStorage.setItem('hbl_bookings', JSON.stringify(data));
-          setApiError(null);
-        } else {
-          console.error(`[${new Date().toISOString()}] Logs fetch failed: ${response.status}`, data);
-          setApiError(data.details || data.error || `HTTP ${response.status}`);
-          setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
-        }
-      } catch (error: any) {
-        console.error(`[${new Date().toISOString()}] Logs fetch error:`, error);
-        setApiError(error.message || 'Connection failed');
-        setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
-      }
-    };
-
     const loadGallery = async () => {
       try {
         const response = await fetch(`${window.location.origin}/api/get-gallery`);
@@ -716,13 +718,37 @@ const App: React.FC = () => {
           <header className="bg-white border-b px-12 py-8 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-12">
                 <Logo branding={branding} onClick={() => setShowDashboard(false)} />
-                <div className="hidden lg:flex items-center gap-4 bg-stone-50 px-4 py-2 rounded-full border border-stone-100">
-                  <Globe size={14} className="text-stone-400" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">
-                    API Status: <span className={apiStatus === 'online' ? 'text-green-600' : 'text-red-600'}>
-                      {apiStatus.toUpperCase()}
-                    </span>
-                  </span>
+                <div className="hidden lg:flex flex-col gap-1">
+                  <div className="flex items-center gap-4 bg-stone-50 px-4 py-2 rounded-full border border-stone-100">
+                    <Globe size={14} className={apiStatus === 'online' ? 'text-green-600' : 'text-red-600'} />
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 flex items-center gap-2">
+                        API Status: <span className={apiStatus === 'online' ? 'text-green-600' : 'text-red-600'}>
+                          {apiStatus.toUpperCase()}
+                        </span>
+                        <button 
+                          onClick={() => { setApiStatus('checking'); checkApi(); }}
+                          className="hover:text-green-800 transition-colors"
+                          title="Refresh Status"
+                        >
+                          <RefreshCcw size={10} className={apiStatus === 'checking' ? 'animate-spin' : ''} />
+                        </button>
+                      </span>
+                      {lastApiCheck && (
+                        <span className="text-[8px] text-stone-400 font-bold uppercase tracking-tighter">
+                          Last sync: {lastApiCheck.toLocaleTimeString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {apiError && (
+                    <div className="px-4 flex items-center gap-2">
+                      <ShieldAlert size={10} className="text-red-500" />
+                      <span className="text-[8px] text-red-500 font-bold uppercase tracking-tight truncate max-w-[150px]">
+                        {apiError}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {storageWarning && (
                   <div className="hidden lg:flex items-center gap-4 bg-amber-50 px-4 py-2 rounded-full border border-amber-100">
