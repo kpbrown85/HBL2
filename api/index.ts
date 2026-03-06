@@ -255,8 +255,13 @@ api.get("/get-bookings", async (req, res) => {
       console.log(`[${new Date().toISOString()}] Supabase: Fetched ${data?.length || 0} bookings`);
       res.json(data || []);
     } else {
-      const data = fs.existsSync(BOOKINGS_FILE) ? fs.readFileSync(BOOKINGS_FILE, "utf-8") : "[]";
-      res.json(JSON.parse(data));
+      try {
+        const data = fs.existsSync(BOOKINGS_FILE) ? fs.readFileSync(BOOKINGS_FILE, "utf-8") : "[]";
+        res.json(JSON.parse(data));
+      } catch (parseErr) {
+        console.error("Error parsing bookings file:", parseErr);
+        res.json([]);
+      }
     }
   } catch (e: any) {
     console.error("Fetch error:", e);
@@ -468,8 +473,13 @@ api.post("/save-gallery", async (req, res) => {
         if (error) throw error;
         res.json(data || []);
       } else {
-        const data = fs.existsSync(GEAR_FILE) ? fs.readFileSync(GEAR_FILE, "utf-8") : "[]";
-        res.json(JSON.parse(data));
+        try {
+          const data = fs.existsSync(GEAR_FILE) ? fs.readFileSync(GEAR_FILE, "utf-8") : "[]";
+          res.json(JSON.parse(data));
+        } catch (parseErr) {
+          console.error("Error parsing gear file:", parseErr);
+          res.json([]);
+        }
       }
     } catch (e: any) {
       console.error("Gear fetch error:", e);

@@ -235,17 +235,25 @@ const App: React.FC = () => {
       // Try the main API ping first
       const response = await fetch(pingUrl);
       setLastApiCheck(new Date());
-      if (response.ok) {
+      
+      const contentType = response.headers.get("content-type");
+      if (response.ok && contentType && contentType.includes("application/json")) {
         const data = await response.json();
         setApiStatus('online');
         setSupabaseStatus(data.supabase);
         setApiError(null);
         return;
+      } else if (response.ok) {
+        // It's 200 OK but not JSON (likely the SPA catch-all)
+        setApiStatus('offline');
+        setApiError('API Router not found (SPA fallback)');
+        return;
       }
       
       // If ping fails, try the direct health check
       const healthResponse = await fetch(healthUrl);
-      if (healthResponse.ok) {
+      const healthContentType = healthResponse.headers.get("content-type");
+      if (healthResponse.ok && healthContentType && healthContentType.includes("application/json")) {
         setApiStatus('online');
         setApiError('API Router issue, but Server is OK');
       } else {
@@ -264,15 +272,18 @@ const App: React.FC = () => {
     console.log(`[${new Date().toISOString()}] Fetching logs from: ${logsUrl}`);
     try {
       const response = await fetch(logsUrl);
-      const data = await response.json();
-      if (response.ok) {
+      const contentType = response.headers.get("content-type");
+      
+      if (response.ok && contentType && contentType.includes("application/json")) {
+        const data = await response.json();
         console.log(`[${new Date().toISOString()}] Logs received:`, data);
         setBookings(data);
         localStorage.setItem('hbl_bookings', JSON.stringify(data));
         setApiError(null);
       } else {
-        console.error(`[${new Date().toISOString()}] Logs fetch failed: ${response.status}`, data);
-        setApiError(data.details || data.error || `HTTP ${response.status}`);
+        const text = await response.text();
+        console.error(`[${new Date().toISOString()}] Logs fetch failed: ${response.status}`, text.substring(0, 100));
+        setApiError(response.ok ? 'Not JSON' : `HTTP ${response.status}`);
         setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
       }
     } catch (error: any) {
@@ -288,7 +299,8 @@ const App: React.FC = () => {
     const loadGallery = async () => {
       try {
         const response = await fetch(`${window.location.origin}/api/get-gallery`);
-        if (response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (response.ok && contentType && contentType.includes("application/json")) {
           const data = await response.json();
           if (data && data.length > 0) setGallery(data);
         }
@@ -300,14 +312,12 @@ const App: React.FC = () => {
     const loadGear = async () => {
       try {
         const response = await fetch(`${window.location.origin}/api/get-gear`);
-        if (response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (response.ok && contentType && contentType.includes("application/json")) {
           const data = await response.json();
           if (data && data.length > 0) {
             setGearItems(data);
           } else {
-            // If backend is empty but we have defaults, we might want to keep defaults
-            // or if the user explicitly cleared it, we should respect that.
-            // For now, let's just set it to what the backend says if it's a valid array.
             if (Array.isArray(data)) setGearItems(data.length > 0 ? data : DEFAULT_GEAR_ITEMS);
           }
         }
