@@ -2,7 +2,11 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import api from "./api/index.js";
+import { api } from "./api/index.js";
+
+console.log(`[${new Date().toISOString()}] Server starting...`);
+console.log(`[${new Date().toISOString()}] API Router imported type:`, typeof api);
+console.log(`[${new Date().toISOString()}] API Router is function:`, typeof api === 'function');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,10 +25,28 @@ app.use((req, res, next) => {
 
 // Direct health check to verify server is alive independently of the API router
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({ status: "ok", timestamp: new Date().toISOString(), message: "Server is healthy" });
 });
 
-app.use("/api", api);
+app.get("/api/test-direct", (req, res) => {
+  res.json({ ok: true, message: "Direct API route in server.ts works" });
+});
+
+const apiRouter = (api as any).default || api;
+console.log(`[${new Date().toISOString()}] Mounting API Router. Type: ${typeof apiRouter}`);
+
+app.use("/api", apiRouter);
+
+// Specific 404 for /api routes to prevent HTML fallback
+app.use("/api", (req, res) => {
+  console.log(`[${new Date().toISOString()}] 404 API Route: ${req.method} ${req.url}`);
+  res.status(404).json({ 
+    error: "API endpoint not found", 
+    method: req.method,
+    url: req.originalUrl,
+    hint: "Check if the route is defined in /api/index.ts"
+  });
+});
 
 async function startApp() {
   if (process.env.NODE_ENV !== "production") {

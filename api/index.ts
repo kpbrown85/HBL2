@@ -33,10 +33,27 @@ const twilioClient = (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_
 const api = express.Router();
 console.log(`[${new Date().toISOString()}] API Router Module Initialized`);
 
+// Debug state to track initialization
+const debugInfo = {
+  initialized: true,
+  supabaseConfigured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
+  supabaseActive: !!supabase,
+  bookingsFile: BOOKINGS_FILE,
+  gearFile: GEAR_FILE,
+  env: {
+    NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT
+  }
+};
+
 // Middleware to log all API requests
 api.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] API Request: ${req.method} ${req.url}`);
   next();
+});
+
+api.get("/debug", (req, res) => {
+  res.json(debugInfo);
 });
 
 api.get("/ping", (req, res) => {

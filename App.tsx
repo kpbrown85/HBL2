@@ -254,12 +254,24 @@ const App: React.FC = () => {
       // If ping fails, try the direct health check
       const healthResponse = await fetch(healthUrl);
       const healthContentType = healthResponse.headers.get("content-type");
+      
       if (healthResponse.ok && healthContentType && healthContentType.includes("application/json")) {
+        const healthData = await healthResponse.json();
         setApiStatus('online');
-        setApiError('API Router issue, but Server is OK');
+        setApiError(`API Router issue, but Server is OK: ${healthData.message || 'No message'}`);
+        
+        // Try one more: debug
+        try {
+          const debugResponse = await fetch(`${window.location.origin}/api/debug`);
+          if (debugResponse.ok) {
+            const debugData = await debugResponse.json();
+            console.log("API Debug Info:", debugData);
+          }
+        } catch (e) {}
       } else {
         setApiStatus('offline');
-        setApiError(`API: ${response.status}, Health: ${healthResponse.status}`);
+        const text = await healthResponse.text();
+        setApiError(`Server Error: HTTP ${healthResponse.status}. ${text.substring(0, 50)}`);
       }
     } catch (err: any) {
       setApiStatus('offline');
@@ -276,11 +288,16 @@ const App: React.FC = () => {
       const contentType = response.headers.get("content-type");
       
       if (response.ok && contentType && contentType.includes("application/json")) {
-        const data = await response.json();
-        console.log(`[${new Date().toISOString()}] Logs received:`, data);
-        setBookings(data);
-        localStorage.setItem('hbl_bookings', JSON.stringify(data));
-        setApiError(null);
+        try {
+          const data = await response.json();
+          console.log(`[${new Date().toISOString()}] Logs received:`, data);
+          setBookings(data);
+          localStorage.setItem('hbl_bookings', JSON.stringify(data));
+          setApiError(null);
+        } catch (jsonErr: any) {
+          console.error("JSON Parse Error in loadLogs:", jsonErr);
+          setApiError(`Invalid JSON response: ${jsonErr.message}`);
+        }
       } else {
         const text = await response.text();
         let errorDetail = `HTTP ${response.status}`;
