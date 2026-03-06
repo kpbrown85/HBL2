@@ -1,0 +1,16 @@
+[
+  {
+    "id": "test-1",
+    "name": "Test User",
+    "email": "test@example.com",
+    "phone": "555-0199",
+    "startDate": "2026-06-01",
+    "endDate": "2026-06-05",
+    "numLlamas": 2,
+    "trailerNeeded": false,
+    "isFirstTimer": true,
+    "timestamp": 1741256400000,
+    "status": "pending",
+    "isRead": false
+  }
+]

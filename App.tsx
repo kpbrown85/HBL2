@@ -69,6 +69,7 @@ import {
   Wind,
   PenTool,
   ShieldAlert,
+  Database,
   Play
 } from 'lucide-react';
 
@@ -1274,17 +1275,17 @@ const App: React.FC = () => {
                         </div>
                       )}
                       {supabaseStatus === false && (
-                        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center gap-3 text-amber-800 animate-pulse">
-                          <ShieldAlert size={16} />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Warning: Non-Persistent Storage. Bookings will be lost on server restart. Configure Supabase for live site.</span>
+                        <div className="bg-stone-50 border border-stone-200 p-4 rounded-2xl flex items-center gap-3 text-stone-600">
+                          <Database size={16} className="text-stone-400" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Local Storage Mode: Data is saved to server disk. For production persistence, connect Supabase.</span>
                         </div>
                       )}
                       <div className="flex items-center gap-4">
                         <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${apiStatus === 'online' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
                           System: {apiStatus}
                         </div>
-                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${supabaseStatus ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
-                          Database: {supabaseStatus ? 'Supabase Connected' : 'Local File (Non-Persistent)'}
+                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${supabaseStatus ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-stone-50 text-stone-600 border-stone-100'}`}>
+                          Database: {supabaseStatus ? 'Supabase Connected' : 'Local Storage'}
                         </div>
                         <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${bookings.length > 0 ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-stone-50 text-stone-400 border-stone-100'}`}>
                           Sync: {bookings.length} Records
