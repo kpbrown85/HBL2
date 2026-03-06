@@ -143,7 +143,15 @@ export const PRICING = {
   longTripDiscountDays: 5,
   longTripDiscountRate: 0.15,
   clinicFee: 75,
-  trailerDaily: 25
+  trailerDaily: 25,
+  // New Factors
+  peakSeasonMonths: [6, 7, 8], // July, August, September (0-indexed: 6,7,8)
+  peakSeasonSurcharge: 0.20,
+  shoulderSeasonMonths: [5, 9], // June, October
+  offSeasonDiscount: 0.15,
+  highDemandThreshold: 0.5, // 50% of herd booked
+  highDemandSurcharge: 0.10,
+  customOutfittingFee: 150
 };
 
 export const REVIEWS: Review[] = [

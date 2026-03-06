@@ -21,6 +21,7 @@ import {
   Zap,
   Tent,
   Bed,
+  PenTool,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -41,7 +42,17 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
     trailerNeeded: false,
     isFirstTimer: isClinicOnly ? true : false,
     bookingType: (isClinicOnly ? 'clinic' : 'expedition') as 'clinic' | 'expedition',
-    addons: [] as string[]
+    addons: [] as string[],
+    customOutfitting: false,
+    customRequests: ''
+  });
+
+  const [pricingBreakdown, setPricingBreakdown] = useState({
+    base: 0,
+    seasonal: 0,
+    demand: 0,
+    addons: 0,
+    total: 0
   });
 
   const [estimate, setEstimate] = useState(0);
@@ -90,26 +101,71 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
 
       if (diffDays >= 0) {
         let dailyRate = currentPricing.dailyPerLlama;
+        
+        // 1. Seasonality Adjustment
+        const startMonth = start.getMonth();
+        let seasonalMultiplier = 1;
+        if (currentPricing.peakSeasonMonths.includes(startMonth)) {
+          seasonalMultiplier += currentPricing.peakSeasonSurcharge;
+        } else if (!currentPricing.shoulderSeasonMonths.includes(startMonth)) {
+          seasonalMultiplier -= currentPricing.offSeasonDiscount;
+        }
+        
+        // 2. Availability / Demand Adjustment
+        // Total herd size is 4 (Wookie, Boulder, Everett, Murphy)
+        const totalHerdSize = 4;
+        const daysInInterval = eachDayOfInterval({ start, end });
+        let maxLlamasBooked = 0;
+        
+        daysInInterval.forEach(day => {
+          const bookedOnDay = existingBookings.reduce((count, b) => {
+            const bStart = new Date(b.startDate);
+            const bEnd = new Date(b.endDate);
+            return isWithinInterval(day, { start: bStart, end: bEnd }) ? count + b.numLlamas : count;
+          }, 0);
+          maxLlamasBooked = Math.max(maxLlamasBooked, bookedOnDay);
+        });
+        
+        let demandMultiplier = 1;
+        if (maxLlamasBooked / totalHerdSize >= currentPricing.highDemandThreshold) {
+          demandMultiplier += currentPricing.highDemandSurcharge;
+        }
+
+        // 3. Long Trip Discount
         if (diffDays > currentPricing.longTripDiscountDays) {
           dailyRate *= (1 - currentPricing.longTripDiscountRate);
         }
 
-        let total = (formData.numLlamas * dailyRate * diffDays);
-        if (formData.trailerNeeded) total += (currentPricing.trailerDaily * diffDays);
-        if (formData.isFirstTimer) total += currentPricing.clinicFee;
+        const adjustedDailyRate = dailyRate * seasonalMultiplier * demandMultiplier;
+        let baseTotal = (formData.numLlamas * adjustedDailyRate * diffDays);
+        if (formData.trailerNeeded) baseTotal += (currentPricing.trailerDaily * diffDays);
+        if (formData.isFirstTimer) baseTotal += currentPricing.clinicFee;
 
-        // Add Gear Addons
+        // 4. Add Gear Addons
+        let addonsTotal = 0;
         formData.addons.forEach(addonId => {
           const addon = GEAR_ADDONS.find(a => a.id === addonId);
-          if (addon) total += (addon.pricePerDay * diffDays);
+          if (addon) addonsTotal += (addon.pricePerDay * diffDays);
         });
+        
+        // 5. Custom Outfitting
+        if (formData.customOutfitting) addonsTotal += currentPricing.customOutfittingFee;
 
+        const total = baseTotal + addonsTotal;
         setEstimate(total);
+        setPricingBreakdown({
+          base: baseTotal,
+          seasonal: seasonalMultiplier - 1,
+          demand: demandMultiplier - 1,
+          addons: addonsTotal,
+          total
+        });
       }
     } else {
       setEstimate(0);
+      setPricingBreakdown({ base: 0, seasonal: 0, demand: 0, addons: 0, total: 0 });
     }
-  }, [formData, isClinicOnly]);
+  }, [formData, isClinicOnly, existingBookings]);
 
   const toggleAddon = (id: string) => {
     setFormData(prev => ({
@@ -224,7 +280,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
     const newBooking: Partial<BookingData> = {
       ...formData,
       status: 'pending',
-      isRead: false
+      isRead: false,
+      totalPrice: estimate,
+      timestamp: Date.now()
     };
 
     try {
@@ -290,7 +348,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
       trailerNeeded: false,
       isFirstTimer: isClinicOnly ? true : false,
       bookingType: isClinicOnly ? 'clinic' : 'expedition',
-      addons: []
+      addons: [],
+      customOutfitting: false,
+      customRequests: ''
     });
     setIsSubmitted(false);
   };
@@ -382,8 +442,24 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
               </div>
             </div>
 
-            <div className="mt-10 pt-8 border-t border-stone-200 flex justify-between items-end">
-              <div>
+            <div className="mt-10 pt-8 border-t border-stone-200 flex flex-col md:flex-row justify-between items-end gap-6">
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Pricing Breakdown</p>
+                <div className="flex flex-wrap gap-4 text-[10px] font-bold uppercase tracking-widest">
+                  {pricingBreakdown.seasonal !== 0 && (
+                    <span className={pricingBreakdown.seasonal > 0 ? 'text-amber-600' : 'text-green-600'}>
+                      {pricingBreakdown.seasonal > 0 ? 'Peak Season Surcharge' : 'Off-Season Discount'}
+                    </span>
+                  )}
+                  {pricingBreakdown.demand > 0 && (
+                    <span className="text-red-600">High Demand Surcharge</span>
+                  )}
+                  {formData.customOutfitting && (
+                    <span className="text-stone-600">Custom Outfitting Fee</span>
+                  )}
+                </div>
+              </div>
+              <div className="text-right">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-1">Estimated Investment</p>
                 <div className="text-4xl font-black text-green-800">
                   ${estimate.toLocaleString()}
@@ -499,6 +575,39 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                   </div>
                 </button>
               ))}
+            </div>
+
+            <div className="bg-stone-50 p-10 rounded-[3rem] border border-stone-100 space-y-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-stone-400">
+                    <PenTool className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-lg tracking-tight">Custom Outfitting</h4>
+                    <p className="text-stone-400 font-bold text-[10px] uppercase tracking-widest">Special requests & custom gear</p>
+                  </div>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setFormData({...formData, customOutfitting: !formData.customOutfitting})}
+                  className={`w-16 h-8 rounded-full transition-all relative ${formData.customOutfitting ? 'bg-green-800' : 'bg-stone-200'}`}
+                >
+                  <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${formData.customOutfitting ? 'left-9' : 'left-1'}`} />
+                </button>
+              </div>
+              
+              {formData.customOutfitting && (
+                <div className="space-y-4 animate-in slide-in-from-top-4">
+                  <p className="text-xs font-bold text-stone-500 italic">Adds a ${PRICING.customOutfittingFee} flat outfitting fee for custom logistics and gear sourcing.</p>
+                  <textarea 
+                    className="w-full bg-white border border-stone-100 p-6 rounded-2xl outline-none focus:ring-4 focus:ring-green-500/10 font-medium text-stone-900 text-sm min-h-[120px]"
+                    placeholder="Describe your custom gear needs or special logistics..."
+                    value={formData.customRequests}
+                    onChange={(e) => setFormData({...formData, customRequests: e.target.value})}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -620,6 +729,16 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-500 mb-2">Estimated Investment</p>
                   <div className="text-6xl font-black tracking-tighter">${estimate.toLocaleString()}</div>
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {pricingBreakdown.seasonal !== 0 && (
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${pricingBreakdown.seasonal > 0 ? 'bg-amber-500/20 text-amber-400' : 'bg-green-500/20 text-green-400'}`}>
+                        {pricingBreakdown.seasonal > 0 ? 'Peak Rate' : 'Off-Season Rate'}
+                      </span>
+                    )}
+                    {pricingBreakdown.demand > 0 && (
+                      <span className="text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md bg-red-500/20 text-red-400">High Demand</span>
+                    )}
+                  </div>
                 </div>
                 <Calculator className="text-stone-700" size={48} />
               </div>

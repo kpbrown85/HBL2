@@ -37,6 +37,8 @@ export interface BookingData {
   signature_data?: string;
   signed_at?: string;
   addons?: string[]; // IDs of gear addons
+  customOutfitting?: boolean;
+  customRequests?: string;
   totalPrice?: number;
 }
 
