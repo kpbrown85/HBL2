@@ -24,6 +24,7 @@ const twilioClient = (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_
   : null;
 
 const api = express.Router();
+console.log(`[${new Date().toISOString()}] API Router Module Initialized`);
 
 // Middleware to log all API requests
 api.use((req, res, next) => {
@@ -38,30 +39,6 @@ api.get("/ping", (req, res) => {
     smtp: !!(process.env.SMTP_USER && process.env.SMTP_PASS),
     timestamp: new Date().toISOString() 
   });
-});
-
-api.get("/test-api", (req, res) => {
-  res.json({ ok: true, message: "API Router is working" });
-});
-
-api.get("/test-api", (req, res) => {
-  res.json({ ok: true, message: "API Router is working" });
-});
-
-api.get("/test-api", (req, res) => {
-  res.json({ ok: true, message: "API Router is working" });
-});
-
-api.get("/test-api", (req, res) => {
-  res.json({ ok: true, message: "API Router is working" });
-});
-
-api.get("/test-api", (req, res) => {
-  res.json({ ok: true, message: "API Router is working" });
-});
-
-api.get("/test-api", (req, res) => {
-  res.json({ ok: true, message: "API Router is working" });
 });
 
 api.get("/test-api", (req, res) => {

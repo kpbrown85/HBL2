@@ -2,9 +2,7 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import * as apiModule from "./api/index.js";
-const api = (apiModule as any).default || (apiModule as any).api;
-console.log(`[${new Date().toISOString()}] API Router loaded: ${!!api}`);
+import api from "./api/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,12 +19,12 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/api/test", (req, res) => {
-  res.json({ message: "API is working", timestamp: new Date().toISOString() });
+// Direct health check to verify server is alive independently of the API router
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 app.use("/api", api);
-app.use("/", api);
 
 async function startApp() {
   if (process.env.NODE_ENV !== "production") {

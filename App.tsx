@@ -231,20 +231,32 @@ const App: React.FC = () => {
     
     const checkApi = async () => {
       const pingUrl = `${window.location.origin}/api/ping`;
+      const healthUrl = `${window.location.origin}/api/health`;
+      
       try {
+        // Try the main API ping first
         const response = await fetch(pingUrl);
         if (response.ok) {
           const data = await response.json();
           setApiStatus('online');
           setSupabaseStatus(data.supabase);
           setApiError(null);
+          return;
+        }
+        
+        // If ping fails, try the direct health check
+        const healthResponse = await fetch(healthUrl);
+        if (healthResponse.ok) {
+          setApiStatus('online');
+          setApiError('API Router issue, but Server is OK');
         } else {
           setApiStatus('offline');
-          setApiError(`HTTP ${response.status}`);
+          setApiError(`API: ${response.status}, Health: ${healthResponse.status}`);
         }
       } catch (err: any) {
         setApiStatus('offline');
         setApiError(err.message || 'Connection failed');
+        console.error("API Check Error:", err);
       }
     };
 
