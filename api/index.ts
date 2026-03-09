@@ -96,6 +96,19 @@ api.get("/ping", (req, res) => {
   });
 });
 
+api.get("/test-supabase", async (req, res) => {
+  if (!supabase) {
+    return res.json({ status: "error", message: "Supabase not configured" });
+  }
+  try {
+    const { data, error } = await supabase.from('gear').select('count', { count: 'exact', head: true });
+    if (error) throw error;
+    res.json({ status: "ok", message: "Supabase connected and table 'gear' exists", data });
+  } catch (e: any) {
+    res.status(500).json({ status: "error", message: "Supabase connection failed", details: e.message || JSON.stringify(e) });
+  }
+});
+
 api.get("/test-api", (req, res) => {
   res.json({ ok: true, message: "API Router is working" });
 });
@@ -512,7 +525,8 @@ api.get("/get-gallery", async (req, res) => {
         const { error: deleteError } = await supabase.from('gallery').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         if (deleteError) {
           console.error("Supabase gallery delete error:", deleteError);
-          return res.status(500).json({ error: "Database delete failed", details: deleteError.message });
+          const details = deleteError.message || JSON.stringify(deleteError);
+          return res.status(500).json({ error: "Database delete failed", details });
         }
 
         const { error: insertError } = await supabase.from('gallery').insert(gallery.map((img: any) => ({
@@ -522,7 +536,8 @@ api.get("/get-gallery", async (req, res) => {
         
         if (insertError) {
           console.error("Supabase gallery insert error:", insertError);
-          return res.status(500).json({ error: "Database insert failed", details: insertError.message });
+          const details = insertError.message || JSON.stringify(insertError);
+          return res.status(500).json({ error: "Database insert failed", details });
         }
       } else {
         console.log(`[${new Date().toISOString()}] Using local file system for gallery persistence: ${GALLERY_FILE}`);
@@ -536,7 +551,8 @@ api.get("/get-gallery", async (req, res) => {
       res.json({ success: true });
     } catch (e: any) {
       console.error("Gallery save error:", e);
-      res.status(500).json({ error: "Failed to save gallery", details: e.message });
+      const details = e.message || (typeof e === 'string' ? e : JSON.stringify(e));
+      res.status(500).json({ error: "Failed to save gallery", details });
     }
   });
   
@@ -579,7 +595,8 @@ api.get("/get-gallery", async (req, res) => {
         const { error: deleteError } = await supabase.from('gear').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         if (deleteError) {
           console.error("Supabase gear delete error:", deleteError);
-          return res.status(500).json({ error: "Database delete failed", details: deleteError.message });
+          const details = deleteError.message || JSON.stringify(deleteError);
+          return res.status(500).json({ error: "Database delete failed", details });
         }
 
         // Then insert new items
@@ -594,7 +611,8 @@ api.get("/get-gallery", async (req, res) => {
         
         if (insertError) {
           console.error("Supabase gear insert error:", insertError);
-          return res.status(500).json({ error: "Database insert failed", details: insertError.message });
+          const details = insertError.message || JSON.stringify(insertError);
+          return res.status(500).json({ error: "Database insert failed", details });
         }
       } else {
         console.log(`[${new Date().toISOString()}] Using local file system for gear persistence: ${GEAR_FILE}`);
@@ -608,7 +626,8 @@ api.get("/get-gallery", async (req, res) => {
       res.json({ success: true });
     } catch (e: any) {
       console.error("Gear save error:", e);
-      res.status(500).json({ error: "Failed to save gear", details: e.message });
+      const details = e.message || (typeof e === 'string' ? e : JSON.stringify(e));
+      res.status(500).json({ error: "Failed to save gear", details });
     }
   });
 
@@ -626,7 +645,8 @@ api.get("/get-gallery", async (req, res) => {
         const { error: deleteError } = await supabase.from('llamas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         if (deleteError) {
           console.error("Supabase llamas delete error:", deleteError);
-          return res.status(500).json({ error: "Database delete failed", details: deleteError.message });
+          const details = deleteError.message || JSON.stringify(deleteError);
+          return res.status(500).json({ error: "Database delete failed", details });
         }
 
         const { error: insertError } = await supabase.from('llamas').insert(llamas.map((l: any) => ({
@@ -641,7 +661,8 @@ api.get("/get-gallery", async (req, res) => {
         
         if (insertError) {
           console.error("Supabase llamas insert error:", insertError);
-          return res.status(500).json({ error: "Database insert failed", details: insertError.message });
+          const details = insertError.message || JSON.stringify(insertError);
+          return res.status(500).json({ error: "Database insert failed", details });
         }
       } else {
         console.log(`[${new Date().toISOString()}] Using local file system for llamas persistence: ${LLAMAS_FILE}`);
@@ -655,7 +676,8 @@ api.get("/get-gallery", async (req, res) => {
       res.json({ success: true });
     } catch (e: any) {
       console.error("Llamas save error:", e);
-      res.status(500).json({ error: "Failed to save llamas", details: e.message });
+      const details = e.message || (typeof e === 'string' ? e : JSON.stringify(e));
+      res.status(500).json({ error: "Failed to save llamas", details });
     }
   });
 
@@ -676,7 +698,8 @@ api.get("/get-gallery", async (req, res) => {
         });
         if (error) {
           console.error("Supabase branding upsert error:", error);
-          return res.status(500).json({ error: "Database upsert failed", details: error.message });
+          const details = error.message || JSON.stringify(error);
+          return res.status(500).json({ error: "Database upsert failed", details });
         }
       } else {
         console.log(`[${new Date().toISOString()}] Using local file system for branding persistence: ${BRANDING_FILE}`);
@@ -690,7 +713,8 @@ api.get("/get-gallery", async (req, res) => {
       res.json({ success: true });
     } catch (e: any) {
       console.error("Branding save error:", e);
-      res.status(500).json({ error: "Failed to save branding", details: e.message });
+      const details = e.message || (typeof e === 'string' ? e : JSON.stringify(e));
+      res.status(500).json({ error: "Failed to save branding", details });
     }
   });
 

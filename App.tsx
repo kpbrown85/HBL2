@@ -1103,6 +1103,20 @@ const App: React.FC = () => {
                     <div>
                       <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Gear Shop</h2>
                       <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Manage rental inventory and pricing</p>
+                      <button 
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(`${window.location.origin}/api/test-supabase`);
+                            const data = await res.json();
+                            alert(`Supabase Status: ${data.status}\nMessage: ${data.message}\nDetails: ${data.details || 'None'}`);
+                          } catch (err) {
+                            alert('Failed to reach test endpoint');
+                          }
+                        }}
+                        className="mt-4 text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-green-800 transition-colors"
+                      >
+                        Test Database Connection
+                      </button>
                     </div>
                     {!editingShopItem ? (
                       <button 
