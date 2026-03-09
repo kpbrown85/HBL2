@@ -434,9 +434,9 @@ const App: React.FC = () => {
         setGearItems(items);
         setEditingShopItem(null);
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error', details: 'No details provided' }));
         console.error("Failed to save gear:", errorData);
-        alert(`Failed to save gear: ${errorData.error || response.statusText}`);
+        alert(`Failed to save gear: ${errorData.details || errorData.error || response.statusText}`);
       }
     } catch (err) {
       console.error("Failed to save gear:", err);
@@ -640,8 +640,8 @@ const App: React.FC = () => {
         setLlamas(updatedLlamas);
         setEditingLlama(null);
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        alert(`Failed to save llamas: ${errorData.error || response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error', details: 'No details provided' }));
+        alert(`Failed to save llamas: ${errorData.details || errorData.error || response.statusText}`);
       }
     } catch (err) {
       console.error("Failed to save llamas:", err);
@@ -660,8 +660,8 @@ const App: React.FC = () => {
         setBranding(updatedBranding);
         alert("Branding saved successfully!");
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        alert(`Failed to save branding: ${errorData.error || response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error', details: 'No details provided' }));
+        alert(`Failed to save branding: ${errorData.details || errorData.error || response.statusText}`);
       }
     } catch (err) {
       console.error("Failed to save branding:", err);
@@ -679,8 +679,8 @@ const App: React.FC = () => {
       if (response.ok) {
         setGallery(updatedGallery);
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        alert(`Failed to save gallery: ${errorData.error || response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error', details: 'No details provided' }));
+        alert(`Failed to save gallery: ${errorData.details || errorData.error || response.statusText}`);
       }
     } catch (err) {
       console.error("Failed to save gallery:", err);

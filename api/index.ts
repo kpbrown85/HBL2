@@ -16,6 +16,18 @@ const LLAMAS_FILE = path.join(__dirname, "..", "llamas.json");
 const BRANDING_FILE = path.join(__dirname, "..", "branding.json");
 const GALLERY_FILE = path.join(__dirname, "..", "gallery.json");
 
+// Ensure data files exist
+[BOOKINGS_FILE, GEAR_FILE, LLAMAS_FILE, BRANDING_FILE, GALLERY_FILE].forEach(file => {
+  if (!fs.existsSync(file)) {
+    try {
+      fs.writeFileSync(file, JSON.stringify(file === BRANDING_FILE ? {} : [], null, 2));
+      console.log(`[${new Date().toISOString()}] Created missing data file: ${file}`);
+    } catch (e) {
+      console.error(`[${new Date().toISOString()}] Failed to create data file: ${file}`, e);
+    }
+  }
+});
+
 // Direct Supabase client setup to avoid path issues
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
@@ -486,18 +498,40 @@ api.get("/get-gallery", async (req, res) => {
   }
 });
 
-api.post("/save-gallery", async (req, res) => {
+  api.post("/save-gallery", async (req, res) => {
     try {
       const { gallery } = req.body;
+      if (!Array.isArray(gallery)) {
+        return res.status(400).json({ error: "Invalid data", details: "Gallery must be an array" });
+      }
+      
+      console.log(`[${new Date().toISOString()}] Saving gallery:`, gallery.length);
+      
       if (supabase) {
-        // For simplicity, we'll replace the gallery content
-        // In a real app, we'd do incremental updates, but this matches the current localStorage logic
-        await supabase.from('gallery').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
-        const { error } = await supabase.from('gallery').insert(gallery.map((img: any) => ({
+        console.log(`[${new Date().toISOString()}] Using Supabase for gallery persistence`);
+        const { error: deleteError } = await supabase.from('gallery').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (deleteError) {
+          console.error("Supabase gallery delete error:", deleteError);
+          return res.status(500).json({ error: "Database delete failed", details: deleteError.message });
+        }
+
+        const { error: insertError } = await supabase.from('gallery').insert(gallery.map((img: any) => ({
           url: img.url,
           caption: img.caption
         })));
-        if (error) throw error;
+        
+        if (insertError) {
+          console.error("Supabase gallery insert error:", insertError);
+          return res.status(500).json({ error: "Database insert failed", details: insertError.message });
+        }
+      } else {
+        console.log(`[${new Date().toISOString()}] Using local file system for gallery persistence: ${GALLERY_FILE}`);
+        try {
+          fs.writeFileSync(GALLERY_FILE, JSON.stringify(gallery, null, 2));
+        } catch (fsError: any) {
+          console.error("File system write error:", fsError);
+          return res.status(500).json({ error: "File system write failed", details: fsError.message });
+        }
       }
       res.json({ success: true });
     } catch (e: any) {
@@ -533,11 +567,23 @@ api.post("/save-gallery", async (req, res) => {
   api.post("/save-gear", async (req, res) => {
     try {
       const { gear } = req.body;
-      console.log(`[${new Date().toISOString()}] Saving gear items:`, gear?.length);
+      if (!Array.isArray(gear)) {
+        return res.status(400).json({ error: "Invalid data", details: "Gear must be an array" });
+      }
+      
+      console.log(`[${new Date().toISOString()}] Saving gear items:`, gear.length);
+      
       if (supabase) {
         console.log(`[${new Date().toISOString()}] Using Supabase for gear persistence`);
-        await supabase.from('gear').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        const { error } = await supabase.from('gear').insert(gear.map((item: any) => ({
+        // First delete existing items
+        const { error: deleteError } = await supabase.from('gear').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (deleteError) {
+          console.error("Supabase gear delete error:", deleteError);
+          return res.status(500).json({ error: "Database delete failed", details: deleteError.message });
+        }
+
+        // Then insert new items
+        const { error: insertError } = await supabase.from('gear').insert(gear.map((item: any) => ({
           id: item.id,
           name: item.name,
           category: item.category,
@@ -545,13 +591,19 @@ api.post("/save-gallery", async (req, res) => {
           description: item.description,
           imageUrl: item.imageUrl
         })));
-        if (error) {
-          console.error("Supabase gear insert error:", error);
-          throw error;
+        
+        if (insertError) {
+          console.error("Supabase gear insert error:", insertError);
+          return res.status(500).json({ error: "Database insert failed", details: insertError.message });
         }
       } else {
         console.log(`[${new Date().toISOString()}] Using local file system for gear persistence: ${GEAR_FILE}`);
-        fs.writeFileSync(GEAR_FILE, JSON.stringify(gear, null, 2));
+        try {
+          fs.writeFileSync(GEAR_FILE, JSON.stringify(gear, null, 2));
+        } catch (fsError: any) {
+          console.error("File system write error:", fsError);
+          return res.status(500).json({ error: "File system write failed", details: fsError.message });
+        }
       }
       res.json({ success: true });
     } catch (e: any) {
@@ -563,9 +615,21 @@ api.post("/save-gallery", async (req, res) => {
   api.post("/save-llamas", async (req, res) => {
     try {
       const { llamas } = req.body;
+      if (!Array.isArray(llamas)) {
+        return res.status(400).json({ error: "Invalid data", details: "Llamas must be an array" });
+      }
+      
+      console.log(`[${new Date().toISOString()}] Saving llamas:`, llamas.length);
+      
       if (supabase) {
-        await supabase.from('llamas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        const { error } = await supabase.from('llamas').insert(llamas.map((l: any) => ({
+        console.log(`[${new Date().toISOString()}] Using Supabase for llamas persistence`);
+        const { error: deleteError } = await supabase.from('llamas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (deleteError) {
+          console.error("Supabase llamas delete error:", deleteError);
+          return res.status(500).json({ error: "Database delete failed", details: deleteError.message });
+        }
+
+        const { error: insertError } = await supabase.from('llamas').insert(llamas.map((l: any) => ({
           id: l.id,
           name: l.name,
           age: l.age,
@@ -574,9 +638,19 @@ api.post("/save-gallery", async (req, res) => {
           imageUrl: l.imageUrl,
           specialty: l.specialty
         })));
-        if (error) throw error;
+        
+        if (insertError) {
+          console.error("Supabase llamas insert error:", insertError);
+          return res.status(500).json({ error: "Database insert failed", details: insertError.message });
+        }
       } else {
-        fs.writeFileSync(LLAMAS_FILE, JSON.stringify(llamas, null, 2));
+        console.log(`[${new Date().toISOString()}] Using local file system for llamas persistence: ${LLAMAS_FILE}`);
+        try {
+          fs.writeFileSync(LLAMAS_FILE, JSON.stringify(llamas, null, 2));
+        } catch (fsError: any) {
+          console.error("File system write error:", fsError);
+          return res.status(500).json({ error: "File system write failed", details: fsError.message });
+        }
       }
       res.json({ success: true });
     } catch (e: any) {
@@ -588,14 +662,30 @@ api.post("/save-gallery", async (req, res) => {
   api.post("/save-branding", async (req, res) => {
     try {
       const { branding } = req.body;
+      if (!branding || typeof branding !== 'object') {
+        return res.status(400).json({ error: "Invalid data", details: "Branding must be an object" });
+      }
+      
+      console.log(`[${new Date().toISOString()}] Saving branding configuration`);
+      
       if (supabase) {
+        console.log(`[${new Date().toISOString()}] Using Supabase for branding persistence`);
         const { error } = await supabase.from('branding').upsert({
           id: 'site-config', // Single record for branding
           ...branding
         });
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase branding upsert error:", error);
+          return res.status(500).json({ error: "Database upsert failed", details: error.message });
+        }
       } else {
-        fs.writeFileSync(BRANDING_FILE, JSON.stringify(branding, null, 2));
+        console.log(`[${new Date().toISOString()}] Using local file system for branding persistence: ${BRANDING_FILE}`);
+        try {
+          fs.writeFileSync(BRANDING_FILE, JSON.stringify(branding, null, 2));
+        } catch (fsError: any) {
+          console.error("File system write error:", fsError);
+          return res.status(500).json({ error: "File system write failed", details: fsError.message });
+        }
       }
       res.json({ success: true });
     } catch (e: any) {
