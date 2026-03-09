@@ -533,7 +533,9 @@ api.post("/save-gallery", async (req, res) => {
   api.post("/save-gear", async (req, res) => {
     try {
       const { gear } = req.body;
+      console.log(`[${new Date().toISOString()}] Saving gear items:`, gear?.length);
       if (supabase) {
+        console.log(`[${new Date().toISOString()}] Using Supabase for gear persistence`);
         await supabase.from('gear').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         const { error } = await supabase.from('gear').insert(gear.map((item: any) => ({
           id: item.id,
@@ -543,8 +545,12 @@ api.post("/save-gallery", async (req, res) => {
           description: item.description,
           imageUrl: item.imageUrl
         })));
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase gear insert error:", error);
+          throw error;
+        }
       } else {
+        console.log(`[${new Date().toISOString()}] Using local file system for gear persistence: ${GEAR_FILE}`);
         fs.writeFileSync(GEAR_FILE, JSON.stringify(gear, null, 2));
       }
       res.json({ success: true });

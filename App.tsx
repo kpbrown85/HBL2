@@ -433,10 +433,14 @@ const App: React.FC = () => {
       if (response.ok) {
         setGearItems(items);
         setEditingShopItem(null);
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error("Failed to save gear:", errorData);
+        alert(`Failed to save gear: ${errorData.error || response.statusText}`);
       }
     } catch (err) {
       console.error("Failed to save gear:", err);
-      alert("Failed to save gear items.");
+      alert("Failed to save gear items due to a network error.");
     }
   };
 
@@ -635,10 +639,13 @@ const App: React.FC = () => {
       if (response.ok) {
         setLlamas(updatedLlamas);
         setEditingLlama(null);
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        alert(`Failed to save llamas: ${errorData.error || response.statusText}`);
       }
     } catch (err) {
       console.error("Failed to save llamas:", err);
-      alert("Failed to save llamas.");
+      alert("Failed to save llamas due to a network error.");
     }
   };
 
@@ -652,10 +659,13 @@ const App: React.FC = () => {
       if (response.ok) {
         setBranding(updatedBranding);
         alert("Branding saved successfully!");
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        alert(`Failed to save branding: ${errorData.error || response.statusText}`);
       }
     } catch (err) {
       console.error("Failed to save branding:", err);
-      alert("Failed to save branding.");
+      alert("Failed to save branding due to a network error.");
     }
   };
 
@@ -668,9 +678,13 @@ const App: React.FC = () => {
       });
       if (response.ok) {
         setGallery(updatedGallery);
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        alert(`Failed to save gallery: ${errorData.error || response.statusText}`);
       }
     } catch (err) {
       console.error("Failed to save gallery:", err);
+      alert("Failed to save gallery due to a network error.");
     }
   };
 
@@ -1107,6 +1121,7 @@ const App: React.FC = () => {
                         </button>
                         <button 
                           onClick={() => {
+                            if (!editingShopItem) return;
                             const updated = editingShopItem.id && gearItems.some(i => i.id === editingShopItem.id)
                               ? gearItems.map(i => i.id === editingShopItem.id ? editingShopItem : i)
                               : [...gearItems, editingShopItem];
@@ -1152,7 +1167,10 @@ const App: React.FC = () => {
                             <input 
                               type="number" 
                               value={editingShopItem.price} 
-                              onChange={e => setEditingShopItem({...editingShopItem, price: parseFloat(e.target.value)})}
+                              onChange={e => {
+                                const val = parseFloat(e.target.value);
+                                setEditingShopItem({...editingShopItem, price: isNaN(val) ? 0 : val});
+                              }}
                               className="w-full bg-stone-50 border-none rounded-3xl p-6 text-xl font-black focus:ring-2 focus:ring-green-800 outline-none"
                             />
                           </div>
@@ -1169,6 +1187,7 @@ const App: React.FC = () => {
                         <div className="flex gap-4 pt-8">
                           <button 
                             onClick={() => {
+                              if (!editingShopItem) return;
                               const updated = editingShopItem.id && gearItems.some(i => i.id === editingShopItem.id)
                                 ? gearItems.map(i => i.id === editingShopItem.id ? editingShopItem : i)
                                 : [...gearItems, editingShopItem];
