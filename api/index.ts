@@ -98,12 +98,29 @@ api.get("/ping", (req, res) => {
 
 api.get("/test-supabase", async (req, res) => {
   if (!supabase) {
-    return res.json({ status: "error", message: "Supabase not configured" });
+    return res.json({ status: "error", message: "Supabase not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables." });
   }
   try {
-    const { data, error } = await supabase.from('gear').select('count', { count: 'exact', head: true });
-    if (error) throw error;
-    res.json({ status: "ok", message: "Supabase connected and table 'gear' exists", data });
+    const tables = ['gear', 'llamas', 'branding', 'gallery', 'bookings'];
+    const results: any = {};
+    
+    for (const table of tables) {
+      const { error } = await supabase.from(table).select('count', { count: 'exact', head: true });
+      results[table] = error ? { status: "missing", error: error.message } : { status: "ok" };
+    }
+    
+    const missingTables = Object.entries(results).filter(([_, v]: any) => v.status === "missing").map(([k]) => k);
+    
+    if (missingTables.length > 0) {
+      res.json({ 
+        status: "partial", 
+        message: `Some tables are missing in your Supabase project: ${missingTables.join(', ')}`,
+        details: "You need to create these tables in the Supabase SQL Editor. I can provide the SQL script for you.",
+        results 
+      });
+    } else {
+      res.json({ status: "ok", message: "All Supabase tables are correctly configured!", results });
+    }
   } catch (e: any) {
     res.status(500).json({ status: "error", message: "Supabase connection failed", details: e.message || JSON.stringify(e) });
   }

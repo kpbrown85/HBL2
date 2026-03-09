@@ -1108,7 +1108,13 @@ const App: React.FC = () => {
                           try {
                             const res = await fetch(`${window.location.origin}/api/test-supabase`);
                             const data = await res.json();
-                            alert(`Supabase Status: ${data.status}\nMessage: ${data.message}\nDetails: ${data.details || 'None'}`);
+                            if (data.status === 'partial') {
+                              alert(`⚠️ DATABASE SETUP REQUIRED\n\n${data.message}\n\n${data.details}`);
+                            } else if (data.status === 'ok') {
+                              alert(`✅ DATABASE OK\n\n${data.message}`);
+                            } else {
+                              alert(`❌ DATABASE ERROR\n\n${data.message}\n\nDetails: ${data.details || 'None'}`);
+                            }
                           } catch (err) {
                             alert('Failed to reach test endpoint');
                           }
