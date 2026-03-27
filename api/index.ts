@@ -146,27 +146,46 @@ api.get("/test-supabase", async (req, res) => {
 // Email Helper
 const getTransporter = () => {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
+  
+  const port = parseInt(process.env.SMTP_PORT || "465");
+  const host = process.env.SMTP_HOST || "smtp.gmail.com";
+  
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.SMTP_PORT || "465"),
-    secure: process.env.SMTP_PORT === "465" || !process.env.SMTP_PORT,
+    host,
+    port,
+    secure: port === 465, // true for 465, false for other ports
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS
+    },
+    tls: {
+      // Do not fail on invalid certs (common issue with Cloud Run/Proxies)
+      rejectUnauthorized: false
     }
   });
 };
 
 const sendEmail = async (options: { to: string, subject: string, html: string, fromName?: string }) => {
   const transporter = getTransporter();
-  if (!transporter) throw new Error("SMTP not configured");
+  if (!transporter) {
+    console.error("Email failed: SMTP not configured (check SMTP_USER/SMTP_PASS)");
+    throw new Error("SMTP not configured");
+  }
   
-  return transporter.sendMail({
-    from: `"${options.fromName || 'HBL Notifications'}" <${process.env.SMTP_USER}>`,
-    to: options.to,
-    subject: options.subject,
-    html: options.html
-  });
+  console.log(`Attempting to send email to ${options.to} (Subject: ${options.subject})...`);
+  try {
+    const info = await transporter.sendMail({
+      from: `"${options.fromName || 'HBL Notifications'}" <${process.env.SMTP_USER}>`,
+      to: options.to,
+      subject: options.subject,
+      html: options.html
+    });
+    console.log(`Email sent successfully! MessageId: ${info.messageId}`);
+    return info;
+  } catch (error: any) {
+    console.error(`Email failed to ${options.to}:`, error);
+    throw error;
+  }
 };
 
 api.get("/test-email", async (req, res) => {
@@ -174,6 +193,14 @@ api.get("/test-email", async (req, res) => {
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
       return res.json({ status: "error", message: "SMTP credentials missing (SMTP_USER, SMTP_PASS)" });
     }
+    
+    const transporter = getTransporter();
+    if (!transporter) throw new Error("Could not initialize transporter");
+    
+    // Verify connection first
+    console.log("Verifying SMTP connection...");
+    await transporter.verify();
+    console.log("SMTP connection verified!");
     
     await sendEmail({
       to: process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com",
@@ -187,8 +214,10 @@ api.get("/test-email", async (req, res) => {
             <li>Host: ${process.env.SMTP_HOST || 'smtp.gmail.com'}</li>
             <li>Port: ${process.env.SMTP_PORT || '465'}</li>
             <li>User: ${process.env.SMTP_USER}</li>
+            <li>Secure: ${process.env.SMTP_PORT === "465" || !process.env.SMTP_PORT}</li>
           </ul>
           <p>Timestamp: ${new Date().toISOString()}</p>
+          <p>If you received this, your email system is fully operational.</p>
         </div>
       `
     });
@@ -196,7 +225,13 @@ api.get("/test-email", async (req, res) => {
     res.json({ status: "ok", message: `Test email sent to ${process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com"}` });
   } catch (e: any) {
     console.error("Email test failed:", e);
-    res.status(500).json({ status: "error", message: "Email test failed", details: e.message });
+    res.status(500).json({ 
+      status: "error", 
+      message: "Email test failed", 
+      details: e.message,
+      code: e.code,
+      command: e.command
+    });
   }
 });
 

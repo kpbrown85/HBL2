@@ -221,6 +221,24 @@ const App: React.FC = () => {
   const [lastApiCheck, setLastApiCheck] = useState<Date | null>(null);
   const [supabaseStatus, setSupabaseStatus] = useState<boolean | null>(null);
   const [smtpStatus, setSmtpStatus] = useState<boolean | null>(null);
+  const [isTestingEmail, setIsTestingEmail] = useState(false);
+
+  const handleTestEmail = async () => {
+    setIsTestingEmail(true);
+    try {
+      const response = await fetch('/api/test-email');
+      const data = await response.json();
+      if (data.status === 'ok') {
+        alert("Success! Test email sent. Please check your inbox (and spam folder).");
+      } else {
+        alert(`Email Test Failed: ${data.message}\n\nDetails: ${data.details || 'No details'}`);
+      }
+    } catch (err) {
+      alert("Failed to connect to the email test endpoint.");
+    } finally {
+      setIsTestingEmail(false);
+    }
+  };
   const [apiError, setApiError] = useState<string | null>(null);
   const [apiVersion, setApiVersion] = useState<string | null>(null);
   const [storageWarning, setStorageWarning] = useState(false);
@@ -1470,13 +1488,23 @@ const App: React.FC = () => {
                         <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${bookings.length > 0 ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-stone-50 text-stone-400 border-stone-100'}`}>
                           Sync: {bookings.length} Records
                         </div>
-                        <button 
-                          onClick={() => window.dispatchEvent(new Event('hbl_new_booking'))}
-                          className="p-2 bg-stone-100 text-stone-600 rounded-full hover:bg-stone-200 transition-colors"
-                          title="Refresh Logs"
-                        >
-                          <RefreshCcw size={14} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={handleTestEmail}
+                            disabled={isTestingEmail}
+                            className={`p-2 rounded-full transition-colors ${isTestingEmail ? 'bg-stone-100 text-stone-400' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
+                            title="Send Test Email"
+                          >
+                            {isTestingEmail ? <RefreshCcw size={14} className="animate-spin" /> : <Mail size={14} />}
+                          </button>
+                          <button 
+                            onClick={() => window.dispatchEvent(new Event('hbl_new_booking'))}
+                            className="p-2 bg-stone-100 text-stone-600 rounded-full hover:bg-stone-200 transition-colors"
+                            title="Refresh Logs"
+                          >
+                            <RefreshCcw size={14} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </header>
