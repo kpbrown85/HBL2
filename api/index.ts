@@ -188,13 +188,15 @@ api.post("/create-booking", async (req, res) => {
         numLlamas: booking.numLlamas,
         trailerNeeded: booking.trailerNeeded,
         isFirstTimer: booking.isFirstTimer,
+        bookingType: booking.bookingType,
+        totalPrice: booking.totalPrice,
         timestamp: booking.timestamp,
         status: booking.status,
         isRead: booking.isRead
       }]);
       if (error) {
         console.error("Supabase Insert Error:", error);
-        throw new Error(`Database save failed: ${error.message}. Please ensure your Supabase table has columns: id (text/uuid), name, email, phone, startDate, endDate, numLlamas, trailerNeeded, isFirstTimer, timestamp, status, isRead.`);
+        throw new Error(`Database save failed: ${error.message}. Please ensure your Supabase table has columns: id (text/uuid), name, email, phone, startDate, endDate, numLlamas, trailerNeeded, isFirstTimer, bookingType, totalPrice, timestamp, status, isRead.`);
       }
     } else {
       let bookings = [];
@@ -240,7 +242,7 @@ api.post("/create-booking", async (req, res) => {
           <p><strong>Clinic Required:</strong> ${booking.isFirstTimer ? 'Yes' : 'No'}</p>
           ${dbError ? `<p style="color: red;"><strong>Note:</strong> Database save failed, but request was captured via email.</p>` : ''}
           <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-          <a href="https://www.helenallamas.com/admin" style="display: inline-block; background: #166534; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Dashboard</a>
+          <a href="${process.env.APP_URL || 'https://www.helenallamas.com'}/admin" style="display: inline-block; background: #166534; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Dashboard</a>
         </div>
       `;
 
@@ -420,17 +422,25 @@ api.post("/update-booking", async (req, res) => {
       const clinicTotal = booking.isFirstTimer ? priceClinic : 0;
       const grandTotal = llamaTotal + trailerTotal + clinicTotal;
 
+      const waiverUrl = `${process.env.APP_URL || 'https://www.helenallamas.com'}/sign/${booking.id}`;
+      
       const invoiceHtml = `
         <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e7e5e4; border-radius: 16px; overflow: hidden; background: #fff;">
           <div style="background: #166534; padding: 40px; text-align: center; color: white;">
             ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 20px; border-radius: 8px;" />` : ''}
-            <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -0.02em;">Booking Confirmed</h1>
+            <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -0.02em;">Booking Accepted</h1>
             <p style="margin: 10px 0 0; opacity: 0.8; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">Invoice #${booking.id.slice(0,8).toUpperCase()}</p>
           </div>
           
           <div style="padding: 40px;">
-            <p style="font-size: 16px; color: #444; margin-bottom: 30px;">Hello <strong>${booking.name}</strong>, your expedition into the Montana high country is officially scheduled. Below is your invoice and payment instructions.</p>
+            <p style="font-size: 16px; color: #444; margin-bottom: 30px;">Hello <strong>${booking.name}</strong>, your ${booking.bookingType === 'clinic' ? 'Llama Packing Clinic' : 'expedition into the Montana high country'} has been accepted! To secure your dates, please sign the waiver and pay a $100 deposit.</p>
             
+            <div style="background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 30px;">
+              <h3 style="margin: 0 0 12px; color: #166534; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">Action Required: Sign Waiver</h3>
+              <p style="margin: 0 0 20px; font-size: 14px; color: #166534;">Please sign the mandatory rental agreement and liability waiver.</p>
+              <a href="${waiverUrl}" style="display: inline-block; background: #166534; color: white; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: 900; font-size: 16px;">Sign Waiver Now</a>
+            </div>
+
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
               <thead>
                 <tr style="border-bottom: 2px solid #f5f5f4;">
@@ -471,8 +481,8 @@ api.post("/update-booking", async (req, res) => {
 
             <div style="background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 12px; padding: 24px; text-align: center;">
               <h3 style="margin: 0 0 12px; color: #166534; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">Payment via Venmo</h3>
-              <p style="margin: 0 0 20px; font-size: 14px; color: #166534;">Please send payment to <strong>${venmoHandle}</strong> to secure your dates.</p>
-              <a href="${venmoLink}" style="display: inline-block; background: #008CFF; color: white; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: 900; font-size: 16px; box-shadow: 0 4px 12px rgba(0,140,255,0.3);">Pay with Venmo</a>
+              <p style="margin: 0 0 20px; font-size: 14px; color: #166534;">Please send a <strong>$100 deposit</strong> to <strong>${venmoHandle}</strong> to secure your dates. The remaining balance will be due before your trip.</p>
+              <a href="${venmoLink}" style="display: inline-block; background: #008CFF; color: white; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: 900; font-size: 16px; box-shadow: 0 4px 12px rgba(0,140,255,0.3);">Pay $100 Deposit</a>
             </div>
           </div>
           
