@@ -225,10 +225,20 @@ api.get("/test-email", async (req, res) => {
     res.json({ status: "ok", message: `Test email sent to ${process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com"}` });
   } catch (e: any) {
     console.error("Email test failed:", e);
+    
+    let message = "Email test failed";
+    let details = e.message;
+    
+    // Specific hint for Gmail 535 errors
+    if (details.includes("535-5.7.8") || details.includes("Invalid login")) {
+      message = "Invalid Login (Gmail)";
+      details = "Gmail rejected your credentials. IMPORTANT: You must use a 16-character 'App Password', NOT your regular Gmail password. Generate one in your Google Account Security settings.";
+    }
+
     res.status(500).json({ 
       status: "error", 
-      message: "Email test failed", 
-      details: e.message,
+      message, 
+      details,
       code: e.code,
       command: e.command
     });
