@@ -143,8 +143,61 @@ api.get("/test-supabase", async (req, res) => {
   }
 });
 
-api.get("/test-api", (req, res) => {
-  res.json({ ok: true, message: "API Router is working" });
+// Email Helper
+const getTransporter = () => {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "465"),
+    secure: process.env.SMTP_PORT === "465" || !process.env.SMTP_PORT,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+};
+
+const sendEmail = async (options: { to: string, subject: string, html: string, fromName?: string }) => {
+  const transporter = getTransporter();
+  if (!transporter) throw new Error("SMTP not configured");
+  
+  return transporter.sendMail({
+    from: `"${options.fromName || 'HBL Notifications'}" <${process.env.SMTP_USER}>`,
+    to: options.to,
+    subject: options.subject,
+    html: options.html
+  });
+};
+
+api.get("/test-email", async (req, res) => {
+  try {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      return res.json({ status: "error", message: "SMTP credentials missing (SMTP_USER, SMTP_PASS)" });
+    }
+    
+    await sendEmail({
+      to: process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com",
+      subject: "HBL Email System Test",
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #166534;">Email System Test Successful!</h2>
+          <p>Your SMTP configuration is working correctly.</p>
+          <p><strong>Config:</strong></p>
+          <ul>
+            <li>Host: ${process.env.SMTP_HOST || 'smtp.gmail.com'}</li>
+            <li>Port: ${process.env.SMTP_PORT || '465'}</li>
+            <li>User: ${process.env.SMTP_USER}</li>
+          </ul>
+          <p>Timestamp: ${new Date().toISOString()}</p>
+        </div>
+      `
+    });
+    
+    res.json({ status: "ok", message: `Test email sent to ${process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com"}` });
+  } catch (e: any) {
+    console.error("Email test failed:", e);
+    res.status(500).json({ status: "error", message: "Email test failed", details: e.message });
+  }
 });
 
 api.post("/sign-waiver", async (req, res) => {
@@ -242,11 +295,6 @@ api.post("/create-booking", async (req, res) => {
   // 2. Try Email (Always attempt)
   try {
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-      const transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com", port: 465, secure: true,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-      });
-      
       // ADMIN NOTIFICATION
       const adminHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
@@ -264,11 +312,11 @@ api.post("/create-booking", async (req, res) => {
         </div>
       `;
 
-      await transporter.sendMail({
-        from: `"HBL Notifications" <${process.env.SMTP_USER}>`,
+      await sendEmail({
         to: process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com",
         subject: `New Booking: ${booking.name}`,
-        html: adminHtml
+        html: adminHtml,
+        fromName: "HBL Notifications"
       });
 
       // CUSTOMER CONFIRMATION
@@ -309,11 +357,11 @@ api.post("/create-booking", async (req, res) => {
         </div>
       `;
 
-      await transporter.sendMail({
-        from: `"Helena Backcountry Llamas" <${process.env.SMTP_USER}>`,
+      await sendEmail({
         to: booking.email,
         subject: `Expedition Request Received: ${booking.startDate}`,
-        html: customerHtml
+        html: customerHtml,
+        fromName: "Helena Backcountry Llamas"
       });
 
       emailSent = true;
@@ -413,13 +461,8 @@ api.post("/update-booking", async (req, res) => {
 
     // Send Approval Email if status changed to confirmed
     if (booking && (action === 'approve' || status === 'confirmed') && process.env.SMTP_USER && process.env.SMTP_PASS) {
-      const transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com", port: 465, secure: true,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-      });
-
       const branding = req.body.branding || {};
-      const venmoHandle = branding.venmoHandle || "@helenallamas";
+      const venmoHandle = branding.venmoHandle || "@helenallams";
       const venmoLink = `https://venmo.com/u/${venmoHandle.replace('@', '')}`;
       
       // Pricing logic (matching client-side)
@@ -511,11 +554,11 @@ api.post("/update-booking", async (req, res) => {
         </div>
       `;
 
-      await transporter.sendMail({
-        from: `"Helena Backcountry Llamas" <${process.env.SMTP_USER}>`,
+      await sendEmail({
         to: booking.email,
         subject: `Booking Confirmed & Invoice: ${booking.startDate} Expedition`,
-        html: invoiceHtml
+        html: invoiceHtml,
+        fromName: "Helena Backcountry Llamas"
       }).catch(err => console.error("Approval email failed:", err));
 
       // Send SMS Approval Alert
