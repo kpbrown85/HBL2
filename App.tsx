@@ -220,6 +220,7 @@ const App: React.FC = () => {
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [lastApiCheck, setLastApiCheck] = useState<Date | null>(null);
   const [supabaseStatus, setSupabaseStatus] = useState<boolean | null>(null);
+  const [smtpStatus, setSmtpStatus] = useState<boolean | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const [apiVersion, setApiVersion] = useState<string | null>(null);
   const [storageWarning, setStorageWarning] = useState(false);
@@ -243,6 +244,7 @@ const App: React.FC = () => {
         const data = await response.json();
         setApiStatus('online');
         setSupabaseStatus(data.supabase);
+        setSmtpStatus(data.smtp);
         setApiError(null);
         setApiVersion(response.headers.get("X-API-Version"));
         return;
@@ -1461,6 +1463,9 @@ const App: React.FC = () => {
                         </div>
                         <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${supabaseStatus ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-stone-50 text-stone-600 border-stone-100'}`}>
                           Database: {supabaseStatus ? 'Supabase Connected' : 'Local Storage'}
+                        </div>
+                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${smtpStatus ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                          Email: {smtpStatus ? 'SMTP Active' : 'Email Offline'}
                         </div>
                         <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${bookings.length > 0 ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-stone-50 text-stone-400 border-stone-100'}`}>
                           Sync: {bookings.length} Records

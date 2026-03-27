@@ -109,17 +109,34 @@ api.get("/test-supabase", async (req, res) => {
       results[table] = error ? { status: "missing", error: error.message } : { status: "ok" };
     }
     
-    const missingTables = Object.entries(results).filter(([_, v]: any) => v.status === "missing").map(([k]) => k);
+    // Specifically check for new columns in bookings table
+    if (results['bookings'].status === "ok") {
+      const { error: columnError } = await supabase.from('bookings').select('bookingType, totalPrice').limit(1);
+      if (columnError) {
+        results['bookings'] = { 
+          status: "outdated", 
+          error: "Missing required columns: bookingType or totalPrice",
+          details: columnError.message
+        };
+      }
+    }
     
-    if (missingTables.length > 0) {
+    const missingTables = Object.entries(results).filter(([_, v]: any) => v.status === "missing").map(([k]) => k);
+    const outdatedTables = Object.entries(results).filter(([_, v]: any) => v.status === "outdated").map(([k]) => k);
+    
+    if (missingTables.length > 0 || outdatedTables.length > 0) {
+      let message = "";
+      if (missingTables.length > 0) message += `Some tables are missing: ${missingTables.join(', ')}. `;
+      if (outdatedTables.length > 0) message += `Some tables are missing required columns: ${outdatedTables.join(', ')}. `;
+      
       res.json({ 
         status: "partial", 
-        message: `Some tables are missing in your Supabase project: ${missingTables.join(', ')}`,
-        details: "You need to create these tables in the Supabase SQL Editor. I can provide the SQL script for you.",
+        message: message.trim(),
+        details: "You need to update your Supabase schema. I can provide the SQL script for you.",
         results 
       });
     } else {
-      res.json({ status: "ok", message: "All Supabase tables are correctly configured!", results });
+      res.json({ status: "ok", message: "All Supabase tables and columns are correctly configured!", results });
     }
   } catch (e: any) {
     res.status(500).json({ status: "error", message: "Supabase connection failed", details: e.message || JSON.stringify(e) });
@@ -196,7 +213,8 @@ api.post("/create-booking", async (req, res) => {
       }]);
       if (error) {
         console.error("Supabase Insert Error:", error);
-        throw new Error(`Database save failed: ${error.message}. Please ensure your Supabase table has columns: id (text/uuid), name, email, phone, startDate, endDate, numLlamas, trailerNeeded, isFirstTimer, bookingType, totalPrice, timestamp, status, isRead.`);
+        const sqlFix = `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "bookingType" TEXT; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "totalPrice" NUMERIC;`;
+        throw new Error(`Database save failed: ${error.message}. Please run this SQL in your Supabase SQL Editor: ${sqlFix}`);
       }
     } else {
       let bookings = [];
@@ -248,7 +266,7 @@ api.post("/create-booking", async (req, res) => {
 
       await transporter.sendMail({
         from: `"HBL Notifications" <${process.env.SMTP_USER}>`,
-        to: "kevin.paul.brown@gmail.com",
+        to: process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com",
         subject: `New Booking: ${booking.name}`,
         html: adminHtml
       });
