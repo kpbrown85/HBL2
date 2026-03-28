@@ -145,16 +145,15 @@ api.get("/test-supabase", async (req, res) => {
 
 // Email Helper
 const getTransporter = () => {
-  // Check for alternative names just in case
   const user = (process.env.SMTP_USER || process.env.GMAIL_USER)?.trim();
-  const pass = (process.env.SMTP_PASS || process.env.GMAIL_PASS)?.replace(/\s+/g, ''); // Remove all spaces from App Password
+  const pass = (process.env.SMTP_PASS || process.env.GMAIL_PASS)?.replace(/\s+/g, ''); 
   
   if (!user || !pass) {
     console.error("Email Helper: Missing SMTP_USER or SMTP_PASS");
     return null;
   }
   
-  console.log(`Initializing Gmail Transporter: User=${user.substring(0, 3)}...${user.substring(user.indexOf('@'))}, PassLength=${pass.length}`);
+  console.log(`Initializing Gmail Transporter: User=${user}, PassLength=${pass.length}`);
   
   // Use 'service: gmail' for better compatibility
   return nodemailer.createTransport({
@@ -163,9 +162,8 @@ const getTransporter = () => {
       user: user,
       pass: pass
     },
-    tls: {
-      rejectUnauthorized: false
-    }
+    debug: true, // Enable debug output
+    logger: true  // Log to console
   });
 };
 
