@@ -24,6 +24,7 @@
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
     "react-signature-canvas": "^1.1.0-alpha.2",
+    "resend": "^6.9.4",
     "tsx": "^4.21.0",
     "twilio": "^5.12.2",
     "uuid": "^11.0.0"

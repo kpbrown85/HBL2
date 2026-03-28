@@ -1512,25 +1512,32 @@ const App: React.FC = () => {
                         <div className="flex flex-col items-end gap-2 mt-4 p-4 bg-stone-50 border border-stone-200 rounded-2xl max-w-md">
                           <p className="text-[10px] font-black text-stone-900 uppercase tracking-widest flex items-center gap-2">
                             <ShieldAlert size={14} className="text-red-500" />
-                            Gmail SMTP Troubleshooting Guide
+                            Email Notification Setup
                           </p>
-                          <ol className="text-[9px] font-bold text-stone-500 uppercase tracking-widest space-y-2 list-decimal pl-4">
-                            <li>Ensure <strong>2-Step Verification</strong> is ON in your Google Account.</li>
-                            <li>
-                              <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Create a 16-character App Password</a> 
-                              and save it as <strong>SMTP_PASS</strong> in AI Studio Secrets.
-                            </li>
-                            <li>
-                              <strong>Unlock Account:</strong> If the link below is "dead," it means your account is already unlocked or you aren't logged in. Try:
-                              <div className="flex flex-col gap-1 mt-1">
-                                <a href="https://accounts.google.com/DisplayUnlockCaptcha" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Link 1: Standard Unlock</a>
-                                <a href="https://accounts.google.com/b/0/DisplayUnlockCaptcha" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Link 2: Multi-Account Unlock</a>
-                              </div>
-                            </li>
-                            <li>
-                              <strong>Check for Email:</strong> Look for a "Sign-in attempt blocked" email from Google. Click <strong>"Check activity"</strong> and then <strong>"Yes, it was me."</strong>
-                            </li>
-                          </ol>
+                          <div className="space-y-4">
+                            <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                              <p className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-2">Recommended: Use Resend</p>
+                              <p className="text-[9px] font-bold text-blue-600 uppercase tracking-widest leading-relaxed">
+                                Gmail SMTP is often blocked by Google's security. 
+                                <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="underline ml-1">Resend</a> 
+                                is free, takes 1 minute to set up, and is much more reliable.
+                              </p>
+                              <ol className="text-[9px] font-bold text-blue-700 uppercase tracking-widest mt-2 list-decimal pl-4 space-y-1">
+                                <li>Create a free account at <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="underline">resend.com</a></li>
+                                <li>Generate an <strong>API Key</strong></li>
+                                <li>Add it as <strong>RESEND_API_KEY</strong> in AI Studio Secrets</li>
+                              </ol>
+                            </div>
+                            
+                            <div className="opacity-60">
+                              <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Alternative: Gmail SMTP</p>
+                              <ol className="text-[9px] font-bold text-stone-500 uppercase tracking-widest space-y-2 list-decimal pl-4">
+                                <li>Ensure <strong>2-Step Verification</strong> is ON.</li>
+                                <li><a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="underline">Create App Password</a> (save as <strong>SMTP_PASS</strong>).</li>
+                                <li>Visit <a href="https://accounts.google.com/DisplayUnlockCaptcha" target="_blank" rel="noopener noreferrer" className="underline">Unlock Page</a> and click Continue.</li>
+                              </ol>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1636,9 +1643,18 @@ const App: React.FC = () => {
                                   </button>
                                 </>
                               )}
-                              <button onClick={() => updateBooking(booking.id, 'delete')} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all">
-                                <Trash2 size={20}/>
-                              </button>
+                              <div className="flex gap-3">
+                                <a 
+                                  href={`mailto:${booking.email}?subject=Booking Confirmation: ${booking.name}&body=Hi ${booking.name},%0D%0A%0D%0AWe are excited to confirm your backcountry llama expedition!%0D%0A%0D%0APlease sign the waiver here: ${window.location.origin}/sign-waiver/${booking.id}%0D%0A%0D%0APayment Instructions: [Add your Venmo/PayPal/Check details here]%0D%0A%0D%0AExpedition Dates: ${booking.startDate} to ${booking.endDate}%0D%0A%0D%0ASee you soon!`}
+                                  className="flex-1 p-4 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all flex items-center justify-center gap-2"
+                                  title="Send Manual Email Fallback"
+                                >
+                                  <Mail size={20}/>
+                                </a>
+                                <button onClick={() => updateBooking(booking.id, 'delete')} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all">
+                                  <Trash2 size={20}/>
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>

@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
+import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 import twilio from 'twilio';
 
@@ -144,37 +145,58 @@ api.get("/test-supabase", async (req, res) => {
 });
 
 // Email Helper
+const getResendClient = () => {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) return null;
+  return new Resend(apiKey);
+};
+
 const getTransporter = () => {
   const user = (process.env.SMTP_USER || process.env.GMAIL_USER)?.trim();
   const pass = (process.env.SMTP_PASS || process.env.GMAIL_PASS)?.replace(/\s+/g, ''); 
   
   if (!user || !pass) {
-    console.error("Email Helper: Missing SMTP_USER or SMTP_PASS");
     return null;
   }
   
-  console.log(`Initializing Gmail Transporter: User=${user}, PassLength=${pass.length}`);
-  
-  // Use 'service: gmail' for better compatibility
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: user,
       pass: pass
-    },
-    debug: true, // Enable debug output
-    logger: true  // Log to console
+    }
   });
 };
 
 const sendEmail = async (options: { to: string, subject: string, html: string, fromName?: string }) => {
+  // Try Resend first if configured
+  const resend = getResendClient();
+  if (resend) {
+    console.log(`Attempting to send email via Resend to ${options.to}...`);
+    try {
+      const { data, error } = await resend.emails.send({
+        from: `${options.fromName || 'HBL Notifications'} <onboarding@resend.dev>`, // Default Resend domain
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+      });
+      
+      if (error) throw error;
+      console.log(`Email sent via Resend! ID: ${data?.id}`);
+      return data;
+    } catch (error) {
+      console.error("Resend failed, falling back to SMTP if available:", error);
+    }
+  }
+
+  // Fallback to SMTP
   const transporter = getTransporter();
   if (!transporter) {
-    console.error("Email failed: SMTP not configured (check SMTP_USER/SMTP_PASS)");
-    throw new Error("SMTP not configured");
+    console.error("Email failed: No email provider configured (check RESEND_API_KEY or SMTP_USER/SMTP_PASS)");
+    throw new Error("No email provider configured");
   }
   
-  console.log(`Attempting to send email to ${options.to} (Subject: ${options.subject})...`);
+  console.log(`Attempting to send email via SMTP to ${options.to}...`);
   try {
     const info = await transporter.sendMail({
       from: `"${options.fromName || 'HBL Notifications'}" <${process.env.SMTP_USER}>`,
@@ -182,30 +204,27 @@ const sendEmail = async (options: { to: string, subject: string, html: string, f
       subject: options.subject,
       html: options.html
     });
-    console.log(`Email sent successfully! MessageId: ${info.messageId}`);
+    console.log(`Email sent successfully via SMTP! MessageId: ${info.messageId}`);
     return info;
   } catch (error: any) {
-    console.error(`Email failed to ${options.to}:`, error);
+    console.error(`Email failed via SMTP to ${options.to}:`, error);
     throw error;
   }
 };
 
 api.get("/test-email", async (req, res) => {
   try {
-    const user = process.env.SMTP_USER?.trim();
-    const pass = process.env.SMTP_PASS?.replace(/\s+/g, '');
+    const resendKey = process.env.RESEND_API_KEY?.trim();
+    const smtpUser = process.env.SMTP_USER?.trim();
+    const smtpPass = process.env.SMTP_PASS?.trim();
     
-    if (!user || !pass) {
-      return res.json({ status: "error", message: "SMTP credentials missing (SMTP_USER, SMTP_PASS)" });
+    if (!resendKey && (!smtpUser || !smtpPass)) {
+      return res.json({ 
+        status: "error", 
+        message: "No email provider configured",
+        details: "Please set RESEND_API_KEY (Recommended) or SMTP_USER/SMTP_PASS in environment variables."
+      });
     }
-    
-    const transporter = getTransporter();
-    if (!transporter) throw new Error("Could not initialize transporter");
-    
-    // Verify connection first
-    console.log("Verifying SMTP connection...");
-    await transporter.verify();
-    console.log("SMTP connection verified!");
     
     await sendEmail({
       to: process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com",
@@ -213,12 +232,8 @@ api.get("/test-email", async (req, res) => {
       html: `
         <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
           <h2 style="color: #166534;">Email System Test Successful!</h2>
-          <p>Your SMTP configuration is working correctly.</p>
-          <p><strong>Config:</strong></p>
-          <ul>
-            <li>User: ${user}</li>
-            <li>PassLength: ${pass.length}</li>
-          </ul>
+          <p>Your email configuration is working correctly.</p>
+          <p><strong>Provider:</strong> ${resendKey ? 'Resend API' : 'Gmail SMTP'}</p>
           <p>Timestamp: ${new Date().toISOString()}</p>
           <p>If you received this, your email system is fully operational.</p>
         </div>
@@ -228,30 +243,15 @@ api.get("/test-email", async (req, res) => {
     res.json({ status: "ok", message: `Test email sent to ${process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com"}` });
   } catch (e: any) {
     console.error("Email test failed:", e);
-    
-    let message = "Email test failed";
-    let details = e.message;
-    const pass = process.env.SMTP_PASS?.replace(/\s+/g, '') || '';
-    
-    // Specific hint for Gmail 535 errors
-    if (details.includes("535-5.7.8") || details.includes("Invalid login")) {
-      message = "Invalid Login (Gmail)";
-      details = "Gmail rejected your credentials. \n\n" +
-                `1. Check your SMTP_USER: Is it your FULL email address? (${process.env.SMTP_USER})\n` +
-                `2. Check your SMTP_PASS: Is it a 16-character 'App Password' (NOT your regular password)? Current length: ${pass.length}\n` +
-                "3. Create a new App Password here: https://myaccount.google.com/apppasswords\n" +
-                "4. Unlock your account: Visit https://accounts.google.com/DisplayUnlockCaptcha while logged into your Gmail account and click 'Continue'. This is often required after multiple failed attempts.";
-    }
-
     res.status(500).json({ 
       status: "error", 
-      message, 
-      details,
+      message: "Email test failed", 
+      details: e.message,
       code: e.code,
-      command: e.command,
       diagnostics: {
-        passLength: pass.length,
-        user: process.env.SMTP_USER
+        hasResendKey: !!process.env.RESEND_API_KEY,
+        hasSmtpUser: !!process.env.SMTP_USER,
+        smtpPassLength: process.env.SMTP_PASS?.length || 0
       }
     });
   }
