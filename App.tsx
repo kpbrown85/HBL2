@@ -231,7 +231,8 @@ const App: React.FC = () => {
       if (data.status === 'ok') {
         alert("Success! Test email sent. Please check your inbox (and spam folder).");
       } else {
-        alert(`Email Test Failed: ${data.message}\n\nDetails: ${data.details || 'No details'}`);
+        const diagnostics = data.diagnostics ? `\n(User: ${data.diagnostics.user}, PassLength: ${data.diagnostics.passLength})` : '';
+        alert(`Email Test Failed: ${data.message}${diagnostics}\n\n${data.details || 'No details'}`);
       }
     } catch (err) {
       alert("Failed to connect to the email test endpoint.");
@@ -1506,6 +1507,16 @@ const App: React.FC = () => {
                           </button>
                         </div>
                       </div>
+                      
+                      {!smtpStatus && (
+                        <div className="flex flex-col items-end gap-1 mt-2">
+                          <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">Gmail SMTP Troubleshooting:</p>
+                          <div className="flex gap-3">
+                            <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-[9px] font-black text-blue-500 hover:underline uppercase tracking-widest">1. Create App Password</a>
+                            <a href="https://accounts.google.com/DisplayUnlockCaptcha" target="_blank" rel="noopener noreferrer" className="text-[9px] font-black text-blue-500 hover:underline uppercase tracking-widest">2. Unlock Account</a>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </header>
 

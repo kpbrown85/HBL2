@@ -145,23 +145,20 @@ api.get("/test-supabase", async (req, res) => {
 
 // Email Helper
 const getTransporter = () => {
-  const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASS?.replace(/\s+/g, ''); // Remove all spaces from App Password
+  // Check for alternative names just in case
+  const user = (process.env.SMTP_USER || process.env.GMAIL_USER)?.trim();
+  const pass = (process.env.SMTP_PASS || process.env.GMAIL_PASS)?.replace(/\s+/g, ''); // Remove all spaces from App Password
   
   if (!user || !pass) {
     console.error("Email Helper: Missing SMTP_USER or SMTP_PASS");
     return null;
   }
   
-  const port = parseInt(process.env.SMTP_PORT || "465");
-  const host = process.env.SMTP_HOST || "smtp.gmail.com";
+  console.log(`Initializing Gmail Transporter: User=${user.substring(0, 3)}...${user.substring(user.indexOf('@'))}, PassLength=${pass.length}`);
   
-  console.log(`Initializing Transporter: Host=${host}, Port=${port}, User=${user.substring(0, 3)}...${user.substring(user.indexOf('@'))}, PassLength=${pass.length}`);
-  
+  // Use 'service: gmail' for better compatibility
   return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
+    service: 'gmail',
     auth: {
       user: user,
       pass: pass
@@ -197,7 +194,10 @@ const sendEmail = async (options: { to: string, subject: string, html: string, f
 
 api.get("/test-email", async (req, res) => {
   try {
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    const user = process.env.SMTP_USER?.trim();
+    const pass = process.env.SMTP_PASS?.replace(/\s+/g, '');
+    
+    if (!user || !pass) {
       return res.json({ status: "error", message: "SMTP credentials missing (SMTP_USER, SMTP_PASS)" });
     }
     
@@ -218,10 +218,8 @@ api.get("/test-email", async (req, res) => {
           <p>Your SMTP configuration is working correctly.</p>
           <p><strong>Config:</strong></p>
           <ul>
-            <li>Host: ${process.env.SMTP_HOST || 'smtp.gmail.com'}</li>
-            <li>Port: ${process.env.SMTP_PORT || '465'}</li>
-            <li>User: ${process.env.SMTP_USER}</li>
-            <li>Secure: ${process.env.SMTP_PORT === "465" || !process.env.SMTP_PORT}</li>
+            <li>User: ${user}</li>
+            <li>PassLength: ${pass.length}</li>
           </ul>
           <p>Timestamp: ${new Date().toISOString()}</p>
           <p>If you received this, your email system is fully operational.</p>
@@ -235,14 +233,16 @@ api.get("/test-email", async (req, res) => {
     
     let message = "Email test failed";
     let details = e.message;
+    const pass = process.env.SMTP_PASS?.replace(/\s+/g, '') || '';
     
     // Specific hint for Gmail 535 errors
     if (details.includes("535-5.7.8") || details.includes("Invalid login")) {
       message = "Invalid Login (Gmail)";
       details = "Gmail rejected your credentials. \n\n" +
-                "1. Check your SMTP_USER: Is it your FULL email address?\n" +
-                "2. Check your SMTP_PASS: Is it a 16-character 'App Password' (NOT your regular password)?\n" +
-                "3. Unlock your account: Visit https://accounts.google.com/DisplayUnlockCaptcha while logged into your Gmail account and click 'Continue'. This is often required after multiple failed attempts.";
+                `1. Check your SMTP_USER: Is it your FULL email address? (${process.env.SMTP_USER})\n` +
+                `2. Check your SMTP_PASS: Is it a 16-character 'App Password' (NOT your regular password)? Current length: ${pass.length}\n` +
+                "3. Create a new App Password here: https://myaccount.google.com/apppasswords\n" +
+                "4. Unlock your account: Visit https://accounts.google.com/DisplayUnlockCaptcha while logged into your Gmail account and click 'Continue'. This is often required after multiple failed attempts.";
     }
 
     res.status(500).json({ 
@@ -250,7 +250,11 @@ api.get("/test-email", async (req, res) => {
       message, 
       details,
       code: e.code,
-      command: e.command
+      command: e.command,
+      diagnostics: {
+        passLength: pass.length,
+        user: process.env.SMTP_USER
+      }
     });
   }
 });
