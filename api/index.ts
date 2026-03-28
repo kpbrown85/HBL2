@@ -145,21 +145,28 @@ api.get("/test-supabase", async (req, res) => {
 
 // Email Helper
 const getTransporter = () => {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
+  const user = process.env.SMTP_USER?.trim();
+  const pass = process.env.SMTP_PASS?.replace(/\s+/g, ''); // Remove all spaces from App Password
+  
+  if (!user || !pass) {
+    console.error("Email Helper: Missing SMTP_USER or SMTP_PASS");
+    return null;
+  }
   
   const port = parseInt(process.env.SMTP_PORT || "465");
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   
+  console.log(`Initializing Transporter: Host=${host}, Port=${port}, User=${user.substring(0, 3)}...${user.substring(user.indexOf('@'))}, PassLength=${pass.length}`);
+  
   return nodemailer.createTransport({
     host,
     port,
-    secure: port === 465, // true for 465, false for other ports
+    secure: port === 465,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
+      user: user,
+      pass: pass
     },
     tls: {
-      // Do not fail on invalid certs (common issue with Cloud Run/Proxies)
       rejectUnauthorized: false
     }
   });
@@ -232,7 +239,10 @@ api.get("/test-email", async (req, res) => {
     // Specific hint for Gmail 535 errors
     if (details.includes("535-5.7.8") || details.includes("Invalid login")) {
       message = "Invalid Login (Gmail)";
-      details = "Gmail rejected your credentials. IMPORTANT: You must use a 16-character 'App Password', NOT your regular Gmail password. Generate one in your Google Account Security settings.";
+      details = "Gmail rejected your credentials. \n\n" +
+                "1. Check your SMTP_USER: Is it your FULL email address?\n" +
+                "2. Check your SMTP_PASS: Is it a 16-character 'App Password' (NOT your regular password)?\n" +
+                "3. Unlock your account: Visit https://accounts.google.com/DisplayUnlockCaptcha while logged into your Gmail account and click 'Continue'. This is often required after multiple failed attempts.";
     }
 
     res.status(500).json({ 
