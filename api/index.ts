@@ -351,7 +351,7 @@ api.post("/create-booking", async (req, res) => {
 
   // 2. Try Email (Always attempt)
   try {
-    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    if ((process.env.SMTP_USER && process.env.SMTP_PASS) || process.env.RESEND_API_KEY) {
       // ADMIN NOTIFICATION
       const adminHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
@@ -517,7 +517,7 @@ api.post("/update-booking", async (req, res) => {
     }
 
     // Send Approval Email if status changed to confirmed
-    if (booking && (action === 'approve' || status === 'confirmed') && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    if (booking && (action === 'approve' || status === 'confirmed') && ((process.env.SMTP_USER && process.env.SMTP_PASS) || process.env.RESEND_API_KEY)) {
       const branding = req.body.branding || {};
       const venmoHandle = branding.venmoHandle || "@helenallams";
       const venmoLink = `https://venmo.com/u/${venmoHandle.replace('@', '')}`;

@@ -1645,7 +1645,7 @@ const App: React.FC = () => {
                               )}
                               <div className="flex gap-3">
                                 <a 
-                                  href={`mailto:${booking.email}?subject=Booking Confirmation: ${booking.name}&body=Hi ${booking.name},%0D%0A%0D%0AWe are excited to confirm your backcountry llama expedition!%0D%0A%0D%0APlease sign the waiver here: ${window.location.origin}/sign-waiver/${booking.id}%0D%0A%0D%0APayment Instructions: [Add your Venmo/PayPal/Check details here]%0D%0A%0D%0AExpedition Dates: ${booking.startDate} to ${booking.endDate}%0D%0A%0D%0ASee you soon!`}
+                                  href={`mailto:${booking.email}?subject=Booking Confirmation: ${booking.name}&body=Hi ${booking.name},%0D%0A%0D%0AWe are excited to confirm your backcountry llama expedition!%0D%0A%0D%0APlease sign the waiver here: ${window.location.origin}/sign/${booking.id}%0D%0A%0D%0APayment Instructions: [Add your Venmo/PayPal/Check details here]%0D%0A%0D%0AExpedition Dates: ${booking.startDate} to ${booking.endDate}%0D%0A%0D%0ASee you soon!`}
                                   className="flex-1 p-4 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all flex items-center justify-center gap-2"
                                   title="Send Manual Email Fallback"
                                 >
