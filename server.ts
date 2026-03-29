@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -5,6 +6,7 @@ import { fileURLToPath } from "url";
 import { api } from "./api/index.js";
 
 console.log(`[${new Date().toISOString()}] Server starting...`);
+console.log(`[${new Date().toISOString()}] RESEND_API_KEY present: ${!!process.env.RESEND_API_KEY}`);
 console.log(`[${new Date().toISOString()}] API Router imported type:`, typeof api);
 console.log(`[${new Date().toISOString()}] API Router is function:`, typeof api === 'function');
 

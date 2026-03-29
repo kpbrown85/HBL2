@@ -69,7 +69,7 @@ const debugInfo = {
   initialized: true,
   supabaseConfigured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
   supabaseActive: !!supabase,
-  resendConfigured: !!process.env.RESEND_API_KEY,
+  resendConfigured: !!getResendApiKey(),
   bookingsFile: BOOKINGS_FILE,
   gearFile: GEAR_FILE,
   env: {
@@ -78,7 +78,7 @@ const debugInfo = {
   }
 };
 
-console.log(`[${new Date().toISOString()}] API App Initialized. Resend: ${!!process.env.RESEND_API_KEY ? 'CONFIGURED' : 'MISSING'}`);
+console.log(`[${new Date().toISOString()}] API App Initialized. Resend: ${!!getResendApiKey() ? 'CONFIGURED' : 'MISSING'}`);
 
 // Middleware to log all API requests
 api.use((req, res, next) => {
@@ -90,11 +90,31 @@ api.get("/debug", (req, res) => {
   res.json(debugInfo);
 });
 
+api.get("/debug-env", (req, res) => {
+  const allKeys = Object.keys(process.env);
+  const resendRelated = allKeys.filter(k => k.toLowerCase().includes('resend'));
+  const key = getResendApiKey();
+  
+  res.json({ 
+    resendPresent: !!key,
+    resendLength: key?.length || 0,
+    resendPrefix: key ? key.substring(0, 3) + "..." : "none",
+    resendRelatedKeys: resendRelated,
+    supabasePresent: !!process.env.SUPABASE_URL,
+    allKeysCount: allKeys.length,
+    nodeEnv: process.env.NODE_ENV,
+    cwd: process.cwd(),
+    timestamp: new Date().toISOString()
+  });
+});
+
 api.get("/ping", (req, res) => {
+  const resendKey = getResendApiKey();
+  console.log(`[${new Date().toISOString()}] Ping received. Resend key present: ${!!resendKey}`);
   res.json({ 
     status: "ok", 
     supabase: !!supabase,
-    resend: !!process.env.RESEND_API_KEY,
+    resend: !!resendKey,
     timestamp: new Date().toISOString() 
   });
 });
@@ -146,9 +166,13 @@ api.get("/test-supabase", async (req, res) => {
   }
 });
 
+const getResendApiKey = () => {
+  return (process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY)?.trim();
+};
+
 // Email Helper
 const getResendClient = () => {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const apiKey = getResendApiKey();
   if (!apiKey) return null;
   return new Resend(apiKey);
 };
@@ -180,7 +204,7 @@ const sendEmail = async (options: { to: string, subject: string, html: string, f
 
 api.get("/test-email", async (req, res) => {
   try {
-    const resendKey = process.env.RESEND_API_KEY?.trim();
+    const resendKey = getResendApiKey();
     
     if (!resendKey) {
       return res.json({ 
@@ -212,7 +236,7 @@ api.get("/test-email", async (req, res) => {
       details: e.message,
       code: e.code,
       diagnostics: {
-        hasResendKey: !!process.env.RESEND_API_KEY
+        hasResendKey: !!getResendApiKey()
       }
     });
   }
@@ -314,7 +338,7 @@ api.post("/create-booking", async (req, res) => {
 
   // 2. Try Email (Always attempt)
   try {
-    if (process.env.RESEND_API_KEY) {
+    if (getResendApiKey()) {
       // ADMIN NOTIFICATION
       const adminHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
@@ -519,7 +543,8 @@ api.post("/update-booking", async (req, res) => {
       }
 
       // Send Approval Email if status changed to confirmed
-      if (process.env.RESEND_API_KEY) {
+      const resendKey = getResendApiKey();
+      if (resendKey) {
         const venmoHandle = branding.venmoHandle || "@helenallams";
         const venmoLink = `https://venmo.com/u/${venmoHandle.replace('@', '')}`;
         const waiverUrl = `${process.env.APP_URL || 'https://www.helenallamas.com'}/sign/${booking.id}`;

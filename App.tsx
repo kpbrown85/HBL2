@@ -1603,6 +1603,15 @@ const App: React.FC = () => {
                                 <li>Generate an <strong>API Key</strong></li>
                                 <li>Add it as <strong>RESEND_API_KEY</strong> in AI Studio Secrets</li>
                               </ol>
+                              <div className="mt-4 flex justify-end">
+                                <button 
+                                  onClick={() => checkApi()}
+                                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-200"
+                                >
+                                  <RefreshCcw size={12} />
+                                  Check Again
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
