@@ -262,6 +262,7 @@ const App: React.FC = () => {
       const contentType = response.headers.get("content-type");
       if (response.ok && contentType && contentType.includes("application/json")) {
         const data = await response.json();
+        console.log("API Ping Data:", data);
         setApiStatus('online');
         setSupabaseStatus(data.supabase);
         setEmailStatus(data.resend);
@@ -1560,8 +1561,8 @@ const App: React.FC = () => {
                         <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${supabaseStatus ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-stone-50 text-stone-600 border-stone-100'}`}>
                           Database: {supabaseStatus ? 'Supabase Connected' : 'Local Storage'}
                         </div>
-                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${emailStatus ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                          Email: {emailStatus ? 'Resend Active' : 'Resend Offline'}
+                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${emailStatus === true ? 'bg-blue-50 text-blue-700 border-blue-100' : emailStatus === false ? 'bg-red-50 text-red-700 border-red-100' : 'bg-stone-50 text-stone-400 border-stone-100'}`}>
+                          Email: {emailStatus === true ? 'Resend Active' : emailStatus === false ? 'Resend Offline' : 'Checking...'}
                         </div>
                         <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${bookings.length > 0 ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-stone-50 text-stone-400 border-stone-100'}`}>
                           Sync: {bookings.length} Records
@@ -1585,7 +1586,7 @@ const App: React.FC = () => {
                         </div>
                       </div>
                       
-                      {!emailStatus && (
+                      {emailStatus === false && (
                         <div className="flex flex-col items-end gap-2 mt-4 p-4 bg-stone-50 border border-stone-200 rounded-2xl max-w-md text-right">
                           <p className="text-[10px] font-black text-stone-900 uppercase tracking-widest flex items-center gap-2">
                             <ShieldAlert size={14} className="text-red-500" />

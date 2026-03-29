@@ -69,6 +69,7 @@ const debugInfo = {
   initialized: true,
   supabaseConfigured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
   supabaseActive: !!supabase,
+  resendConfigured: !!process.env.RESEND_API_KEY,
   bookingsFile: BOOKINGS_FILE,
   gearFile: GEAR_FILE,
   env: {
@@ -76,6 +77,8 @@ const debugInfo = {
     PORT: process.env.PORT
   }
 };
+
+console.log(`[${new Date().toISOString()}] API App Initialized. Resend: ${!!process.env.RESEND_API_KEY ? 'CONFIGURED' : 'MISSING'}`);
 
 // Middleware to log all API requests
 api.use((req, res, next) => {
