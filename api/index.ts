@@ -275,13 +275,15 @@ api.post("/create-booking", async (req, res) => {
         isFirstTimer: booking.isFirstTimer,
         bookingType: booking.bookingType,
         totalPrice: booking.totalPrice,
+        depositPaid: booking.depositPaid || 0,
+        totalPaid: booking.totalPaid || 0,
         timestamp: booking.timestamp,
         status: booking.status,
         isRead: booking.isRead
       }]);
       if (error) {
         console.error("Supabase Insert Error:", error);
-        const sqlFix = `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "bookingType" TEXT; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "totalPrice" NUMERIC;`;
+        const sqlFix = `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "bookingType" TEXT; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "totalPrice" NUMERIC; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "depositPaid" NUMERIC DEFAULT 0; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "totalPaid" NUMERIC DEFAULT 0;`;
         throw new Error(`Database save failed: ${error.message}. Please run this SQL in your Supabase SQL Editor: ${sqlFix}`);
       }
     } else {
@@ -439,11 +441,13 @@ api.get("/get-bookings", async (req, res) => {
 
 api.post("/update-booking", async (req, res) => {
   try {
-    const { id, action, status, isRead } = req.body;
+    const { id, action, status, isRead, depositPaid, totalPaid } = req.body;
     const update: any = {};
     if (action === 'approve' || status === 'confirmed') update.status = 'confirmed';
     if (action === 'reject' || status === 'canceled') update.status = 'canceled';
     if (action === 'markRead' || isRead) update.isRead = true;
+    if (depositPaid !== undefined) update.depositPaid = Number(depositPaid);
+    if (totalPaid !== undefined) update.totalPaid = Number(totalPaid);
 
     let booking: any = null;
 
@@ -645,6 +649,10 @@ api.get("/invoice/:id", async (req, res) => {
     const clinicTotal = booking.isFirstTimer ? priceClinic : 0;
     const grandTotal = llamaTotal + trailerTotal + clinicTotal;
 
+    const depositPaid = booking.depositPaid || 0;
+    const totalPaid = booking.totalPaid || 0;
+    const remainingBalance = grandTotal - depositPaid - totalPaid;
+
     const venmoHandle = branding.venmoHandle || "@helenallams";
 
     // 4. Generate HTML
@@ -744,12 +752,32 @@ api.get("/invoice/:id", async (req, res) => {
                 <td class="total-label">Total Amount Due</td>
                 <td class="total-amount">$${grandTotal.toFixed(2)}</td>
               </tr>
+              ${depositPaid > 0 ? `
+              <tr>
+                <td style="padding: 10px 0; color: #166534; font-weight: bold;">Deposit Paid</td>
+                <td style="padding: 10px 0; text-align: right; color: #166534; font-weight: bold;">-$${depositPaid.toFixed(2)}</td>
+              </tr>` : ''}
+              ${totalPaid > 0 ? `
+              <tr>
+                <td style="padding: 10px 0; color: #166534; font-weight: bold;">Additional Payments</td>
+                <td style="padding: 10px 0; text-align: right; color: #166534; font-weight: bold;">-$${totalPaid.toFixed(2)}</td>
+              </tr>` : ''}
+              <tr style="border-top: 2px solid #166534;">
+                <td style="padding: 20px 0; font-size: 24px; font-weight: 900;">Remaining Balance</td>
+                <td style="padding: 20px 0; text-align: right; font-size: 32px; font-weight: 900; color: ${remainingBalance <= 0 ? '#166534' : '#1c1917'};">
+                  ${remainingBalance <= 0 ? 'PAID IN FULL' : `$${remainingBalance.toFixed(2)}`}
+                </td>
+              </tr>
             </tbody>
           </table>
 
           <div style="background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 12px; padding: 24px;">
             <h3 style="margin: 0 0 10px; color: #166534; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">Payment Instructions</h3>
-            <p style="margin: 0; font-size: 14px;">Please send a <strong>$100 deposit</strong> to Venmo: <strong>${venmoHandle}</strong> to secure your dates. The remaining balance is due before your trip.</p>
+            ${remainingBalance > 0 ? `
+              <p style="margin: 0; font-size: 14px;">Please send your payment to Venmo: <strong>${venmoHandle}</strong>. Reference Invoice #${booking.id.slice(0,8).toUpperCase()}.</p>
+            ` : `
+              <p style="margin: 0; font-size: 14px; font-weight: bold; color: #166534;">Thank you! Your expedition is fully paid.</p>
+            `}
           </div>
 
           <div class="footer">

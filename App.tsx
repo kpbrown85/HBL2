@@ -539,7 +539,7 @@ const App: React.FC = () => {
     }
   };
 
-  const updateBooking = async (id: string, action: 'confirm' | 'cancel' | 'delete') => {
+  const updateBooking = async (id: string, action: 'confirm' | 'cancel' | 'delete' | 'updatePayment', depositPaid?: number, totalPaid?: number) => {
     if (action === 'delete') {
       if (!confirm("Are you sure you want to permanently delete this booking? This action cannot be undone.")) {
         return;
@@ -555,7 +555,9 @@ const App: React.FC = () => {
         action,
         status: action === 'confirm' ? 'confirmed' : (action === 'cancel' ? 'canceled' : undefined), 
         isRead: true,
-        branding // Pass branding for invoice generation
+        branding, // Pass branding for invoice generation
+        depositPaid,
+        totalPaid
       };
       
       const response = await fetch(apiPath, { 
@@ -1619,6 +1621,33 @@ const App: React.FC = () => {
                                     </button>
                                   </div>
                                 )}
+                                <div className="space-y-2 col-span-2 md:col-span-4 pt-4 border-t border-stone-100">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-4">Payment Tracking</p>
+                                  <div className="flex flex-wrap items-center gap-6">
+                                    <div className="flex items-center gap-3">
+                                      <label className="text-[10px] font-bold text-stone-500 uppercase">Deposit ($)</label>
+                                      <input 
+                                        type="number" 
+                                        defaultValue={booking.depositPaid || 0}
+                                        onBlur={(e) => updateBooking(booking.id, 'updatePayment', Number(e.target.value), booking.totalPaid)}
+                                        className="w-24 bg-stone-50 border-none rounded-xl p-2 text-xs font-bold focus:ring-2 focus:ring-green-800 outline-none"
+                                      />
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <label className="text-[10px] font-bold text-stone-500 uppercase">Total Paid ($)</label>
+                                      <input 
+                                        type="number" 
+                                        defaultValue={booking.totalPaid || 0}
+                                        onBlur={(e) => updateBooking(booking.id, 'updatePayment', booking.depositPaid, Number(e.target.value))}
+                                        className="w-24 bg-stone-50 border-none rounded-xl p-2 text-xs font-bold focus:ring-2 focus:ring-green-800 outline-none"
+                                      />
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-green-800 bg-green-50 px-4 py-2 rounded-2xl">
+                                      <CreditCard size={12} />
+                                      Balance: ${((booking.totalPrice || 0) - (booking.depositPaid || 0) - (booking.totalPaid || 0)).toFixed(2)}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
 

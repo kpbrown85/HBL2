@@ -40,6 +40,8 @@ export interface BookingData {
   customOutfitting?: boolean;
   customRequests?: string;
   totalPrice?: number;
+  depositPaid?: number;
+  totalPaid?: number;
 }
 
 export interface Trail {
