@@ -70,7 +70,8 @@ import {
   PenTool,
   ShieldAlert,
   Database,
-  Play
+  Play,
+  FileText
 } from 'lucide-react';
 
 const APP_VERSION = "3.7.0-Conditions-Sync";
@@ -220,7 +221,7 @@ const App: React.FC = () => {
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [lastApiCheck, setLastApiCheck] = useState<Date | null>(null);
   const [supabaseStatus, setSupabaseStatus] = useState<boolean | null>(null);
-  const [smtpStatus, setSmtpStatus] = useState<boolean | null>(null);
+  const [emailStatus, setEmailStatus] = useState<boolean | null>(null);
   const [isTestingEmail, setIsTestingEmail] = useState(false);
 
   const handleTestEmail = async () => {
@@ -263,7 +264,7 @@ const App: React.FC = () => {
         const data = await response.json();
         setApiStatus('online');
         setSupabaseStatus(data.supabase);
-        setSmtpStatus(data.smtp);
+        setEmailStatus(data.resend);
         setApiError(null);
         setApiVersion(response.headers.get("X-API-Version"));
         return;
@@ -1483,8 +1484,8 @@ const App: React.FC = () => {
                         <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${supabaseStatus ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-stone-50 text-stone-600 border-stone-100'}`}>
                           Database: {supabaseStatus ? 'Supabase Connected' : 'Local Storage'}
                         </div>
-                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${smtpStatus ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                          Email: {smtpStatus ? 'SMTP Active' : 'Email Offline'}
+                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${emailStatus ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                          Email: {emailStatus ? 'Resend Active' : 'Resend Offline'}
                         </div>
                         <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${bookings.length > 0 ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-stone-50 text-stone-400 border-stone-100'}`}>
                           Sync: {bookings.length} Records
@@ -1508,33 +1509,22 @@ const App: React.FC = () => {
                         </div>
                       </div>
                       
-                      {!smtpStatus && (
-                        <div className="flex flex-col items-end gap-2 mt-4 p-4 bg-stone-50 border border-stone-200 rounded-2xl max-w-md">
+                      {!emailStatus && (
+                        <div className="flex flex-col items-end gap-2 mt-4 p-4 bg-stone-50 border border-stone-200 rounded-2xl max-w-md text-right">
                           <p className="text-[10px] font-black text-stone-900 uppercase tracking-widest flex items-center gap-2">
                             <ShieldAlert size={14} className="text-red-500" />
-                            Email Notification Setup
+                            Resend API Key Required
                           </p>
                           <div className="space-y-4">
                             <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl">
-                              <p className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-2">Recommended: Use Resend</p>
+                              <p className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-2">Setup Resend</p>
                               <p className="text-[9px] font-bold text-blue-600 uppercase tracking-widest leading-relaxed">
-                                Gmail SMTP is often blocked by Google's security. 
-                                <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="underline ml-1">Resend</a> 
-                                is free, takes 1 minute to set up, and is much more reliable.
+                                Resend is free, takes 1 minute to set up, and is much more reliable than Gmail.
                               </p>
-                              <ol className="text-[9px] font-bold text-blue-700 uppercase tracking-widest mt-2 list-decimal pl-4 space-y-1">
+                              <ol className="text-[9px] font-bold text-blue-700 uppercase tracking-widest mt-2 list-decimal pl-4 space-y-1 text-left">
                                 <li>Create a free account at <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="underline">resend.com</a></li>
                                 <li>Generate an <strong>API Key</strong></li>
                                 <li>Add it as <strong>RESEND_API_KEY</strong> in AI Studio Secrets</li>
-                              </ol>
-                            </div>
-                            
-                            <div className="opacity-60">
-                              <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Alternative: Gmail SMTP</p>
-                              <ol className="text-[9px] font-bold text-stone-500 uppercase tracking-widest space-y-2 list-decimal pl-4">
-                                <li>Ensure <strong>2-Step Verification</strong> is ON.</li>
-                                <li><a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="underline">Create App Password</a> (save as <strong>SMTP_PASS</strong>).</li>
-                                <li>Visit <a href="https://accounts.google.com/DisplayUnlockCaptcha" target="_blank" rel="noopener noreferrer" className="underline">Unlock Page</a> and click Continue.</li>
                               </ol>
                             </div>
                           </div>
@@ -1646,10 +1636,19 @@ const App: React.FC = () => {
                               <div className="flex gap-3">
                                 <a 
                                   href={`mailto:${booking.email}?subject=Booking Confirmation: ${booking.name}&body=Hi ${booking.name},%0D%0A%0D%0AWe are excited to confirm your backcountry llama expedition!%0D%0A%0D%0APlease sign the waiver here: ${window.location.origin}/sign/${booking.id}%0D%0A%0D%0APayment Instructions: [Add your Venmo/PayPal/Check details here]%0D%0A%0D%0AExpedition Dates: ${booking.startDate} to ${booking.endDate}%0D%0A%0D%0ASee you soon!`}
-                                  className="flex-1 p-4 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all flex items-center justify-center gap-2"
+                                  className="p-4 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all flex items-center justify-center gap-2"
                                   title="Send Manual Email Fallback"
                                 >
                                   <Mail size={20}/>
+                                </a>
+                                <a 
+                                  href={`${window.location.origin}/api/invoice/${booking.id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl hover:bg-emerald-100 transition-all flex items-center justify-center gap-2"
+                                  title="Print Invoice"
+                                >
+                                  <FileText size={20}/>
                                 </a>
                                 <button onClick={() => updateBooking(booking.id, 'delete')} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all">
                                   <Trash2 size={20}/>

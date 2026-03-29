@@ -2,7 +2,6 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import nodemailer from "nodemailer";
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 import twilio from 'twilio';
@@ -92,7 +91,7 @@ api.get("/ping", (req, res) => {
   res.json({ 
     status: "ok", 
     supabase: !!supabase,
-    smtp: !!(process.env.SMTP_USER && process.env.SMTP_PASS),
+    resend: !!process.env.RESEND_API_KEY,
     timestamp: new Date().toISOString() 
   });
 });
@@ -151,63 +150,27 @@ const getResendClient = () => {
   return new Resend(apiKey);
 };
 
-const getTransporter = () => {
-  const user = (process.env.SMTP_USER || process.env.GMAIL_USER)?.trim();
-  const pass = (process.env.SMTP_PASS || process.env.GMAIL_PASS)?.replace(/\s+/g, ''); 
-  
-  if (!user || !pass) {
-    return null;
-  }
-  
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: user,
-      pass: pass
-    }
-  });
-};
-
 const sendEmail = async (options: { to: string, subject: string, html: string, fromName?: string }) => {
-  // Try Resend first if configured
   const resend = getResendClient();
-  if (resend) {
-    console.log(`Attempting to send email via Resend to ${options.to}...`);
-    try {
-      const { data, error } = await resend.emails.send({
-        from: `${options.fromName || 'HBL Notifications'} <onboarding@resend.dev>`, // Default Resend domain
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-      });
-      
-      if (error) throw error;
-      console.log(`Email sent via Resend! ID: ${data?.id}`);
-      return data;
-    } catch (error) {
-      console.error("Resend failed, falling back to SMTP if available:", error);
-    }
+  if (!resend) {
+    console.error("Email failed: RESEND_API_KEY not configured");
+    throw new Error("Email provider not configured");
   }
 
-  // Fallback to SMTP
-  const transporter = getTransporter();
-  if (!transporter) {
-    console.error("Email failed: No email provider configured (check RESEND_API_KEY or SMTP_USER/SMTP_PASS)");
-    throw new Error("No email provider configured");
-  }
-  
-  console.log(`Attempting to send email via SMTP to ${options.to}...`);
+  console.log(`Attempting to send email via Resend to ${options.to}...`);
   try {
-    const info = await transporter.sendMail({
-      from: `"${options.fromName || 'HBL Notifications'}" <${process.env.SMTP_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from: `${options.fromName || 'HBL Notifications'} <onboarding@resend.dev>`, // Default Resend domain
       to: options.to,
       subject: options.subject,
-      html: options.html
+      html: options.html,
     });
-    console.log(`Email sent successfully via SMTP! MessageId: ${info.messageId}`);
-    return info;
+    
+    if (error) throw error;
+    console.log(`Email sent via Resend! ID: ${data?.id}`);
+    return data;
   } catch (error: any) {
-    console.error(`Email failed via SMTP to ${options.to}:`, error);
+    console.error(`Email failed via Resend to ${options.to}:`, error);
     throw error;
   }
 };
@@ -215,14 +178,12 @@ const sendEmail = async (options: { to: string, subject: string, html: string, f
 api.get("/test-email", async (req, res) => {
   try {
     const resendKey = process.env.RESEND_API_KEY?.trim();
-    const smtpUser = process.env.SMTP_USER?.trim();
-    const smtpPass = process.env.SMTP_PASS?.trim();
     
-    if (!resendKey && (!smtpUser || !smtpPass)) {
+    if (!resendKey) {
       return res.json({ 
         status: "error", 
-        message: "No email provider configured",
-        details: "Please set RESEND_API_KEY (Recommended) or SMTP_USER/SMTP_PASS in environment variables."
+        message: "Resend API Key missing",
+        details: "Please set RESEND_API_KEY in environment variables."
       });
     }
     
@@ -232,8 +193,7 @@ api.get("/test-email", async (req, res) => {
       html: `
         <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
           <h2 style="color: #166534;">Email System Test Successful!</h2>
-          <p>Your email configuration is working correctly.</p>
-          <p><strong>Provider:</strong> ${resendKey ? 'Resend API' : 'Gmail SMTP'}</p>
+          <p>Your Resend configuration is working correctly.</p>
           <p>Timestamp: ${new Date().toISOString()}</p>
           <p>If you received this, your email system is fully operational.</p>
         </div>
@@ -249,9 +209,7 @@ api.get("/test-email", async (req, res) => {
       details: e.message,
       code: e.code,
       diagnostics: {
-        hasResendKey: !!process.env.RESEND_API_KEY,
-        hasSmtpUser: !!process.env.SMTP_USER,
-        smtpPassLength: process.env.SMTP_PASS?.length || 0
+        hasResendKey: !!process.env.RESEND_API_KEY
       }
     });
   }
@@ -351,7 +309,7 @@ api.post("/create-booking", async (req, res) => {
 
   // 2. Try Email (Always attempt)
   try {
-    if ((process.env.SMTP_USER && process.env.SMTP_PASS) || process.env.RESEND_API_KEY) {
+    if (process.env.RESEND_API_KEY) {
       // ADMIN NOTIFICATION
       const adminHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
@@ -517,7 +475,7 @@ api.post("/update-booking", async (req, res) => {
     }
 
     // Send Approval Email if status changed to confirmed
-    if (booking && (action === 'approve' || status === 'confirmed') && ((process.env.SMTP_USER && process.env.SMTP_PASS) || process.env.RESEND_API_KEY)) {
+    if (booking && (action === 'approve' || status === 'confirmed') && process.env.RESEND_API_KEY) {
       const branding = req.body.branding || {};
       const venmoHandle = branding.venmoHandle || "@helenallams";
       const venmoLink = `https://venmo.com/u/${venmoHandle.replace('@', '')}`;
@@ -635,6 +593,177 @@ api.post("/update-booking", async (req, res) => {
     res.json({ success: true });
   } catch (e: any) {
     res.status(500).json({ error: "Update failed", details: e.message });
+  }
+});
+
+api.get("/invoice/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    let booking: any = null;
+    let branding: any = {};
+
+    // 1. Fetch Booking
+    if (supabase) {
+      const { data, error } = await supabase.from('bookings').select('*').eq('id', id).single();
+      if (error) throw error;
+      booking = data;
+    } else {
+      const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
+      const bookings = JSON.parse(data);
+      booking = bookings.find((b: any) => b.id === id);
+    }
+
+    if (!booking) {
+      return res.status(404).send("Booking not found");
+    }
+
+    // 2. Fetch Branding
+    if (supabase) {
+      const { data, error } = await supabase.from('branding').select('*').limit(1);
+      if (!error && data && data.length > 0) branding = data[0];
+    } else {
+      if (fs.existsSync(BRANDING_FILE)) {
+        branding = JSON.parse(fs.readFileSync(BRANDING_FILE, "utf-8"));
+      }
+    }
+
+    // 3. Calculate Totals
+    const priceLlama = branding.pricePerLlamaDay || 65;
+    const priceTrailer = branding.priceTrailerDay || 25;
+    const priceClinic = branding.priceClinic || 75;
+    
+    const start = new Date(booking.startDate);
+    const end = new Date(booking.endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+    
+    let dailyRate = priceLlama;
+    if (diffDays > 5) dailyRate *= 0.85;
+
+    const llamaTotal = booking.numLlamas * dailyRate * diffDays;
+    const trailerTotal = booking.trailerNeeded ? (priceTrailer * diffDays) : 0;
+    const clinicTotal = booking.isFirstTimer ? priceClinic : 0;
+    const grandTotal = llamaTotal + trailerTotal + clinicTotal;
+
+    const venmoHandle = branding.venmoHandle || "@helenallams";
+
+    // 4. Generate HTML
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice - ${booking.name}</title>
+        <style>
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1c1917; margin: 0; padding: 40px; background: #f5f5f4; }
+          .invoice-box { max-width: 800px; margin: auto; padding: 40px; border: 1px solid #e7e5e4; background: #fff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #166534; padding-bottom: 20px; }
+          .logo { height: 60px; border-radius: 8px; }
+          .title { font-size: 32px; font-weight: 900; color: #166534; margin: 0; }
+          .meta { text-align: right; }
+          .meta p { margin: 5px 0; font-size: 14px; color: #78716c; }
+          .details { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+          .details h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: #a8a29e; margin-bottom: 10px; }
+          .details p { margin: 5px 0; font-weight: bold; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+          th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: #a8a29e; padding: 10px 0; border-bottom: 1px solid #e7e5e4; }
+          td { padding: 20px 0; border-bottom: 1px solid #f5f5f4; }
+          .total-row td { border-bottom: none; padding-top: 30px; }
+          .total-label { font-size: 20px; font-weight: 900; }
+          .total-amount { font-size: 32px; font-weight: 900; color: #166534; text-align: right; }
+          .footer { text-align: center; margin-top: 60px; border-top: 1px solid #e7e5e4; padding-top: 20px; font-size: 12px; color: #a8a29e; }
+          @media print {
+            body { background: white; padding: 0; }
+            .invoice-box { border: none; box-shadow: none; padding: 0; }
+            .no-print { display: none; }
+          }
+          .print-btn { position: fixed; top: 20px; right: 20px; background: #166534; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(22,101,52,0.3); }
+        </style>
+      </head>
+      <body>
+        <button class="print-btn no-print" onclick="window.print()">Print Invoice</button>
+        <div class="invoice-box">
+          <div class="header">
+            <div>
+              ${branding.logoUrl ? `<img src="${branding.logoUrl}" class="logo" />` : '<div style="font-size: 24px; font-weight: 900; color: #166534;">HBL</div>'}
+              <h1 class="title">INVOICE</h1>
+            </div>
+            <div class="meta">
+              <p>Invoice #: ${booking.id.slice(0,8).toUpperCase()}</p>
+              <p>Date: ${new Date(booking.timestamp).toLocaleDateString()}</p>
+              <p>Status: ${booking.status.toUpperCase()}</p>
+            </div>
+          </div>
+
+          <div class="details">
+            <div>
+              <h3>Billed To</h3>
+              <p>${booking.name}</p>
+              <p>${booking.email}</p>
+              <p>${booking.phone}</p>
+            </div>
+            <div>
+              <h3>Expedition Details</h3>
+              <p>${booking.startDate} to ${booking.endDate}</p>
+              <p>${booking.numLlamas} Pack Animals</p>
+              <p>${booking.trailerNeeded ? 'Trailer Rental Included' : 'No Trailer'}</p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th style="text-align: right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div style="font-weight: bold;">Llama Pack String Rental</div>
+                  <div style="font-size: 12px; color: #78716c;">${booking.numLlamas} llamas for ${diffDays} days @ $${dailyRate.toFixed(2)}/day</div>
+                </td>
+                <td style="text-align: right; font-weight: bold;">$${llamaTotal.toFixed(2)}</td>
+              </tr>
+              ${booking.trailerNeeded ? `
+              <tr>
+                <td>
+                  <div style="font-weight: bold;">Custom Llama Trailer</div>
+                  <div style="font-size: 12px; color: #78716c;">${diffDays} days @ $${priceTrailer.toFixed(2)}/day</div>
+                </td>
+                <td style="text-align: right; font-weight: bold;">$${trailerTotal.toFixed(2)}</td>
+              </tr>` : ''}
+              ${booking.isFirstTimer ? `
+              <tr>
+                <td>
+                  <div style="font-weight: bold;">Backcountry Pack Clinic</div>
+                  <div style="font-size: 12px; color: #78716c;">Mandatory for first-time packers</div>
+                </td>
+                <td style="text-align: right; font-weight: bold;">$${priceClinic.toFixed(2)}</td>
+              </tr>` : ''}
+              <tr class="total-row">
+                <td class="total-label">Total Amount Due</td>
+                <td class="total-amount">$${grandTotal.toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 12px; padding: 24px;">
+            <h3 style="margin: 0 0 10px; color: #166534; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">Payment Instructions</h3>
+            <p style="margin: 0; font-size: 14px;">Please send a <strong>$100 deposit</strong> to Venmo: <strong>${venmoHandle}</strong> to secure your dates. The remaining balance is due before your trip.</p>
+          </div>
+
+          <div class="footer">
+            <p>&copy; ${new Date().getFullYear()} ${branding.siteName || 'Helena Backcountry Llamas'}</p>
+            <p>Helena, Montana • Backcountry Logistics Specialists</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    res.send(html);
+  } catch (e: any) {
+    res.status(500).send("Failed to generate invoice: " + e.message);
   }
 });
 
