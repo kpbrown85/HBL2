@@ -157,7 +157,7 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('hbl_isAdmin') === 'true');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showDashboard, setShowDashboard] = useState(isAdmin);
-  const [adminTab, setAdminTab] = useState<'branding' | 'fleet' | 'gallery' | 'bookings' | 'billing' | 'gear'>('branding');
+  const [adminTab, setAdminTab] = useState<'branding' | 'fleet' | 'gallery' | 'bookings' | 'billing' | 'gear' | 'invoices'>('branding');
   const [passwordInput, setPasswordInput] = useState("");
   const [editingLlama, setEditingLlama] = useState<Llama | null>(null);
   const [editingGalleryItem, setEditingGalleryItem] = useState<GalleryImage | null>(null);
@@ -912,6 +912,7 @@ const App: React.FC = () => {
                 { id: 'gallery' as const, icon: ImageIcon, label: 'Journal' },
                 { id: 'gear' as const, icon: Package, label: 'Shop' },
                 { id: 'bookings' as const, icon: ClipboardList, label: 'Logs' },
+                { id: 'invoices' as const, icon: FileText, label: 'Invoices' },
                 { id: 'billing' as const, icon: CreditCard, label: 'API' }
               ].map(t => (
                 <button 
@@ -1116,6 +1117,79 @@ const App: React.FC = () => {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {adminTab === 'invoices' && (
+                <div className="space-y-16 animate-in slide-in-from-bottom-8">
+                  <header className="flex justify-between items-end">
+                    <div>
+                      <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Invoice Ledger</h2>
+                      <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Track revenue and payment status for confirmed expeditions</p>
+                    </div>
+                    <div className="bg-green-800 text-white p-8 rounded-[2.5rem] shadow-2xl flex flex-col items-end">
+                      <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">Total Confirmed Revenue</p>
+                      <p className="text-4xl font-black tracking-tighter">
+                        ${bookings.filter(b => b.status === 'confirmed').reduce((acc, b) => acc + (b.totalPrice || 0), 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </header>
+
+                  <div className="bg-white rounded-[4rem] shadow-2xl border border-stone-100 overflow-hidden">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-stone-50 border-b border-stone-100">
+                          <th className="p-10 text-[10px] font-black uppercase tracking-widest text-stone-400">Client / ID</th>
+                          <th className="p-10 text-[10px] font-black uppercase tracking-widest text-stone-400">Dates</th>
+                          <th className="p-10 text-[10px] font-black uppercase tracking-widest text-stone-400">Total Price</th>
+                          <th className="p-10 text-[10px] font-black uppercase tracking-widest text-stone-400">Paid</th>
+                          <th className="p-10 text-[10px] font-black uppercase tracking-widest text-stone-400">Balance</th>
+                          <th className="p-10 text-[10px] font-black uppercase tracking-widest text-stone-400 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bookings.filter(b => b.status === 'confirmed').length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="p-20 text-center text-stone-400 font-bold uppercase tracking-widest text-xs">No confirmed invoices yet</td>
+                          </tr>
+                        ) : (
+                          bookings.filter(b => b.status === 'confirmed').map(booking => {
+                            const totalPaid = (booking.depositPaid || 0) + (booking.totalPaid || 0);
+                            const balance = (booking.totalPrice || 0) - totalPaid;
+                            return (
+                              <tr key={booking.id} className="border-b border-stone-50 hover:bg-stone-50/50 transition-colors">
+                                <td className="p-10">
+                                  <p className="font-black text-stone-900">{booking.name}</p>
+                                  <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{booking.id.slice(0,8)}</p>
+                                </td>
+                                <td className="p-10">
+                                  <p className="font-bold text-stone-600 text-sm">{booking.startDate}</p>
+                                  <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">to {booking.endDate}</p>
+                                </td>
+                                <td className="p-10 font-black text-stone-900">${(booking.totalPrice || 0).toFixed(2)}</td>
+                                <td className="p-10 font-bold text-green-700">${totalPaid.toFixed(2)}</td>
+                                <td className="p-10">
+                                  <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${balance <= 0 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                    {balance <= 0 ? 'Paid' : `$${balance.toFixed(2)} Due`}
+                                  </span>
+                                </td>
+                                <td className="p-10 text-right">
+                                  <a 
+                                    href={`${window.location.origin}/api/invoice/${booking.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all"
+                                  >
+                                    <FileText size={14} /> View Invoice
+                                  </a>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}

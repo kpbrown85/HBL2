@@ -482,13 +482,9 @@ api.post("/update-booking", async (req, res) => {
       }
     }
 
-    // Send Approval Email if status changed to confirmed
-    if (booking && (action === 'approve' || status === 'confirmed') && process.env.RESEND_API_KEY) {
+    // Calculate totalPrice if status is confirmed
+    if (booking && (action === 'approve' || status === 'confirmed')) {
       const branding = req.body.branding || {};
-      const venmoHandle = branding.venmoHandle || "@helenallams";
-      const venmoLink = `https://venmo.com/u/${venmoHandle.replace('@', '')}`;
-      
-      // Pricing logic (matching client-side)
       const priceLlama = branding.pricePerLlamaDay || 65;
       const priceTrailer = branding.priceTrailerDay || 25;
       const priceClinic = branding.priceClinic || 75;
@@ -519,9 +515,13 @@ api.post("/update-booking", async (req, res) => {
         }
       }
 
-      const waiverUrl = `${process.env.APP_URL || 'https://www.helenallamas.com'}/sign/${booking.id}`;
+      // Send Approval Email if status changed to confirmed
+      if (process.env.RESEND_API_KEY) {
+        const venmoHandle = branding.venmoHandle || "@helenallams";
+        const venmoLink = `https://venmo.com/u/${venmoHandle.replace('@', '')}`;
+        const waiverUrl = `${process.env.APP_URL || 'https://www.helenallamas.com'}/sign/${booking.id}`;
       
-      const invoiceHtml = `
+        const invoiceHtml = `
         <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e7e5e4; border-radius: 16px; overflow: hidden; background: #fff;">
           <div style="background: #166534; padding: 40px; text-align: center; color: white;">
             ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 20px; border-radius: 8px;" />` : ''}
@@ -608,6 +608,7 @@ api.post("/update-booking", async (req, res) => {
         } catch (smsErr) {
           console.error("SMS Approval Alert failed:", smsErr);
         }
+      }
       }
     }
 
