@@ -461,7 +461,11 @@ api.post("/update-booking", async (req, res) => {
         booking = existing;
         
         const { error } = await supabase.from('bookings').update(update).eq('id', id);
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase Update Error:", error);
+          const sqlFix = `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "depositPaid" NUMERIC DEFAULT 0; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "totalPaid" NUMERIC DEFAULT 0;`;
+          throw new Error(`${error.message}. Please run this SQL in your Supabase SQL Editor: ${sqlFix}`);
+        }
       }
     } else {
       const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
@@ -501,6 +505,19 @@ api.post("/update-booking", async (req, res) => {
       const trailerTotal = booking.trailerNeeded ? (priceTrailer * diffDays) : 0;
       const clinicTotal = booking.isFirstTimer ? priceClinic : 0;
       const grandTotal = llamaTotal + trailerTotal + clinicTotal;
+
+      // Update booking with calculated totalPrice
+      if (supabase) {
+        await supabase.from('bookings').update({ totalPrice: grandTotal }).eq('id', id);
+      } else {
+        const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
+        let bookings = JSON.parse(data);
+        const idx = bookings.findIndex((b: any) => b.id === id);
+        if (idx !== -1) {
+          bookings[idx].totalPrice = grandTotal;
+          fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+        }
+      }
 
       const waiverUrl = `${process.env.APP_URL || 'https://www.helenallamas.com'}/sign/${booking.id}`;
       

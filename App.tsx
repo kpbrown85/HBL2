@@ -575,7 +575,7 @@ const App: React.FC = () => {
         
         if (contentType && contentType.includes("application/json")) {
           const errData = await response.json();
-          const rawError = errData.error || errorMessage;
+          const rawError = errData.details || errData.error || errorMessage;
           errorMessage = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
         } else {
           const text = await response.text();
