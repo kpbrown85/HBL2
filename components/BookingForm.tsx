@@ -65,7 +65,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await fetch('/api/bookings');
+        const res = await fetch('/api/get-bookings');
         if (res.ok) {
           const data = await res.json();
           setExistingBookings(data.filter((b: any) => b.status === 'confirmed'));
@@ -286,7 +286,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
     };
 
     try {
-      const paths = ['/create-booking', '/api/create-booking'];
+      const paths = ['/api/create-booking'];
       let response: Response | null = null;
       let lastError: any = null;
 

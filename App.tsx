@@ -253,6 +253,7 @@ const App: React.FC = () => {
   const checkApi = async () => {
     const pingUrl = `${window.location.origin}/api/ping`;
     const healthUrl = `${window.location.origin}/api/health`;
+    console.log(`[${new Date().toISOString()}] Checking API status at: ${pingUrl}`);
     
     try {
       // Try the main API ping first
