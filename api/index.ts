@@ -90,6 +90,15 @@ api.get("/debug", (req, res) => {
   res.json(debugInfo);
 });
 
+api.get("/debug-env-keys", (req, res) => {
+  const allKeys = Object.keys(process.env);
+  res.json({ 
+    keys: allKeys.sort(),
+    count: allKeys.length,
+    timestamp: new Date().toISOString()
+  });
+});
+
 api.get("/debug-env", (req, res) => {
   const allKeys = Object.keys(process.env);
   const resendRelated = allKeys.filter(k => k.toLowerCase().includes('resend'));
@@ -110,11 +119,16 @@ api.get("/debug-env", (req, res) => {
 
 api.get("/ping", (req, res) => {
   const resendKey = getResendApiKey();
+  const allKeys = Object.keys(process.env);
+  const resendRelated = allKeys.filter(k => k.toLowerCase().includes('resend'));
+  
   console.log(`[${new Date().toISOString()}] Ping received. Resend key present: ${!!resendKey}`);
   res.json({ 
     status: "ok", 
     supabase: !!supabase,
     resend: !!resendKey,
+    resendRelated: resendRelated,
+    resendLength: resendKey?.length || 0,
     timestamp: new Date().toISOString() 
   });
 });
@@ -167,7 +181,15 @@ api.get("/test-supabase", async (req, res) => {
 });
 
 const getResendApiKey = () => {
-  return (process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY)?.trim();
+  const key = (process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY || process.env.RESEND_KEY || process.env.RESEND_TOKEN)?.trim();
+  if (!key) {
+    const allKeys = Object.keys(process.env);
+    const resendRelated = allKeys.filter(k => k.toLowerCase().includes('resend'));
+    if (resendRelated.length > 0) {
+      console.log(`[${new Date().toISOString()}] RESEND_API_KEY missing, but found related keys: ${resendRelated.join(', ')}`);
+    }
+  }
+  return key;
 };
 
 // Email Helper
