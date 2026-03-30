@@ -34,7 +34,20 @@ export const WaiverPage: React.FC<WaiverPageProps> = ({ bookingId, onComplete })
     setError(null);
 
     try {
-      const signatureData = sigPad.current?.getTrimmedCanvas().toDataURL('image/png');
+      // Try to get trimmed canvas, fallback to raw canvas if it fails (common in some build environments)
+      let canvas;
+      try {
+        canvas = sigPad.current?.getTrimmedCanvas();
+      } catch (e) {
+        console.warn("getTrimmedCanvas failed, falling back to raw canvas", e);
+        canvas = sigPad.current?.getCanvas();
+      }
+      
+      if (!canvas) {
+        throw new Error("Could not capture signature canvas");
+      }
+
+      const signatureData = canvas.toDataURL('image/png');
       const response = await fetch(`${window.location.origin}/api/sign-waiver`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
