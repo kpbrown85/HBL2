@@ -28,6 +28,19 @@ const GALLERY_FILE = path.join(__dirname, "..", "gallery.json");
   }
 });
 
+// DEBUG: Write env keys to a file for inspection
+try {
+  const resendKey = process.env.RESEND_API_KEY;
+  const debugData = [
+    `RESEND_API_KEY present: ${!!resendKey}`,
+    `RESEND_API_KEY length: ${resendKey?.length || 0}`,
+    `RESEND_API_KEY prefix: ${resendKey ? resendKey.substring(0, 3) : 'none'}`,
+    `All Keys:`,
+    ...Object.keys(process.env).sort()
+  ].join("\n");
+  fs.writeFileSync(path.join(__dirname, "..", "env_debug.txt"), debugData);
+} catch (e) {}
+
 // Direct Supabase client setup to avoid path issues
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
@@ -45,17 +58,39 @@ const twilioClient = (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_
   ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN) 
   : null;
 
+// Email Helper
+const getResendApiKey = () => {
+  const key = (process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY || process.env.RESEND_KEY || process.env.RESEND_TOKEN)?.trim();
+  if (!key) {
+    const allKeys = Object.keys(process.env);
+    const resendRelated = allKeys.filter(k => k.toLowerCase().includes('resend'));
+    if (resendRelated.length > 0) {
+      console.log(`[${new Date().toISOString()}] RESEND_API_KEY missing, but found related keys: ${resendRelated.join(', ')}`);
+    }
+  }
+  return key;
+};
+
+const getResendClient = () => {
+  const apiKey = getResendApiKey();
+  if (!apiKey) return null;
+  return new Resend(apiKey);
+};
+
 const api = express();
 api.use(express.json({ limit: '50mb' }));
 api.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Version for deployment verification
-const API_VERSION = "1.0.5";
+const API_VERSION = "1.0.6";
 
 // Path normalization for Vercel rewrites
 api.use((req, res, next) => {
   res.setHeader("X-API-Version", API_VERSION);
   console.log(`[${new Date().toISOString()}] API Request: ${req.method} ${req.url} (v${API_VERSION})`);
+  
+  // If mounted at /api, req.url is already relative. 
+  // But if called directly (e.g. Vercel), it might start with /api
   if (req.url.startsWith('/api')) {
     req.url = req.url.replace('/api', '') || '/';
   }
@@ -84,6 +119,15 @@ console.log(`[${new Date().toISOString()}] API App Initialized. Resend: ${!!getR
 api.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] API Request: ${req.method} ${req.url}`);
   next();
+});
+
+api.get("/health", (req, res) => {
+  res.json({ 
+    status: "ok", 
+    message: "API Router is healthy", 
+    resend: !!getResendApiKey(),
+    timestamp: new Date().toISOString() 
+  });
 });
 
 api.get("/debug", (req, res) => {
@@ -122,13 +166,14 @@ api.get("/ping", (req, res) => {
   const allKeys = Object.keys(process.env);
   const resendRelated = allKeys.filter(k => k.toLowerCase().includes('resend'));
   
-  console.log(`[${new Date().toISOString()}] Ping received. Resend key present: ${!!resendKey}`);
+  console.log(`[${new Date().toISOString()}] Ping received. Resend key present: ${!!resendKey}, length: ${resendKey?.length || 0}`);
   res.json({ 
     status: "ok", 
     supabase: !!supabase,
     resend: !!resendKey,
     resendRelated: resendRelated,
     resendLength: resendKey?.length || 0,
+    resendPrefix: resendKey ? resendKey.substring(0, 3) : null,
     timestamp: new Date().toISOString() 
   });
 });
@@ -180,24 +225,6 @@ api.get("/test-supabase", async (req, res) => {
   }
 });
 
-const getResendApiKey = () => {
-  const key = (process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY || process.env.RESEND_KEY || process.env.RESEND_TOKEN)?.trim();
-  if (!key) {
-    const allKeys = Object.keys(process.env);
-    const resendRelated = allKeys.filter(k => k.toLowerCase().includes('resend'));
-    if (resendRelated.length > 0) {
-      console.log(`[${new Date().toISOString()}] RESEND_API_KEY missing, but found related keys: ${resendRelated.join(', ')}`);
-    }
-  }
-  return key;
-};
-
-// Email Helper
-const getResendClient = () => {
-  const apiKey = getResendApiKey();
-  if (!apiKey) return null;
-  return new Resend(apiKey);
-};
 
 const sendEmail = async (options: { to: string, subject: string, html: string, fromName?: string }) => {
   const resend = getResendClient();
