@@ -21,9 +21,20 @@ service cloud.firestore {
     // Fields:
     //   - uid: string (required, immutable) - The ID of the user who made the booking.
     //   - trekName: string (required) - The name of the trek booked.
-    //   - date: string (required, format: date) - The date of the trek.
+    //   - startDate: string (required, format: date) - The start date of the trek.
+    //   - endDate: string (required, format: date) - The end date of the trek.
+    //   - numLlamas: number (required) - Number of llamas.
     //   - status: string (required, enum: ['pending', 'confirmed', 'cancelled']) - The status of the booking.
+    //   - totalPrice: number (optional) - The total price.
     //   - createdAt: string (required, format: date-time) - The timestamp when the booking was created.
+    //
+    // Collection: bookings/{bookingId}/private/details
+    // Document ID: details
+    // Fields:
+    //   - name: string (required) - Full name.
+    //   - email: string (required, format: email) - Email.
+    //   - phone: string (required) - Phone.
+    //   - customRequests: string (optional) - Special requests.
     //
     // Collection: trip-reports
     // Document ID: reportId
@@ -81,12 +92,21 @@ service cloud.firestore {
     }
 
     function isValidBooking(data) {
-      return hasOnlyAllowedFields(['uid', 'trekName', 'date', 'status', 'createdAt']) &&
+      return hasOnlyAllowedFields(['uid', 'trekName', 'startDate', 'endDate', 'numLlamas', 'status', 'totalPrice', 'createdAt', 'timestamp', 'bookingType', 'trailerNeeded', 'isFirstTimer', 'addons', 'customOutfitting', 'isRead']) &&
              data.uid is string && data.uid.size() > 0 &&
              data.trekName is string && data.trekName.size() > 0 && data.trekName.size() < 100 &&
-             data.date is string && data.date.size() > 0 &&
+             data.startDate is string && data.startDate.size() > 0 &&
+             data.endDate is string && data.endDate.size() > 0 &&
+             data.numLlamas is number && data.numLlamas >= 0 &&
              data.status in ['pending', 'confirmed', 'cancelled'] &&
              isValidDateString(data.createdAt);
+    }
+
+    function isValidBookingPrivate(data) {
+      return hasOnlyAllowedFields(['name', 'email', 'phone', 'customRequests']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.email is string && isValidEmail(data.email) &&
+             data.phone is string && data.phone.size() > 0 && data.phone.size() < 20;
     }
 
     function isValidTripReport(data) {
@@ -113,12 +133,18 @@ service cloud.firestore {
     }
 
     match /bookings/{bookingId} {
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.uid || isAdmin());
+      allow read: if true; // Publicly readable for availability checks (no PII)
       allow create: if isAuthenticated() && isValidBooking(request.resource.data) &&
                       (request.auth.uid == request.resource.data.uid || isAdmin());
       allow update: if isAuthenticated() && isValidBooking(request.resource.data) &&
                       ((request.auth.uid == resource.data.uid && request.resource.data.uid == resource.data.uid && request.resource.data.status == resource.data.status) || isAdmin());
       allow delete: if isAdmin();
+
+      match /private/details {
+        allow read: if isAuthenticated() && (request.auth.uid == get(/databases/$(database)/documents/bookings/$(bookingId)).data.uid || isAdmin());
+        allow write: if isAuthenticated() && isValidBookingPrivate(request.resource.data) &&
+                       (request.auth.uid == get(/databases/$(database)/documents/bookings/$(bookingId)).data.uid || isAdmin());
+      }
     }
 
     match /trip-reports/{reportId} {

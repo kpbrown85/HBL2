@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { PRICING, GEAR_ADDONS } from '../constants';
 import { BookingData, GearAddon } from '../types';
-import { db, auth, collection, onSnapshot, query, orderBy, addDoc, handleFirestoreError, OperationType } from '../firebase';
+import { db, auth, collection, onSnapshot, query, orderBy, addDoc, handleFirestoreError, OperationType, doc, setDoc } from '../firebase';
 import { 
   Calendar, 
   Users, 
@@ -276,11 +276,24 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!auth.currentUser) {
+      alert("Please sign in to request an expedition.");
+      return;
+    }
+
     setIsSubmitting(true);
     
+    // Split public and private data
+    const { name, email, phone, customRequests, ...publicFormData } = formData;
+
+    const bookingId = doc(collection(db, 'bookings')).id;
+    const bookingRef = doc(db, 'bookings', bookingId);
+    const privateRef = doc(db, 'bookings', bookingId, 'private', 'details');
+
     const newBooking = {
-      ...formData,
-      uid: auth.currentUser?.uid || 'anonymous',
+      ...publicFormData,
+      uid: auth.currentUser.uid,
       status: 'pending',
       isRead: false,
       totalPrice: estimate,
@@ -288,10 +301,20 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
       createdAt: new Date().toISOString()
     };
 
+    const privateDetails = {
+      name,
+      email,
+      phone,
+      customRequests
+    };
+
     try {
-      const docRef = await addDoc(collection(db, 'bookings'), newBooking);
+      // Save public part
+      await setDoc(bookingRef, newBooking);
+      // Save private part (PII)
+      await setDoc(privateRef, privateDetails);
       
-      const savedBooking = { id: docRef.id, ...newBooking };
+      const savedBooking = { id: bookingId, ...newBooking };
       const existing = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
       localStorage.setItem('hbl_bookings', JSON.stringify([savedBooking, ...existing]));
       window.dispatchEvent(new Event('hbl_new_booking'));

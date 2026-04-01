@@ -16,16 +16,31 @@
     },
     "Booking": {
       "title": "Booking",
-      "description": "Stores booking information for llama treks.",
+      "description": "Stores public booking information for llama treks (no PII).",
       "type": "object",
       "properties": {
         "uid": { "type": "string", "description": "The ID of the user who made the booking." },
         "trekName": { "type": "string", "description": "The name of the trek booked." },
-        "date": { "type": "string", "format": "date", "description": "The date of the trek." },
+        "startDate": { "type": "string", "format": "date", "description": "The start date of the trek." },
+        "endDate": { "type": "string", "format": "date", "description": "The end date of the trek." },
+        "numLlamas": { "type": "integer", "description": "Number of llamas booked." },
         "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"], "description": "The status of the booking." },
+        "totalPrice": { "type": "number", "description": "The total price of the booking." },
         "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the booking was created." }
       },
-      "required": ["uid", "trekName", "date", "status"]
+      "required": ["uid", "trekName", "startDate", "endDate", "numLlamas", "status"]
+    },
+    "BookingPrivate": {
+      "title": "Booking Private Details",
+      "description": "Stores sensitive PII for a booking.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the person booking." },
+        "email": { "type": "string", "format": "email", "description": "Email address." },
+        "phone": { "type": "string", "description": "Phone number." },
+        "customRequests": { "type": "string", "description": "Any special requests." }
+      },
+      "required": ["name", "email", "phone"]
     },
     "TripReport": {
       "title": "Trip Report",
@@ -50,7 +65,11 @@
     },
     "/bookings/{bookingId}": {
       "schema": "Booking",
-      "description": "Collection of trek bookings."
+      "description": "Collection of trek bookings (public fields)."
+    },
+    "/bookings/{bookingId}/private/details": {
+      "schema": "BookingPrivate",
+      "description": "Private details for a booking (PII)."
     },
     "/trip-reports/{reportId}": {
       "schema": "TripReport",
