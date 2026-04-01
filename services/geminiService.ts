@@ -101,3 +101,60 @@ export async function generateBackdrop(prompt: string) {
     throw error;
   }
 }
+
+export interface AIScoutResponse {
+  text: string;
+  sources?: { title: string; uri: string }[];
+}
+
+export async function getHighCountryAdvice(query: string): Promise<AIScoutResponse> {
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Question: ${query}`,
+      config: {
+        systemInstruction: `You are the "High Country AI Scout" for Helena Backcountry Llamas. 
+        Your mission is to provide real-time intelligence on trail conditions, weather, and llama packing safety in the Montana Rockies.
+        Use Google Search and Maps to find the most current information.
+        Focus on the Helena National Forest and surrounding high country.
+        Be professional, rugged, and safety-oriented.`,
+        tools: [{ googleSearch: {} }],
+        maxOutputTokens: 1000,
+        thinkingConfig: { thinkingBudget: 500 },
+        temperature: 0.7,
+      }
+    });
+
+    const text = response.text || "The scout is currently off-grid. Please try again later.";
+    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+    const sources = chunks?.map(c => {
+      if (c.web) return { title: c.web.title || 'Source', uri: c.web.uri };
+      return null;
+    }).filter(s => s !== null) as { title: string; uri: string }[];
+
+    return { text, sources };
+  } catch (error) {
+    console.error("AI Scout Error:", error);
+    return { text: "The scout is currently off-grid. Please try again later." };
+  }
+}
+
+export async function getQuickAdvice(query: string): Promise<string> {
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.1-flash-lite-preview',
+      contents: `Question: ${query}`,
+      config: {
+        systemInstruction: "You are a helpful assistant for Helena Backcountry Llamas. Provide a quick, concise answer to the user's question about llama packing or our services.",
+        maxOutputTokens: 150,
+        temperature: 0.5,
+      }
+    });
+    return response.text || "I'm sorry, I couldn't get that information right now.";
+  } catch (error) {
+    console.error("Quick Advice Error:", error);
+    return "I'm sorry, I couldn't get that information right now.";
+  }
+}

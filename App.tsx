@@ -7,6 +7,8 @@ import { PhotoCarousel } from './components/PhotoCarousel';
 import { GearSection } from './components/GearSection';
 import { FAQSection } from './components/FAQSection';
 import { PackingListGenerator } from './components/PackingListGenerator';
+import { HighCountryAIScout } from './components/HighCountryAIScout';
+import { MyBookings } from './components/MyBookings';
 import { WaiverPage } from './components/WaiverPage';
 import { LlamaGuidePage } from './components/LlamaGuidePage';
 import { VideoLibraryPage } from './components/VideoLibraryPage';
@@ -15,7 +17,9 @@ import { TrailMap } from './components/TrailMap';
 import { AvailabilityCalendar } from './components/AvailabilityCalendar';
 import { GearShop, DEFAULT_GEAR_ITEMS } from './components/GearShop';
 import { ExpeditionBlog } from './components/ExpeditionBlog';
-import { generateWelcomeSlogan, generateBackdrop } from './services/geminiService';
+import { generateWelcomeSlogan, generateBackdrop, getHighCountryAdvice, getQuickAdvice } from './services/geminiService';
+import { auth, db, googleProvider, signInWithPopup, signOut, onSnapshot, collection, query, where, orderBy, limit, doc, setDoc, handleFirestoreError, OperationType } from './firebase';
+import { User as FirebaseUser } from 'firebase/auth';
 import { GalleryImage, Llama, BookingData, ShopItem } from './types';
 import { 
   Menu, 
@@ -160,6 +164,10 @@ const App: React.FC = () => {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
   const [hasApiKey, setHasApiKey] = useState(false);
   
+  // Firebase Auth State
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+
   // Admin State
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('hbl_isAdmin') === 'true');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -400,7 +408,28 @@ const App: React.FC = () => {
     };
     checkApiKey();
     
-    return () => window.removeEventListener('hbl_new_booking', loadLogs);
+    // Firebase Auth Listener
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      setUser(user);
+      setIsAuthReady(true);
+      if (user) {
+        // Sync user profile to Firestore
+        const userRef = doc(db, 'users', user.uid);
+        setDoc(userRef, {
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          role: user.email === branding.adminEmail ? 'admin' : 'client',
+          createdAt: new Date().toISOString()
+        }, { merge: true }).catch(err => handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`));
+      }
+    });
+    
+    return () => {
+      window.removeEventListener('hbl_new_booking', loadLogs);
+      unsubscribeAuth();
+    };
   }, []);
 
   useEffect(() => { 
@@ -491,6 +520,22 @@ const App: React.FC = () => {
         setEditingShopItem({ ...editingShopItem, imageUrl: compressed });
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err) {
+      console.error("Login failed:", err);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error("Logout failed:", err);
     }
   };
 
@@ -1828,6 +1873,23 @@ const App: React.FC = () => {
                 <button onClick={() => navigate('/gear-shop')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Gear Shop</button>
                 <button onClick={() => navigate('/blog')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Journal</button>
                 <button onClick={() => navigate('/videos')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Videos</button>
+                
+                {isAuthReady && (
+                  user ? (
+                    <div className="flex items-center gap-4 ml-4">
+                      <div className="flex flex-col items-end">
+                        <span className="text-paper text-[10px] font-black lowercase tracking-widest">{user.displayName}</span>
+                        <button onClick={handleLogout} className="text-gold hover:text-gold/80 text-[9px] font-black uppercase tracking-widest">Sign Out</button>
+                      </div>
+                      <img src={user.photoURL || ''} alt="Profile" className="w-10 h-10 rounded-xl border border-white/10 shadow-xl" />
+                    </div>
+                  ) : (
+                    <button onClick={handleLogin} className="ml-4 flex items-center gap-2 text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">
+                      <User size={14} /> Sign In
+                    </button>
+                  )
+                )}
+
                 <a href="#booking" className="bg-gold text-midnight px-10 py-5 rounded-2xl flex items-center gap-2 shadow-2xl shadow-gold/20 hover:bg-gold/90 transition-all active:scale-95">Book Trek <ChevronRight size={14} /></a>
               </div>
               <button className="md:hidden p-3 text-paper" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X size={28} /> : <Menu size={28} />}</button>
@@ -1935,6 +1997,21 @@ const App: React.FC = () => {
               </div>
               <div className="text-center px-8">
                 <h2 className="text-7xl md:text-9xl font-black text-paper tracking-tighter leading-none">The High Country <br /><span className="italic font-light font-display text-gold">Awaits.</span></h2>
+              </div>
+            </section>
+
+            {/* AI Scout Section */}
+            <section id="ai-scout" className="py-64 bg-paper relative overflow-hidden">
+              <div className="absolute inset-0 -z-10 opacity-[0.02] pointer-events-none">
+                <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale" alt="Mountain Texture" />
+              </div>
+              <div className="max-w-7xl mx-auto px-8">
+                <header className="text-center mb-24">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gold mb-4">Real-Time Intelligence</h4>
+                  <h2 className="text-8xl font-black tracking-tighter leading-none mb-8 text-midnight">AI Scout.</h2>
+                  <p className="text-midnight/60 text-xl font-medium max-w-2xl mx-auto">Get expert advice on trail conditions, weather, and llama packing safety.</p>
+                </header>
+                <HighCountryAIScout />
               </div>
             </section>
 
@@ -2058,6 +2135,23 @@ const App: React.FC = () => {
               <div className="max-w-7xl mx-auto px-8"><FAQSection /></div>
             </section>
             
+            {/* My Bookings Section (Authenticated Only) */}
+            {user && (
+              <section id="my-bookings" className="py-64 bg-paper relative overflow-hidden">
+                <div className="absolute inset-0 -z-10 opacity-[0.02] pointer-events-none">
+                  <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale" alt="Mountain Texture" />
+                </div>
+                <div className="max-w-5xl mx-auto px-8">
+                  <header className="text-center mb-24">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gold mb-4">Expedition History</h4>
+                    <h2 className="text-8xl font-black tracking-tighter leading-none mb-8 text-midnight">My Treks.</h2>
+                    <p className="text-midnight/60 text-xl font-medium max-w-2xl mx-auto">Manage your past and upcoming high-country expeditions.</p>
+                  </header>
+                  <MyBookings />
+                </div>
+              </section>
+            )}
+
             {/* Booking Section */}
             <section id="booking" className="py-64 bg-paper relative overflow-hidden">
               <div className="absolute inset-0 -z-10 opacity-[0.02] pointer-events-none">

@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user information and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique ID of the user." },
+        "displayName": { "type": "string", "description": "The display name of the user." },
+        "email": { "type": "string", "format": "email", "description": "The email address of the user." },
+        "photoURL": { "type": "string", "description": "The URL of the user's profile picture." },
+        "role": { "type": "string", "enum": ["client", "admin"], "description": "The role of the user." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the user profile was created." }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Stores booking information for llama treks.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The ID of the user who made the booking." },
+        "trekName": { "type": "string", "description": "The name of the trek booked." },
+        "date": { "type": "string", "format": "date", "description": "The date of the trek." },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"], "description": "The status of the booking." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the booking was created." }
+      },
+      "required": ["uid", "trekName", "date", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Collection of user profiles."
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Collection of trek bookings."
+    }
+  }
+}

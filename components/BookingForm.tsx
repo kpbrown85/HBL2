@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { PRICING, GEAR_ADDONS } from '../constants';
 import { BookingData, GearAddon } from '../types';
+import { db, auth, collection, onSnapshot, query, orderBy, addDoc, handleFirestoreError, OperationType } from '../firebase';
 import { 
   Calendar, 
   Users, 
@@ -63,18 +64,18 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const res = await fetch('/api/get-bookings');
-        if (res.ok) {
-          const data = await res.json();
-          setExistingBookings(data.filter((b: any) => b.status === 'confirmed'));
-        }
-      } catch (err) {
-        console.error("Failed to fetch bookings:", err);
-      }
-    };
-    fetchBookings();
+    const q = query(collection(db, 'bookings'), orderBy('timestamp', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const bookings = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as BookingData[];
+      setExistingBookings(bookings.filter(b => b.status === 'confirmed'));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'bookings');
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -277,67 +278,26 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
     e.preventDefault();
     setIsSubmitting(true);
     
-    const newBooking: Partial<BookingData> = {
+    const newBooking = {
       ...formData,
+      uid: auth.currentUser?.uid || 'anonymous',
       status: 'pending',
       isRead: false,
       totalPrice: estimate,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      createdAt: new Date().toISOString()
     };
 
     try {
-      const paths = ['/api/create-booking'];
-      let response: Response | null = null;
-      let lastError: any = null;
-
-      for (const path of paths) {
-        try {
-          const res = await fetch(path, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify(newBooking),
-          });
-          
-          if (res.ok) {
-            response = res;
-            break;
-          } else {
-            const text = await res.text();
-            lastError = `Path ${path} failed (${res.status}): ${text.substring(0, 100)}`;
-          }
-        } catch (err) {
-          lastError = err;
-        }
-      }
-
-      if (!response) {
-        throw new Error(lastError || "All submission paths failed");
-      }
+      const docRef = await addDoc(collection(db, 'bookings'), newBooking);
       
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}`);
-      }
-
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.details || result.error || "Submission failed");
-      }
-
-      const savedBooking = result;
+      const savedBooking = { id: docRef.id, ...newBooking };
       const existing = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
       localStorage.setItem('hbl_bookings', JSON.stringify([savedBooking, ...existing]));
       window.dispatchEvent(new Event('hbl_new_booking'));
       setIsSubmitted(true);
     } catch (error: any) {
-      console.error("Submission error:", error);
-      const msg = error instanceof Error ? error.message : String(error);
-      alert(`SUBMISSION FAILED\n\nError: ${msg}\n\nIf this persists, please contact us at ${adminEmail} or call 801-372-0353.`);
+      handleFirestoreError(error, OperationType.CREATE, 'bookings');
     } finally {
       setIsSubmitting(false);
     }
