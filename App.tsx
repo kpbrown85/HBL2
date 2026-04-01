@@ -120,28 +120,35 @@ const compressImage = (base64Str: string, maxWidth = 1000, quality = 0.6): Promi
 };
 
 const Logo = ({ branding, light = false, onClick }: { branding: Branding, light?: boolean, onClick?: () => void }) => {
-  const accent = branding.accentName || "Llamas";
-  const safeAccent = accent.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-  const regex = new RegExp(`(${safeAccent})`, 'gi');
-  const parts = (branding.siteName || "Helena Backcountry Llamas").split(regex);
+  const color = light ? "#F5F2ED" : "#C5943E";
   const hasCustomLogo = branding.logoUrl && branding.logoUrl.trim() !== '';
 
   return (
-    <div className="flex items-center gap-3 cursor-pointer select-none group" onClick={onClick}>
-      <div className={`w-10 h-10 ${light ? 'bg-white text-green-800' : 'bg-green-800 text-white'} rounded-lg flex items-center justify-center shadow-lg transition-all group-hover:scale-110 active:scale-95 overflow-hidden ring-1 ring-stone-100/10`}>
+    <div className="flex items-center gap-4 cursor-pointer select-none group" onClick={onClick}>
+      <div className={`w-14 h-14 ${light ? 'bg-white/5' : 'bg-midnight'} rounded-2xl flex items-center justify-center shadow-2xl transition-all group-hover:scale-110 active:scale-95 overflow-hidden ring-1 ring-white/10`}>
         {hasCustomLogo ? (
           <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-cover" />
         ) : (
-          <Mountain className="w-6 h-6" />
+          <svg viewBox="0 0 200 200" className="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="85" r="75" stroke={color} strokeWidth="8" />
+            <path 
+              d="M75 60 C 75 40, 85 30, 90 45 L 95 70 L 105 70 L 110 45 C 115 30, 125 40, 125 60 C 125 90, 115 110, 100 115 C 85 110, 75 90, 75 60 Z" 
+              fill={color} 
+            />
+            <path 
+              d="M90 100 C 90 95, 110 95, 110 100 C 110 105, 105 108, 100 108 C 95 108, 90 105, 90 100 Z" 
+              fill="#0B1D21" 
+            />
+            <path d="M80 50 L 70 20 L 85 45 Z" fill={color} />
+            <path d="M120 50 L 130 20 L 115 45 Z" fill={color} />
+          </svg>
         )}
       </div>
-      <span className={`text-xl font-black tracking-tight ${light ? 'text-white' : 'text-stone-900'}`}>
-        {parts.map((part, i) => (
-          part.toLowerCase() === accent.toLowerCase() 
-            ? <span key={i} className={`${light ? 'text-green-400' : 'text-green-800'} italic font-display`}>{part}</span>
-            : <span key={i}>{part}</span>
-        ))}
-      </span>
+      <div className={`flex flex-col leading-none tracking-[0.3em] font-black uppercase ${light ? 'text-paper' : 'text-midnight'}`}>
+        <span className="text-[0.7em]">Helena</span>
+        <span className="text-[0.6em] mt-1 text-gold">Backcountry</span>
+        <span className="text-[0.7em] mt-1">Llamas</span>
+      </div>
     </div>
   );
 };
@@ -1804,79 +1811,79 @@ const App: React.FC = () => {
       {/* Public Facing Website */}
       {!showDashboard && (
         <>
-          <nav className="fixed w-full z-[100] bg-white/95 backdrop-blur-2xl border-b h-24 flex items-center shadow-sm">
+          <nav className="fixed w-full z-[100] bg-midnight/95 backdrop-blur-2xl border-b border-white/10 h-24 flex items-center shadow-2xl">
             <div className="max-w-7xl mx-auto px-8 w-full flex justify-between items-center">
-              <Logo branding={branding} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
+              <Logo branding={branding} light onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
               <div className="hidden md:flex items-center gap-12 font-black uppercase text-[11px] tracking-[0.2em]">
                 {['Benefits', 'About', 'Trailheads', 'FAQ', 'Contact'].map(item => (
-                  <a key={item} href={`#${item.toLowerCase()}`} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">{item}</a>
+                  <a key={item} href={`#${item.toLowerCase()}`} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">{item}</a>
                 ))}
-                <button onClick={() => navigate('/map')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Map</button>
-                <button onClick={() => navigate('/availability')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Availability</button>
-                <button onClick={() => navigate('/gear-shop')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Gear Shop</button>
-                <button onClick={() => navigate('/blog')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Journal</button>
-                <button onClick={() => navigate('/videos')} className="text-stone-500 hover:text-green-800 transition-all py-2 border-b-2 border-transparent hover:border-green-800">Videos</button>
-                <a href="#booking" className="bg-green-800 text-white px-10 py-5 rounded-2xl flex items-center gap-2 shadow-2xl shadow-green-900/20 hover:bg-green-900 transition-all active:scale-95">Book Trek <ChevronRight size={14} /></a>
+                <button onClick={() => navigate('/map')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Map</button>
+                <button onClick={() => navigate('/availability')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Availability</button>
+                <button onClick={() => navigate('/gear-shop')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Gear Shop</button>
+                <button onClick={() => navigate('/blog')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Journal</button>
+                <button onClick={() => navigate('/videos')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Videos</button>
+                <a href="#booking" className="bg-gold text-midnight px-10 py-5 rounded-2xl flex items-center gap-2 shadow-2xl shadow-gold/20 hover:bg-gold/90 transition-all active:scale-95">Book Trek <ChevronRight size={14} /></a>
               </div>
-              <button className="md:hidden p-3 text-stone-900" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X size={28} /> : <Menu size={28} />}</button>
+              <button className="md:hidden p-3 text-paper" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X size={28} /> : <Menu size={28} />}</button>
             </div>
           </nav>
 
-          <div className={`fixed inset-0 z-[110] bg-stone-950 transition-all duration-700 md:hidden ${isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+          <div className={`fixed inset-0 z-[110] bg-midnight transition-all duration-700 md:hidden ${isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
             <div className="p-16 pt-32 flex flex-col h-full space-y-8 overflow-y-auto">
               {['Benefits', 'About', 'Trailheads', 'FAQ', 'Contact'].map(l => (
-                <a key={l} href={`#${l.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase">{l}</a>
+                <a key={l} href={`#${l.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase">{l}</a>
               ))}
-              <button onClick={() => { navigate('/map'); setIsMenuOpen(false); }} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Map</button>
-              <button onClick={() => { navigate('/availability'); setIsMenuOpen(false); }} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Availability</button>
-              <button onClick={() => { navigate('/gear-shop'); setIsMenuOpen(false); }} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Gear Shop</button>
-              <button onClick={() => { navigate('/blog'); setIsMenuOpen(false); }} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Journal</button>
-              <button onClick={() => { navigate('/videos'); setIsMenuOpen(false); }} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Videos</button>
-              <button onClick={() => { navigate('/book-clinic'); setIsMenuOpen(false); }} className="text-4xl font-black text-white hover:text-green-400 transition-all tracking-tighter uppercase text-left">Book Clinic</button>
-              <a href="#booking" onClick={() => setIsMenuOpen(false)} className="bg-green-600 text-white py-10 rounded-[2rem] text-2xl font-black uppercase tracking-widest text-center shadow-2xl">Plan My Trek</a>
+              <button onClick={() => { navigate('/map'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Map</button>
+              <button onClick={() => { navigate('/availability'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Availability</button>
+              <button onClick={() => { navigate('/gear-shop'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Gear Shop</button>
+              <button onClick={() => { navigate('/blog'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Journal</button>
+              <button onClick={() => { navigate('/videos'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Videos</button>
+              <button onClick={() => { navigate('/book-clinic'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Book Clinic</button>
+              <a href="#booking" onClick={() => setIsMenuOpen(false)} className="bg-gold text-midnight py-10 rounded-[2rem] text-2xl font-black uppercase tracking-widest text-center shadow-2xl">Plan My Trek</a>
             </div>
           </div>
 
           <main>
             {/* Hero Section */}
-            <section className="relative h-screen flex items-center justify-center text-center overflow-hidden">
-              <div className="absolute inset-0 -z-10"><img src={branding.heroImageUrl} className="w-full h-full object-cover brightness-[0.4] scale-105 animate-in zoom-in duration-[10000ms]" alt="Landscape" /></div>
-              <div className="max-w-5xl px-8 text-white">
-                <h1 className="text-7xl md:text-9xl font-black mb-12 leading-[0.85] tracking-tighter animate-in slide-in-from-top-12 duration-1000">Master the Montana Peaks. <br /><span className="italic text-green-400 font-light font-display">Elite Strings for the High Country.</span></h1>
-                <p className="text-2xl md:text-4xl text-stone-200 mb-20 max-w-4xl mx-auto font-medium leading-relaxed tracking-tight">{slogan}</p>
-                <a href="#booking" className="bg-green-600 px-20 py-8 rounded-3xl text-3xl font-black shadow-2xl shadow-green-900/40 hover:bg-green-500 transition-all active:scale-95 inline-block">Secure Your String</a>
+            <section className="relative h-screen flex items-center justify-center text-center overflow-hidden bg-midnight">
+              <div className="absolute inset-0 -z-10"><img src={branding.heroImageUrl} className="w-full h-full object-cover opacity-40 scale-105 animate-in zoom-in duration-[10000ms]" alt="Landscape" /></div>
+              <div className="max-w-5xl px-8 text-paper">
+                <h1 className="text-7xl md:text-9xl font-black mb-12 leading-[0.85] tracking-tighter animate-in slide-in-from-top-12 duration-1000">Master the Montana Peaks. <br /><span className="italic text-gold font-light font-display">Elite Strings for the High Country.</span></h1>
+                <p className="text-2xl md:text-4xl text-paper/80 mb-20 max-w-4xl mx-auto font-medium leading-relaxed tracking-tight">{slogan}</p>
+                <a href="#booking" className="bg-gold text-midnight px-20 py-8 rounded-3xl text-3xl font-black shadow-2xl shadow-gold/40 hover:bg-gold/90 transition-all active:scale-95 inline-block">Secure Your String</a>
               </div>
             </section>
 
             {/* Benefits Section */}
-            <section id="benefits" className="py-64 bg-white overflow-hidden">
+            <section id="benefits" className="py-64 bg-paper overflow-hidden">
               <div className="max-w-7xl mx-auto px-8">
                 <div className="flex flex-col lg:flex-row gap-24 items-start">
                   <div className="lg:w-1/2 lg:sticky lg:top-48">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-green-700 mb-6">The High Country Advantage</h4>
-                    <h2 className="text-8xl font-black tracking-tighter leading-[0.85] mb-12">Built for the <br /><span className="italic font-light font-display text-green-800">Vertical</span>.</h2>
-                    <p className="text-2xl text-stone-500 font-medium leading-relaxed max-w-xl mb-12">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gold mb-6">The High Country Advantage</h4>
+                    <h2 className="text-8xl font-black tracking-tighter leading-[0.85] mb-12">Built for the <br /><span className="italic font-light font-display text-gold">Vertical</span>.</h2>
+                    <p className="text-2xl text-midnight/60 font-medium leading-relaxed max-w-xl mb-12">
                       Llamas are the ultimate technical partners for backpacking and hunting in the Montana Rockies. Their unique physiology provides a low-impact, high-efficiency solution for wilderness logistics.
                     </p>
                     <div className="flex flex-wrap gap-4">
-                      <div className="flex items-center gap-3 px-8 py-4 bg-stone-50 border border-stone-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-stone-900">
-                        <Zap size={16} className="text-green-700" /> Backpacking
+                      <div className="flex items-center gap-3 px-8 py-4 bg-midnight/5 border border-midnight/10 rounded-2xl text-[11px] font-black uppercase tracking-widest text-midnight">
+                        <Zap size={16} className="text-gold" /> Backpacking
                       </div>
-                      <div className="flex items-center gap-3 px-8 py-4 bg-stone-50 border border-stone-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-stone-900">
-                        <Target size={16} className="text-green-700" /> Hunting
+                      <div className="flex items-center gap-3 px-8 py-4 bg-midnight/5 border border-midnight/10 rounded-2xl text-[11px] font-black uppercase tracking-widest text-midnight">
+                        <Target size={16} className="text-gold" /> Hunting
                       </div>
                     </div>
                   </div>
                   <div className="lg:w-1/2 grid grid-cols-1 md:grid-cols-2 gap-8">
                     {BENEFITS.map((benefit, idx) => (
-                      <div key={idx} className="p-12 bg-stone-50 rounded-[4rem] border border-stone-100 hover:border-green-800/20 hover:bg-white transition-all group hover:shadow-2xl duration-500">
-                        <div className="mb-12 text-green-800 group-hover:scale-110 transition-transform duration-500">
+                      <div key={idx} className="p-12 bg-white rounded-[4rem] border border-midnight/5 hover:border-gold/20 hover:bg-white transition-all group hover:shadow-2xl duration-500">
+                        <div className="mb-12 text-gold group-hover:scale-110 transition-transform duration-500">
                           {benefit.icon}
                         </div>
-                        <h3 className="text-3xl font-black mb-6 tracking-tight leading-none">{benefit.title}</h3>
-                        <p className="text-stone-500 font-medium leading-relaxed text-lg">{benefit.description}</p>
-                        <div className="mt-8 pt-8 border-t border-stone-100 opacity-0 group-hover:opacity-100 transition-opacity">
-                           <span className="text-[10px] font-black uppercase tracking-widest text-green-800">Field Proven</span>
+                        <h3 className="text-3xl font-black mb-6 tracking-tight leading-none text-midnight">{benefit.title}</h3>
+                        <p className="text-midnight/60 font-medium leading-relaxed text-lg">{benefit.description}</p>
+                        <div className="mt-8 pt-8 border-t border-midnight/5 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <span className="text-[10px] font-black uppercase tracking-widest text-gold">Field Proven</span>
                         </div>
                       </div>
                     ))}
@@ -1886,36 +1893,36 @@ const App: React.FC = () => {
             </section>
             
             {/* The Herd Section */}
-            <section id="about" className="py-64 bg-stone-100"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">The Herd.</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">{llamas.map(l=><LlamaCard key={l.id} llama={l} />)}</div></div></section>
+            <section id="about" className="py-64 bg-paper"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none text-midnight">The Herd.</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">{llamas.map(l=><LlamaCard key={l.id} llama={l} />)}</div></div></section>
             
             {/* Gear Section */}
-            <section id="gear" className="py-64 bg-white"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none">Expedition Assets.</h2><GearSection /></div></section>
+            <section id="gear" className="py-64 bg-paper"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none text-midnight">Expedition Assets.</h2><GearSection /></div></section>
             
             {/* Packing List Section */}
-            <section id="packing" className="py-64 bg-stone-50">
+            <section id="packing" className="py-64 bg-paper">
               <div className="max-w-7xl mx-auto px-8">
                 <header className="text-center mb-24">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-green-700 mb-4">Precision Planning</h4>
-                  <h2 className="text-8xl font-black tracking-tighter leading-none mb-8">Load Intel.</h2>
-                  <p className="text-stone-500 text-xl font-medium max-w-2xl mx-auto">Generate a personalized mission gear list using our AI Trail Advisor.</p>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gold mb-4">Precision Planning</h4>
+                  <h2 className="text-8xl font-black tracking-tighter leading-none mb-8 text-midnight">Load Intel.</h2>
+                  <p className="text-midnight/60 text-xl font-medium max-w-2xl mx-auto">Generate a personalized mission gear list using our AI Trail Advisor.</p>
                 </header>
                 <PackingListGenerator />
               </div>
             </section>
 
             {/* Gallery Section */}
-            <section id="gallery" className="py-64 bg-stone-950 text-white"><div className="max-w-7xl mx-auto px-8"><header className="flex flex-col md:flex-row justify-between items-end mb-32 gap-8"><h2 className="text-9xl font-black tracking-tighter leading-none">Journal.</h2><div className="bg-white/5 border border-white/10 px-12 py-6 rounded-full text-green-400 font-black uppercase tracking-widest text-xs">High Country Field Notes</div></header><PhotoCarousel images={gallery} /></div></section>
+            <section id="gallery" className="py-64 bg-midnight text-paper"><div className="max-w-7xl mx-auto px-8"><header className="flex flex-col md:flex-row justify-between items-end mb-32 gap-8"><h2 className="text-9xl font-black tracking-tighter leading-none">Journal.</h2><div className="bg-white/5 border border-white/10 px-12 py-6 rounded-full text-gold font-black uppercase tracking-widest text-xs">High Country Field Notes</div></header><PhotoCarousel images={gallery} /></div></section>
 
-            <section id="trailheads" className="py-64 bg-white overflow-hidden">
+            <section id="trailheads" className="py-64 bg-paper overflow-hidden">
               <div className="max-w-7xl mx-auto px-8">
                 <header className="mb-32">
-                  <h2 className="text-9xl font-black tracking-tighter text-stone-900 leading-none mb-12">Trailheads.</h2>
-                  <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-xs">Primary Deployment Zones / Helena National Forest</p>
+                  <h2 className="text-9xl font-black tracking-tighter text-midnight leading-none mb-12">Trailheads.</h2>
+                  <p className="text-midnight/40 font-bold uppercase tracking-[0.4em] text-xs">Primary Deployment Zones / Helena National Forest</p>
                 </header>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                   {TRAILHEADS.map((trail) => (
-                    <div key={trail.id} className="group relative bg-stone-50 rounded-[4rem] overflow-hidden border border-stone-100 hover:border-green-800/20 transition-all duration-700">
+                    <div key={trail.id} className="group relative bg-white rounded-[4rem] overflow-hidden border border-midnight/5 hover:border-gold/20 transition-all duration-700">
                       <div className="aspect-[16/10] relative overflow-hidden">
                         <img 
                           src={trail.imageUrl} 
@@ -1925,8 +1932,8 @@ const App: React.FC = () => {
                         />
                         <div className="absolute top-8 left-8">
                           <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-3 shadow-xl">
-                            <MapPin size={14} className="text-green-800" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-stone-900">{trail.coordinates.lat}, {trail.coordinates.lng}</span>
+                            <MapPin size={14} className="text-gold" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-midnight">{trail.coordinates.lat}, {trail.coordinates.lng}</span>
                           </div>
                         </div>
                         <div className="absolute bottom-8 right-8">
@@ -1941,19 +1948,19 @@ const App: React.FC = () => {
                       </div>
                       <div className="p-16">
                         <div className="flex justify-between items-start mb-8">
-                          <h3 className="text-4xl font-black tracking-tighter text-stone-900">{trail.name}</h3>
-                          <div className="bg-stone-200/50 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest text-stone-500">
+                          <h3 className="text-4xl font-black tracking-tighter text-midnight">{trail.name}</h3>
+                          <div className="bg-midnight/5 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest text-midnight/50">
                             Best For: {trail.bestFor}
                           </div>
                         </div>
-                        <p className="text-stone-500 font-medium text-lg leading-relaxed mb-12">{trail.description}</p>
+                        <p className="text-midnight/60 font-medium text-lg leading-relaxed mb-12">{trail.description}</p>
                         <a 
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trail.name + " Trailhead Helena MT")}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-4 text-stone-900 font-black text-xs uppercase tracking-widest group/link"
+                          className="inline-flex items-center gap-4 text-midnight font-black text-xs uppercase tracking-widest group/link"
                         >
-                          Launch Navigation <ChevronRight size={16} className="group-hover/link:translate-x-2 transition-transform" />
+                          Launch Navigation <ChevronRight size={16} className="group-hover/link:translate-x-2 transition-transform text-gold" />
                         </a>
                       </div>
                     </div>
@@ -1963,31 +1970,31 @@ const App: React.FC = () => {
             </section>
             
             {/* Video Intel Section */}
-            <section id="videos" className="py-64 bg-white">
+            <section id="videos" className="py-64 bg-paper">
               <div className="max-w-7xl mx-auto px-8">
-                <div className="bg-stone-900 rounded-[4rem] p-16 md:p-32 text-center text-white relative overflow-hidden group">
+                <div className="bg-midnight rounded-[4rem] p-16 md:p-32 text-center text-paper relative overflow-hidden group">
                   <div className="absolute inset-0 opacity-10 pointer-events-none">
                     <img src="https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=1920" className="w-full h-full object-cover" alt="Llama" />
                   </div>
                   <div className="relative z-10 space-y-12">
-                    <div className="w-24 h-24 bg-green-800 text-white rounded-3xl flex items-center justify-center mx-auto shadow-2xl group-hover:scale-110 transition-transform duration-500">
+                    <div className="w-24 h-24 bg-gold text-midnight rounded-3xl flex items-center justify-center mx-auto shadow-2xl group-hover:scale-110 transition-transform duration-500">
                       <Play size={40} fill="currentColor" />
                     </div>
                     <header>
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-green-400 mb-4">Educational Resources</h4>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gold mb-4">Educational Resources</h4>
                       <h2 className="text-7xl md:text-8xl font-black tracking-tighter leading-none mb-8">Video Intel.</h2>
-                      <p className="text-stone-400 text-xl font-medium max-w-2xl mx-auto leading-relaxed">Master the art of high-country packing with our curated library of educational field videos.</p>
+                      <p className="text-paper/60 text-xl font-medium max-w-2xl mx-auto leading-relaxed">Master the art of high-country packing with our curated library of educational field videos.</p>
                     </header>
                     <div className="flex flex-col md:flex-row items-center justify-center gap-6">
                       <button 
                         onClick={() => navigate('/videos')}
-                        className="px-16 py-8 bg-white text-stone-900 rounded-3xl font-black text-xs uppercase tracking-[0.3em] hover:bg-green-400 transition-all shadow-2xl active:scale-95"
+                        className="px-16 py-8 bg-paper text-midnight rounded-3xl font-black text-xs uppercase tracking-[0.3em] hover:bg-gold transition-all shadow-2xl active:scale-95"
                       >
                         Launch Video Library
                       </button>
                       <button 
                         onClick={() => navigate('/book-clinic')}
-                        className="px-16 py-8 bg-green-800 text-white rounded-3xl font-black text-xs uppercase tracking-[0.3em] hover:bg-green-700 transition-all shadow-2xl active:scale-95"
+                        className="px-16 py-8 bg-gold text-midnight rounded-3xl font-black text-xs uppercase tracking-[0.3em] hover:bg-gold/80 transition-all shadow-2xl active:scale-95"
                       >
                         Book a Clinic
                       </button>
@@ -1998,50 +2005,50 @@ const App: React.FC = () => {
             </section>
 
             {/* FAQ Section */}
-            <section id="faq" className="py-64 bg-stone-50"><div className="max-w-7xl mx-auto px-8"><FAQSection /></div></section>
+            <section id="faq" className="py-64 bg-paper"><div className="max-w-7xl mx-auto px-8"><FAQSection /></div></section>
             
             {/* Booking Section */}
-            <section id="booking" className="py-64 bg-white"><div className="max-w-5xl mx-auto px-8 text-center"><h2 className="text-8xl font-black mb-32 tracking-tighter leading-none">Logistics.</h2><BookingForm /></div></section>
+            <section id="booking" className="py-64 bg-paper"><div className="max-w-5xl mx-auto px-8 text-center"><h2 className="text-8xl font-black mb-32 tracking-tighter leading-none text-midnight">Logistics.</h2><BookingForm /></div></section>
             
             {/* Contact Section */}
-            <section id="contact" className="py-64 bg-stone-50 relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-32 opacity-[0.03] rotate-12 pointer-events-none">
+            <section id="contact" className="py-64 bg-midnight relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-32 opacity-[0.03] rotate-12 pointer-events-none text-paper">
                  <Mountain size={600} />
                </div>
                <div className="max-w-7xl mx-auto px-8 relative z-10">
                  <header className="text-center mb-24">
-                   <h2 className="text-8xl font-black tracking-tighter leading-none mb-8">Base Camp.</h2>
-                   <p className="text-stone-500 text-xl font-medium max-w-2xl mx-auto">Reach out to finalize your high country deployment intel.</p>
+                   <h2 className="text-8xl font-black tracking-tighter leading-none mb-8 text-paper">Base Camp.</h2>
+                   <p className="text-paper/60 text-xl font-medium max-w-2xl mx-auto">Reach out to finalize your high country deployment intel.</p>
                  </header>
                  
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                   <div className="bg-white p-16 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all duration-500 text-left">
-                     <div className="w-20 h-20 bg-green-50 text-green-800 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-green-800 group-hover:text-white transition-all shadow-lg">
+                   <div className="bg-white/5 p-16 rounded-[4rem] border border-white/10 shadow-xl group hover:shadow-2xl transition-all duration-500 text-left">
+                     <div className="w-20 h-20 bg-gold/10 text-gold rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-gold group-hover:text-midnight transition-all shadow-lg">
                        <MapPin size={36} />
                      </div>
-                     <h3 className="text-2xl font-black mb-4 tracking-tight">Deployment Point</h3>
-                     <p className="text-stone-500 font-medium leading-relaxed mb-10">310 Lump Gulch Road<br />Clancy, MT 59634</p>
-                     <a href="https://www.google.com/maps/search/310+Lump+Gulch+Road+Clancy,+MT+59634" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-green-800 font-black text-xs uppercase tracking-widest hover:gap-4 transition-all">
+                     <h3 className="text-2xl font-black mb-4 tracking-tight text-paper">Deployment Point</h3>
+                     <p className="text-paper/60 font-medium leading-relaxed mb-10">310 Lump Gulch Road<br />Clancy, MT 59634</p>
+                     <a href="https://www.google.com/maps/search/310+Lump+Gulch+Road+Clancy,+MT+59634" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gold font-black text-xs uppercase tracking-widest hover:gap-4 transition-all">
                        Get Bearings <ExternalLink size={14} />
                      </a>
                    </div>
 
-                   <div className="bg-white p-16 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all duration-500 text-left">
-                     <div className="w-20 h-20 bg-green-50 text-green-800 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-green-800 group-hover:text-white transition-all shadow-lg">
+                   <div className="bg-white/5 p-16 rounded-[4rem] border border-white/10 shadow-xl group hover:shadow-2xl transition-all duration-500 text-left">
+                     <div className="w-20 h-20 bg-gold/10 text-gold rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-gold group-hover:text-midnight transition-all shadow-lg">
                        <Phone size={36} />
                      </div>
-                     <h3 className="text-2xl font-black mb-4 tracking-tight">Direct Line</h3>
-                     <p className="text-stone-500 font-medium leading-relaxed mb-10">Available for trail updates and technical kit support.</p>
-                     <a href="tel:8013720353" className="text-3xl font-black text-stone-900 hover:text-green-800 transition-colors">801-372-0353</a>
+                     <h3 className="text-2xl font-black mb-4 tracking-tight text-paper">Direct Line</h3>
+                     <p className="text-paper/60 font-medium leading-relaxed mb-10">Available for trail updates and technical kit support.</p>
+                     <a href="tel:8013720353" className="text-3xl font-black text-paper hover:text-gold transition-colors">801-372-0353</a>
                    </div>
 
-                   <div className="bg-white p-16 rounded-[4rem] border border-stone-100 shadow-xl group hover:shadow-2xl transition-all duration-500 text-left">
-                     <div className="w-20 h-20 bg-green-50 text-green-800 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-green-800 group-hover:text-white transition-all shadow-lg">
+                   <div className="bg-white/5 p-16 rounded-[4rem] border border-white/10 shadow-xl group hover:shadow-2xl transition-all duration-500 text-left">
+                     <div className="w-20 h-20 bg-gold/10 text-gold rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-gold group-hover:text-midnight transition-all shadow-lg">
                        <Mail size={36} />
                      </div>
-                     <h3 className="text-2xl font-black mb-4 tracking-tight">Dispatch</h3>
-                     <p className="text-stone-500 font-medium leading-relaxed mb-10">Send over your itinerary or custom hunt requests.</p>
-                     <a href="mailto:kevin.paul.brown@gmail.com" className="font-black text-stone-900 border-b-4 border-green-800/20 hover:border-green-800 transition-all py-1">kevin.paul.brown@gmail.com</a>
+                     <h3 className="text-2xl font-black mb-4 tracking-tight text-paper">Dispatch</h3>
+                     <p className="text-paper/60 font-medium leading-relaxed mb-10">Send over your itinerary or custom hunt requests.</p>
+                     <a href="mailto:kevin.paul.brown@gmail.com" className="font-black text-paper border-b-4 border-gold/20 hover:border-gold transition-all py-1">kevin.paul.brown@gmail.com</a>
                    </div>
                  </div>
                </div>
@@ -2049,15 +2056,15 @@ const App: React.FC = () => {
           </main>
 
           {/* Footer */}
-          <footer className="bg-stone-950 text-stone-500 pt-48 pb-24 border-t border-white/5 relative">
+          <footer className="bg-midnight text-paper/40 pt-48 pb-24 border-t border-white/5 relative">
             <div className="max-w-7xl mx-auto px-8">
-              <div className="mb-24 p-12 bg-white/5 rounded-[3rem] border border-white/10 flex flex-col md:flex-row items-center gap-8 group transition-all hover:bg-white/[0.08] hover:border-green-500/30">
-                <div className="w-16 h-16 bg-green-800/20 text-green-400 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-green-900/20">
+              <div className="mb-24 p-12 bg-white/5 rounded-[3rem] border border-white/10 flex flex-col md:flex-row items-center gap-8 group transition-all hover:bg-white/[0.08] hover:border-gold/30">
+                <div className="w-16 h-16 bg-gold/20 text-gold rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-gold/20">
                   <Sparkles size={24} className="animate-float" />
                 </div>
                 <div className="flex-1 text-left">
-                  <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-green-500 mb-2">Llama Fact of the Day</h5>
-                  <p className="text-stone-300 text-lg md:text-xl font-medium italic leading-relaxed">"{dailyFact}"</p>
+                  <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-gold mb-2">Llama Fact of the Day</h5>
+                  <p className="text-paper/80 text-lg md:text-xl font-medium italic leading-relaxed">"{dailyFact}"</p>
                 </div>
                 <div className="hidden lg:block">
                    <Mountain size={48} className="text-white/5" />
@@ -2067,21 +2074,21 @@ const App: React.FC = () => {
               <div className="flex flex-col md:flex-row justify-between items-start gap-24 mb-32 text-left">
                 <div className="space-y-10 max-w-xl">
                   <Logo branding={branding} light onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
-                  <p className="text-stone-500 font-medium leading-relaxed text-lg">Providing elite mountain-trained pack strings for adventures since 2018. We specialize in low-impact, high-efficiency wilderness logistics across the Montana Rockies.</p>
+                  <p className="text-paper/40 font-medium leading-relaxed text-lg">Providing elite mountain-trained pack strings for adventures since 2018. We specialize in low-impact, high-efficiency wilderness logistics across the Montana Rockies.</p>
                   <div className="space-y-2 pt-4">
-                    <p className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2"><MapPin size={14} className="text-green-500"/> 310 Lump Gulch Road, Clancy, MT 59634</p>
-                    <p className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2"><Phone size={14} className="text-green-500"/> 801-372-0353</p>
-                    <p className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2"><Mail size={14} className="text-green-500"/> {branding.adminEmail}</p>
+                    <p className="text-paper text-xs font-black uppercase tracking-widest flex items-center gap-2"><MapPin size={14} className="text-gold"/> 310 Lump Gulch Road, Clancy, MT 59634</p>
+                    <p className="text-paper text-xs font-black uppercase tracking-widest flex items-center gap-2"><Phone size={14} className="text-gold"/> 801-372-0353</p>
+                    <p className="text-paper text-xs font-black uppercase tracking-widest flex items-center gap-2"><Mail size={14} className="text-gold"/> {branding.adminEmail}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-24">
-                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Exploration</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#conditions" className="hover:text-green-500 transition-colors">Conditions</a></li><li><a href="#trailheads" className="hover:text-green-500 transition-colors">Trailheads</a></li><li><a href="#benefits" className="hover:text-green-500 transition-colors">Benefits</a></li><li><a href="#about" className="hover:text-green-500 transition-colors">The Herd</a></li></ul></div>
-                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Intel</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><button onClick={() => navigate('/videos')} className="hover:text-green-500 transition-colors">Videos</button></li><li><button onClick={() => navigate('/book-clinic')} className="hover:text-green-500 transition-colors">Book Clinic</button></li><li><a href="#faq" className="hover:text-green-500 transition-colors">Field Manual</a></li><li><a href="#booking" className="hover:text-green-500 transition-colors">Deployment</a></li><li><a href="#contact" className="hover:text-green-500 transition-colors">Base Camp</a></li></ul></div>
+                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-paper">Exploration</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><a href="#conditions" className="hover:text-gold transition-colors">Conditions</a></li><li><a href="#trailheads" className="hover:text-gold transition-colors">Trailheads</a></li><li><a href="#benefits" className="hover:text-gold transition-colors">Benefits</a></li><li><a href="#about" className="hover:text-gold transition-colors">The Herd</a></li></ul></div>
+                  <div className="space-y-8"><h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-paper">Intel</h4><ul className="space-y-4 text-xs font-bold uppercase tracking-widest"><li><button onClick={() => navigate('/videos')} className="hover:text-gold transition-colors">Videos</button></li><li><button onClick={() => navigate('/book-clinic')} className="hover:text-gold transition-colors">Book Clinic</button></li><li><a href="#faq" className="hover:text-gold transition-colors">Field Manual</a></li><li><a href="#booking" className="hover:text-gold transition-colors">Deployment</a></li><li><a href="#contact" className="hover:text-gold transition-colors">Base Camp</a></li></ul></div>
                 </div>
               </div>
               <div className="pt-24 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-12 text-[10px] font-black uppercase tracking-[0.5em]">
                 <p>© {new Date().getFullYear()} {branding.siteName}</p>
-                <div className="flex gap-12 text-stone-800"><span>Helena, MT</span><span>46.5891° N, 112.0391° W</span></div>
+                <div className="flex gap-12 text-paper/20"><span>Helena, MT</span><span>46.5891° N, 112.0391° W</span></div>
               </div>
             </div>
           </footer>
@@ -2090,21 +2097,21 @@ const App: React.FC = () => {
 
       {/* Global Processing Loader */}
       {isProcessing && (
-        <div className="fixed inset-0 z-[500] bg-stone-950/80 backdrop-blur-3xl flex items-center justify-center">
-          <div className="bg-white px-20 py-24 rounded-[5rem] shadow-2xl flex flex-col items-center gap-12 animate-in zoom-in w-full max-w-lg mx-6 text-center">
-             <div className="w-24 h-24 bg-green-800 text-white rounded-[2.5rem] flex items-center justify-center shadow-2xl animate-bounce"><Zap size={48} /></div>
+        <div className="fixed inset-0 z-[500] bg-midnight/80 backdrop-blur-3xl flex items-center justify-center">
+          <div className="bg-paper px-20 py-24 rounded-[5rem] shadow-2xl flex flex-col items-center gap-12 animate-in zoom-in w-full max-w-lg mx-6 text-center">
+             <div className="w-24 h-24 bg-gold text-midnight rounded-[2.5rem] flex items-center justify-center shadow-2xl animate-bounce"><Zap size={48} /></div>
              <div>
-               <h3 className="text-4xl font-black text-stone-900 mb-4 tracking-tighter">
+               <h3 className="text-4xl font-black text-midnight mb-4 tracking-tighter">
                  {uploadStatus ? "Syncing Terrain Assets" : "Optimizing Visuals"}
                </h3>
                {uploadStatus ? (
                  <div className="space-y-6">
                     <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px]">Deploying Entry {uploadStatus.current} of {uploadStatus.total}</p>
-                    <div className="w-full bg-stone-100 h-3 rounded-full overflow-hidden shadow-inner ring-1 ring-stone-200"><div className="h-full bg-green-800 transition-all duration-500" style={{ width: `${(uploadStatus.current / uploadStatus.total) * 100}%` }} /></div>
+                    <div className="w-full bg-stone-100 h-3 rounded-full overflow-hidden shadow-inner ring-1 ring-stone-200"><div className="h-full bg-gold transition-all duration-500" style={{ width: `${(uploadStatus.current / uploadStatus.total) * 100}%` }} /></div>
                  </div>
-               ) : <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px]">Polishing High-Res Expedition Intel...</p>}
+               ) : <p className="text-midnight/40 font-bold uppercase tracking-[0.4em] text-[10px]">Polishing High-Res Expedition Intel...</p>}
              </div>
-             <Loader2 className="w-12 h-12 text-green-800 animate-spin mt-4" />
+             <Loader2 className="w-12 h-12 text-gold animate-spin mt-4" />
           </div>
         </div>
       )}
@@ -2112,7 +2119,7 @@ const App: React.FC = () => {
       <style>{`
         .label-cms { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #a8a29e; margin-bottom: 0.75rem; letter-spacing: 0.3em; }
         .input-cms { width: 100%; background-color: #fafaf9; border: 1px solid #f5f5f4; padding: 1.5rem; border-radius: 1.5rem; font-weight: 700; outline: none; transition: all 0.2s; color: #1c1917; }
-        .input-cms:focus { background-color: white; border-color: #166534; box-shadow: 0 0 0 6px rgba(22, 101, 52, 0.05); }
+        .input-cms:focus { background-color: white; border-color: #C5943E; box-shadow: 0 0 0 6px rgba(197, 148, 62, 0.05); }
       `}</style>
         </>
       )}
