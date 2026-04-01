@@ -1858,37 +1858,60 @@ const App: React.FC = () => {
                 <path d="M0,100 L150,40 L300,85 L500,20 L700,75 L850,30 L1000,100 Z" />
               </svg>
             </div>
-            <div className="max-w-7xl mx-auto px-8 w-full flex justify-between items-center relative z-10">
+            <div className="max-w-[1700px] mx-auto px-12 w-full flex justify-between items-center relative z-10">
               <Logo branding={branding} light onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
-              <div className="hidden md:flex items-center gap-12 font-black uppercase text-[11px] tracking-[0.2em]">
-                {['Benefits', 'About', 'Trailheads', 'FAQ', 'Contact'].map(item => (
-                  <a key={item} href={`#${item.toLowerCase()}`} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">{item}</a>
-                ))}
-                <button onClick={() => navigate('/map')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Map</button>
-                <button onClick={() => navigate('/availability')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Availability</button>
-                <button onClick={() => navigate('/gear-shop')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Gear Shop</button>
-                <button onClick={() => navigate('/blog')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Journal</button>
-                <button onClick={() => navigate('/videos')} className="text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Videos</button>
-                
-                {isAuthReady && (
-                  user ? (
-                    <div className="flex items-center gap-4 ml-4">
-                      <div className="flex flex-col items-end">
-                        <span className="text-paper text-[10px] font-black lowercase tracking-widest">{user.displayName}</span>
-                        <button onClick={handleLogout} className="text-gold hover:text-gold/80 text-[9px] font-black uppercase tracking-widest">Sign Out</button>
-                      </div>
-                      <img src={user.photoURL || ''} alt="Profile" className="w-10 h-10 rounded-xl border border-white/10 shadow-xl" />
-                    </div>
-                  ) : (
-                    <button onClick={handleLogin} className="ml-4 flex items-center gap-2 text-paper/70 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">
-                      <User size={14} /> Sign In
+              <div className="hidden lg:flex items-center gap-12 font-black uppercase text-[10px] tracking-[0.25em]">
+                <div className="flex items-center gap-10 pr-12 border-r border-white/10">
+                  {['Benefits', 'About', 'Journal', 'Videos'].map(item => (
+                    <button 
+                      key={item} 
+                      onClick={() => item === 'Journal' ? navigate('/blog') : item === 'Videos' ? navigate('/videos') : window.location.hash = item.toLowerCase()} 
+                      className="text-paper/60 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold"
+                    >
+                      {item}
                     </button>
-                  )
-                )}
+                  ))}
+                </div>
 
-                <a href="#booking" className="bg-gold text-midnight px-10 py-5 rounded-2xl flex items-center gap-2 shadow-2xl shadow-gold/20 hover:bg-gold/90 transition-all active:scale-95">Book Trek <ChevronRight size={14} /></a>
+                <div className="flex items-center gap-10 pr-12 border-r border-white/10">
+                  {['Trailheads', 'FAQ', 'Map', 'Availability', 'Gear Shop'].map(item => (
+                    <button 
+                      key={item} 
+                      onClick={() => {
+                        if (item === 'Map') navigate('/map');
+                        else if (item === 'Availability') navigate('/availability');
+                        else if (item === 'Gear Shop') navigate('/gear-shop');
+                        else window.location.hash = item.toLowerCase();
+                      }} 
+                      className="text-paper/60 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                  <a href="#contact" className="text-paper/60 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">Contact</a>
+                </div>
+                
+                <div className="flex items-center gap-10">
+                  {isAuthReady && (
+                    user ? (
+                      <div className="flex items-center gap-4">
+                        <div className="flex flex-col items-end">
+                          <span className="text-paper text-[10px] font-black lowercase tracking-widest">{user.displayName}</span>
+                          <button onClick={handleLogout} className="text-gold hover:text-gold/80 text-[9px] font-black uppercase tracking-widest">Sign Out</button>
+                        </div>
+                        <img src={user.photoURL || ''} alt="Profile" className="w-10 h-10 rounded-xl border border-white/10 shadow-xl" />
+                      </div>
+                    ) : (
+                      <button onClick={handleLogin} className="flex items-center gap-2 text-paper/60 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">
+                        <User size={14} /> Sign In
+                      </button>
+                    )
+                  )}
+
+                  <a href="#booking" className="bg-gold text-midnight px-10 py-5 rounded-2xl flex items-center gap-2 shadow-2xl shadow-gold/20 hover:bg-gold/90 transition-all active:scale-95">Book Trek <ChevronRight size={14} /></a>
+                </div>
               </div>
-              <button className="md:hidden p-3 text-paper" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X size={28} /> : <Menu size={28} />}</button>
+              <button className="lg:hidden p-3 text-paper" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X size={28} /> : <Menu size={28} />}</button>
             </div>
           </nav>
 
