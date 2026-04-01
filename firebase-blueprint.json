@@ -26,6 +26,21 @@
         "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the booking was created." }
       },
       "required": ["uid", "trekName", "date", "status"]
+    },
+    "TripReport": {
+      "title": "Trip Report",
+      "description": "Stores user-submitted trip reports.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The ID of the user who submitted the report." },
+        "authorName": { "type": "string", "description": "The name of the author." },
+        "title": { "type": "string", "description": "The title of the trip report." },
+        "content": { "type": "string", "description": "The content of the trip report." },
+        "date": { "type": "string", "format": "date", "description": "The date of the trip." },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"], "description": "The status of the report." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the report was created." }
+      },
+      "required": ["uid", "authorName", "title", "content", "status"]
     }
   },
   "firestore": {
@@ -36,6 +51,10 @@
     "/bookings/{bookingId}": {
       "schema": "Booking",
       "description": "Collection of trek bookings."
+    },
+    "/trip-reports/{reportId}": {
+      "schema": "TripReport",
+      "description": "Collection of user-submitted trip reports."
     }
   }
 }
