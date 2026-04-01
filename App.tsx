@@ -124,12 +124,12 @@ const Logo = ({ branding, light = false, onClick }: { branding: Branding, light?
   const hasCustomLogo = branding.logoUrl && branding.logoUrl.trim() !== '';
 
   return (
-    <div className="flex items-center gap-4 cursor-pointer select-none group" onClick={onClick}>
-      <div className={`w-14 h-14 ${light ? 'bg-white/5' : 'bg-midnight'} rounded-2xl flex items-center justify-center shadow-2xl transition-all group-hover:scale-110 active:scale-95 overflow-hidden ring-1 ring-white/10`}>
+    <div className="flex items-center gap-6 cursor-pointer select-none group" onClick={onClick}>
+      <div className={`w-20 h-20 ${light ? 'bg-white/5' : 'bg-midnight'} rounded-3xl flex items-center justify-center shadow-2xl transition-all group-hover:scale-110 active:scale-95 overflow-hidden ring-1 ring-white/10`}>
         {hasCustomLogo ? (
           <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-cover" />
         ) : (
-          <svg viewBox="0 0 200 200" className="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 200 200" className="w-14 h-14" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="100" cy="85" r="75" stroke={color} strokeWidth="8" />
             <path 
               d="M75 60 C 75 40, 85 30, 90 45 L 95 70 L 105 70 L 110 45 C 115 30, 125 40, 125 60 C 125 90, 115 110, 100 115 C 85 110, 75 90, 75 60 Z" 
@@ -144,10 +144,10 @@ const Logo = ({ branding, light = false, onClick }: { branding: Branding, light?
           </svg>
         )}
       </div>
-      <div className={`flex flex-col leading-none tracking-[0.3em] font-black uppercase ${light ? 'text-paper' : 'text-midnight'}`}>
-        <span className="text-[0.7em]">Helena</span>
-        <span className="text-[0.6em] mt-1 text-gold">Backcountry</span>
-        <span className="text-[0.7em] mt-1">Llamas</span>
+      <div className={`flex flex-col leading-none tracking-[0.35em] font-black uppercase ${light ? 'text-paper' : 'text-midnight'}`}>
+        <span className="text-[0.9em]">Helena</span>
+        <span className="text-[0.8em] mt-1 text-gold">Backcountry</span>
+        <span className="text-[0.9em] mt-1">Llamas</span>
       </div>
     </div>
   );
@@ -797,7 +797,7 @@ const App: React.FC = () => {
       ) : currentPath === '/book-clinic' ? (
         <ClinicBookingPage onBack={() => navigate('/')} />
       ) : currentPath === '/map' ? (
-        <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
+        <div className="pt-40 px-8 max-w-7xl mx-auto pb-24">
           <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-gold transition-all">
             <ChevronLeft size={16} /> Back to Base Camp
           </button>
@@ -808,21 +808,21 @@ const App: React.FC = () => {
           <TrailMap />
         </div>
       ) : currentPath === '/availability' ? (
-        <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
+        <div className="pt-40 px-8 max-w-7xl mx-auto pb-24">
           <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-gold transition-all">
             <ChevronLeft size={16} /> Back to Base Camp
           </button>
           <AvailabilityCalendar />
         </div>
       ) : currentPath === '/gear-shop' ? (
-        <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
+        <div className="pt-40 px-8 max-w-7xl mx-auto pb-24">
           <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-gold transition-all">
             <ChevronLeft size={16} /> Back to Base Camp
           </button>
           <GearShop items={gearItems} />
         </div>
       ) : currentPath === '/blog' ? (
-        <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
+        <div className="pt-40 px-8 max-w-7xl mx-auto pb-24">
           <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-gold transition-all">
             <ChevronLeft size={16} /> Back to Base Camp
           </button>
@@ -1811,7 +1811,7 @@ const App: React.FC = () => {
       {/* Public Facing Website */}
       {!showDashboard && (
         <>
-          <nav className="fixed w-full z-[100] bg-midnight/95 backdrop-blur-2xl border-b border-white/10 h-24 flex items-center shadow-2xl">
+          <nav className="fixed w-full z-[100] bg-midnight/95 backdrop-blur-2xl border-b border-white/10 h-32 flex items-center shadow-2xl">
             <div className="max-w-7xl mx-auto px-8 w-full flex justify-between items-center">
               <Logo branding={branding} light onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
               <div className="hidden md:flex items-center gap-12 font-black uppercase text-[11px] tracking-[0.2em]">
@@ -1830,7 +1830,7 @@ const App: React.FC = () => {
           </nav>
 
           <div className={`fixed inset-0 z-[110] bg-midnight transition-all duration-700 md:hidden ${isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
-            <div className="p-16 pt-32 flex flex-col h-full space-y-8 overflow-y-auto">
+            <div className="p-16 pt-40 flex flex-col h-full space-y-8 overflow-y-auto">
               {['Benefits', 'About', 'Trailheads', 'FAQ', 'Contact'].map(l => (
                 <a key={l} href={`#${l.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase">{l}</a>
               ))}

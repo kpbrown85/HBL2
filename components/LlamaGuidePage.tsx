@@ -7,7 +7,7 @@ interface LlamaGuidePageProps {
 
 export const LlamaGuidePage: React.FC<LlamaGuidePageProps> = ({ onBack }) => {
   return (
-    <div className="min-h-screen bg-stone-50 py-24 px-8">
+    <div className="min-h-screen bg-stone-50 pt-40 pb-24 px-8">
       <div className="max-w-4xl mx-auto space-y-16">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
           <div>
