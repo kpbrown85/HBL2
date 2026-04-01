@@ -1811,8 +1811,13 @@ const App: React.FC = () => {
       {/* Public Facing Website */}
       {!showDashboard && (
         <>
-          <nav className="fixed w-full z-[100] bg-midnight/95 backdrop-blur-2xl border-b border-white/10 h-32 flex items-center shadow-2xl">
-            <div className="max-w-7xl mx-auto px-8 w-full flex justify-between items-center">
+          <nav className="fixed w-full z-[100] bg-midnight/95 backdrop-blur-2xl border-b border-white/10 h-32 flex items-center shadow-2xl overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none opacity-[0.05]">
+              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" className="w-full h-full fill-white">
+                <path d="M0,100 L150,40 L300,85 L500,20 L700,75 L850,30 L1000,100 Z" />
+              </svg>
+            </div>
+            <div className="max-w-7xl mx-auto px-8 w-full flex justify-between items-center relative z-10">
               <Logo branding={branding} light onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
               <div className="hidden md:flex items-center gap-12 font-black uppercase text-[11px] tracking-[0.2em]">
                 {['Benefits', 'About', 'Trailheads', 'FAQ', 'Contact'].map(item => (
@@ -1847,16 +1852,30 @@ const App: React.FC = () => {
           <main>
             {/* Hero Section */}
             <section className="relative h-screen flex items-center justify-center text-center overflow-hidden bg-midnight">
-              <div className="absolute inset-0 -z-10"><img src={branding.heroImageUrl} className="w-full h-full object-cover opacity-40 scale-105 animate-in zoom-in duration-[10000ms]" alt="Landscape" /></div>
-              <div className="max-w-5xl px-8 text-paper">
-                <h1 className="text-7xl md:text-9xl font-black mb-12 leading-[0.85] tracking-tighter animate-in slide-in-from-top-12 duration-1000">Master the Montana Peaks. <br /><span className="italic text-gold font-light font-display">Elite Strings for the High Country.</span></h1>
-                <p className="text-2xl md:text-4xl text-paper/80 mb-20 max-w-4xl mx-auto font-medium leading-relaxed tracking-tight">{slogan}</p>
-                <a href="#booking" className="bg-gold text-midnight px-20 py-8 rounded-3xl text-3xl font-black shadow-2xl shadow-gold/40 hover:bg-gold/90 transition-all active:scale-95 inline-block">Secure Your String</a>
+              <div className="absolute inset-0 -z-10">
+                <img src={branding.heroImageUrl} className="w-full h-full object-cover opacity-80 scale-105 animate-in zoom-in duration-[10000ms]" alt="Landscape" />
+                <div className="absolute inset-0 bg-gradient-to-b from-midnight/40 via-transparent to-midnight/60" />
+              </div>
+              <div className="absolute top-0 left-0 w-full h-64 pointer-events-none opacity-[0.07] z-10">
+                <svg viewBox="0 0 1000 100" preserveAspectRatio="none" className="w-full h-full fill-white">
+                  <path d="M0,0 L150,80 L300,30 L500,95 L700,40 L850,85 L1000,0 Z" />
+                </svg>
+              </div>
+              <div className="max-w-5xl px-8 text-paper relative z-10 pt-32">
+                <div className="flex justify-center mb-8 opacity-20">
+                  <Mountain size={64} strokeWidth={1} />
+                </div>
+                <h1 className="text-6xl md:text-8xl font-black mb-10 leading-[0.85] tracking-tighter animate-in slide-in-from-top-12 duration-1000">Master the Montana Peaks. <br /><span className="italic text-gold font-light font-display">Elite Strings for the High Country.</span></h1>
+                <p className="text-xl md:text-3xl text-paper/80 mb-16 max-w-4xl mx-auto font-medium leading-relaxed tracking-tight">{slogan}</p>
+                <a href="#booking" className="bg-gold text-midnight px-16 py-6 rounded-3xl text-2xl font-black shadow-2xl shadow-gold/40 hover:bg-gold/90 transition-all active:scale-95 inline-block">Secure Your String</a>
               </div>
             </section>
 
             {/* Benefits Section */}
-            <section id="benefits" className="py-64 bg-paper overflow-hidden">
+            <section id="benefits" className="py-64 bg-paper relative overflow-hidden">
+              <div className="absolute inset-0 -z-10 opacity-[0.03] pointer-events-none">
+                <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale" alt="Mountain Texture" />
+              </div>
               <div className="max-w-7xl mx-auto px-8">
                 <div className="flex flex-col lg:flex-row gap-24 items-start">
                   <div className="lg:w-1/2 lg:sticky lg:top-48">
@@ -1893,13 +1912,37 @@ const App: React.FC = () => {
             </section>
             
             {/* The Herd Section */}
-            <section id="about" className="py-64 bg-paper"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none text-midnight">The Herd.</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">{llamas.map(l=><LlamaCard key={l.id} llama={l} />)}</div></div></section>
+            <section id="about" className="py-64 bg-paper relative overflow-hidden">
+              <div className="absolute inset-0 -z-10 opacity-[0.02] pointer-events-none">
+                <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale" alt="Mountain Texture" />
+              </div>
+              <div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none text-midnight">The Herd.</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">{llamas.map(l=><LlamaCard key={l.id} llama={l} />)}</div></div>
+            </section>
             
             {/* Gear Section */}
-            <section id="gear" className="py-64 bg-paper"><div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none text-midnight">Expedition Assets.</h2><GearSection /></div></section>
-            
+            <section id="gear" className="py-64 bg-paper relative overflow-hidden">
+              <div className="absolute inset-0 -z-10 opacity-[0.02] pointer-events-none">
+                <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale scale-110" alt="Mountain Texture" />
+              </div>
+              <div className="max-w-7xl mx-auto px-8"><h2 className="text-8xl font-black mb-32 text-center tracking-tighter leading-none text-midnight">Expedition Assets.</h2><GearSection /></div>
+            </section>
+
+            {/* Mountain Divider */}
+            <section className="h-[60vh] relative overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 -z-10">
+                <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=2400" className="w-full h-full object-cover" alt="Mountain Scene" />
+                <div className="absolute inset-0 bg-midnight/40" />
+              </div>
+              <div className="text-center px-8">
+                <h2 className="text-7xl md:text-9xl font-black text-paper tracking-tighter leading-none">The High Country <br /><span className="italic font-light font-display text-gold">Awaits.</span></h2>
+              </div>
+            </section>
+
             {/* Packing List Section */}
-            <section id="packing" className="py-64 bg-paper">
+            <section id="packing" className="py-64 bg-paper relative overflow-hidden">
+              <div className="absolute inset-0 -z-10 opacity-[0.02] pointer-events-none">
+                <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale" alt="Mountain Texture" />
+              </div>
               <div className="max-w-7xl mx-auto px-8">
                 <header className="text-center mb-24">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gold mb-4">Precision Planning</h4>
@@ -1913,7 +1956,10 @@ const App: React.FC = () => {
             {/* Gallery Section */}
             <section id="gallery" className="py-64 bg-midnight text-paper"><div className="max-w-7xl mx-auto px-8"><header className="flex flex-col md:flex-row justify-between items-end mb-32 gap-8"><h2 className="text-9xl font-black tracking-tighter leading-none">Journal.</h2><div className="bg-white/5 border border-white/10 px-12 py-6 rounded-full text-gold font-black uppercase tracking-widest text-xs">High Country Field Notes</div></header><PhotoCarousel images={gallery} /></div></section>
 
-            <section id="trailheads" className="py-64 bg-paper overflow-hidden">
+            <section id="trailheads" className="py-64 bg-paper relative overflow-hidden">
+              <div className="absolute inset-0 -z-10 opacity-[0.02] pointer-events-none">
+                <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale scale-110" alt="Mountain Texture" />
+              </div>
               <div className="max-w-7xl mx-auto px-8">
                 <header className="mb-32">
                   <h2 className="text-9xl font-black tracking-tighter text-midnight leading-none mb-12">Trailheads.</h2>
@@ -2005,13 +2051,26 @@ const App: React.FC = () => {
             </section>
 
             {/* FAQ Section */}
-            <section id="faq" className="py-64 bg-paper"><div className="max-w-7xl mx-auto px-8"><FAQSection /></div></section>
+            <section id="faq" className="py-64 bg-paper relative overflow-hidden">
+              <div className="absolute inset-0 -z-10 opacity-[0.02] pointer-events-none">
+                <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale" alt="Mountain Texture" />
+              </div>
+              <div className="max-w-7xl mx-auto px-8"><FAQSection /></div>
+            </section>
             
             {/* Booking Section */}
-            <section id="booking" className="py-64 bg-paper"><div className="max-w-5xl mx-auto px-8 text-center"><h2 className="text-8xl font-black mb-32 tracking-tighter leading-none text-midnight">Logistics.</h2><BookingForm /></div></section>
+            <section id="booking" className="py-64 bg-paper relative overflow-hidden">
+              <div className="absolute inset-0 -z-10 opacity-[0.02] pointer-events-none">
+                <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale scale-110" alt="Mountain Texture" />
+              </div>
+              <div className="max-w-5xl mx-auto px-8 text-center"><h2 className="text-8xl font-black mb-32 tracking-tighter leading-none text-midnight">Logistics.</h2><BookingForm /></div>
+            </section>
             
             {/* Contact Section */}
             <section id="contact" className="py-64 bg-midnight relative overflow-hidden">
+               <div className="absolute inset-0 -z-10 opacity-[0.1] pointer-events-none">
+                 <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale" alt="Mountain Scene" />
+               </div>
                <div className="absolute top-0 right-0 p-32 opacity-[0.03] rotate-12 pointer-events-none text-paper">
                  <Mountain size={600} />
                </div>
@@ -2056,7 +2115,10 @@ const App: React.FC = () => {
           </main>
 
           {/* Footer */}
-          <footer className="bg-midnight text-paper/40 pt-48 pb-24 border-t border-white/5 relative">
+          <footer className="bg-midnight text-paper/40 pt-48 pb-24 border-t border-white/5 relative overflow-hidden">
+            <div className="absolute inset-0 -z-10 opacity-[0.05] pointer-events-none">
+              <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale" alt="Mountain Scene" />
+            </div>
             <div className="max-w-7xl mx-auto px-8">
               <div className="mb-24 p-12 bg-white/5 rounded-[3rem] border border-white/10 flex flex-col md:flex-row items-center gap-8 group transition-all hover:bg-white/[0.08] hover:border-gold/30">
                 <div className="w-16 h-16 bg-gold/20 text-gold rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-gold/20">
