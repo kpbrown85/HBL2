@@ -17,6 +17,7 @@ import { TrailMap } from './components/TrailMap';
 import { AvailabilityCalendar } from './components/AvailabilityCalendar';
 import { GearShop, DEFAULT_GEAR_ITEMS } from './components/GearShop';
 import { ExpeditionBlog } from './components/ExpeditionBlog';
+import { LlamaFactCarousel } from './components/LlamaFactCarousel';
 import { generateWelcomeSlogan, generateBackdrop, getHighCountryAdvice, getQuickAdvice } from './services/geminiService';
 import { auth, db, googleProvider, signInWithPopup, signOut, onSnapshot, collection, query, where, orderBy, limit, doc, setDoc, handleFirestoreError, OperationType } from './firebase';
 import { User as FirebaseUser } from 'firebase/auth';
@@ -259,11 +260,6 @@ const App: React.FC = () => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [apiVersion, setApiVersion] = useState<string | null>(null);
   const [storageWarning, setStorageWarning] = useState(false);
-
-  const dailyFact = useMemo(() => {
-    const day = new Date().getDate();
-    return LLAMA_FACTS[day % LLAMA_FACTS.length];
-  }, []);
 
   const checkApi = async () => {
     const pingUrl = `${window.location.origin}/api/ping`;
@@ -1933,6 +1929,8 @@ const App: React.FC = () => {
               </div>
             </section>
 
+            <LlamaFactCarousel className="z-20 relative -mt-12 mb-12 max-w-4xl mx-auto rounded-3xl shadow-2xl border border-white/10" />
+
             {/* Benefits Section */}
             <section id="benefits" className="py-64 bg-paper relative overflow-hidden">
               <div className="absolute inset-0 -z-10 opacity-[0.03] pointer-events-none">
@@ -2214,17 +2212,8 @@ const App: React.FC = () => {
               <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale" alt="Mountain Scene" />
             </div>
             <div className="max-w-7xl mx-auto px-8">
-              <div className="mb-24 p-12 bg-white/5 rounded-[3rem] border border-white/10 flex flex-col md:flex-row items-center gap-8 group transition-all hover:bg-white/[0.08] hover:border-gold/30">
-                <div className="w-16 h-16 bg-gold/20 text-gold rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-gold/20">
-                  <Sparkles size={24} className="animate-float" />
-                </div>
-                <div className="flex-1 text-left">
-                  <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-gold mb-2">Llama Fact of the Day</h5>
-                  <p className="text-paper/80 text-lg md:text-xl font-medium italic leading-relaxed">"{dailyFact}"</p>
-                </div>
-                <div className="hidden lg:block">
-                   <Mountain size={48} className="text-white/5" />
-                </div>
+              <div className="mb-24">
+                <LlamaFactCarousel className="bg-transparent border-none py-0" />
               </div>
 
               <div className="flex flex-col md:flex-row justify-between items-start gap-24 mb-32 text-left">
