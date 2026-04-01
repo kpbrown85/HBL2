@@ -519,17 +519,26 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogin = async (e?: React.MouseEvent) => {
+  const handleLogin = async (e?: React.MouseEvent | React.FormEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
     console.log("Attempting Google Sign-In...");
     try {
+      // Use signInWithPopup with the initialized auth and provider
       const result = await signInWithPopup(auth, googleProvider);
       console.log("Login successful:", result.user.email);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login failed:", err);
+      // Handle specific Firebase Auth errors that might cause the popup to close
+      if (err.code === 'auth/popup-closed-by-user') {
+        console.warn("Popup closed by user before completion.");
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        console.warn("Popup request cancelled.");
+      } else if (err.code === 'auth/popup-blocked') {
+        console.error("Popup blocked by browser.");
+      }
     }
   };
 
@@ -1908,7 +1917,7 @@ const App: React.FC = () => {
                         <img src={user.photoURL || ''} alt="Profile" className="w-10 h-10 rounded-xl border border-white/10 shadow-xl" />
                       </div>
                     ) : (
-                      <button onClick={handleLogin} className="flex items-center gap-2 text-paper/60 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">
+                      <button onClick={(e) => handleLogin(e)} className="flex items-center gap-2 text-paper/60 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold">
                         <User size={14} /> Sign In
                       </button>
                     )
