@@ -46,7 +46,7 @@ export const VideoLibraryPage: React.FC<VideoLibraryPageProps> = ({ onBack, onBo
                 ></iframe>
               </div>
               <div className="p-10 space-y-4">
-                <div className="flex items-center gap-3 text-green-800">
+                <div className="flex items-center gap-3 text-gold">
                   <Play size={20} fill="currentColor" />
                   <h3 className="text-xl font-black tracking-tight uppercase">{video.title}</h3>
                 </div>
@@ -60,7 +60,7 @@ export const VideoLibraryPage: React.FC<VideoLibraryPageProps> = ({ onBack, onBo
 
         <section className="bg-stone-900 text-white p-12 md:p-20 rounded-[4rem] flex flex-col md:flex-row items-center justify-between gap-12">
           <div className="space-y-6 text-center md:text-left max-w-2xl">
-            <div className="flex items-center justify-center md:justify-start gap-4 text-green-400">
+            <div className="flex items-center justify-center md:justify-start gap-4 text-gold">
               <Youtube size={32} />
               <h2 className="text-3xl font-black tracking-tight uppercase">More Resources</h2>
             </div>
@@ -70,7 +70,7 @@ export const VideoLibraryPage: React.FC<VideoLibraryPageProps> = ({ onBack, onBo
           </div>
           <button 
             onClick={onBookClinic}
-            className="px-10 py-6 bg-green-800 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-green-700 transition-all shadow-xl"
+            className="px-10 py-6 bg-midnight text-white rounded-2xl font-black uppercase tracking-widest hover:bg-midnight/90 transition-all shadow-xl"
           >
             Book a Clinic
           </button>

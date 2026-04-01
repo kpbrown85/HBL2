@@ -253,7 +253,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
               isBooked ? 'bg-red-50 text-red-300 border-red-50 cursor-not-allowed' :
               isPastDate ? 'text-stone-300 border-transparent cursor-default' :
               isSelected ? 'bg-stone-900 text-white border-stone-900 shadow-lg scale-110 z-10' :
-              isInRange ? 'bg-green-100 text-green-800 border-green-100' :
+              isInRange ? 'bg-gold/10 text-gold border-gold/20' :
               'bg-white text-stone-600 border-stone-50 hover:border-stone-200'
             }`}
           >
@@ -364,9 +364,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
   if (isSubmitted) {
     return (
       <div className="bg-white p-12 lg:p-20 rounded-[4rem] shadow-2xl border border-stone-100 text-center max-w-4xl mx-auto overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-2 bg-green-800" />
+        <div className="absolute top-0 left-0 w-full h-2 bg-midnight" />
         <div className="space-y-12">
-          <div className="w-24 h-24 bg-green-50 text-green-700 rounded-[2rem] flex items-center justify-center mx-auto shadow-xl shadow-green-900/5">
+          <div className="w-24 h-24 bg-gold/10 text-gold rounded-[2rem] flex items-center justify-center mx-auto shadow-xl shadow-gold/5">
             <CheckCircle2 size={48} />
           </div>
           
@@ -416,10 +416,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                     <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Equipment</p>
                     <div className="space-y-1">
                       <p className="font-bold text-stone-900 flex items-center gap-2">
-                        {formData.trailerNeeded ? <span className="text-green-600">Trailer Included</span> : <span className="text-stone-300">No Trailer</span>}
+                        {formData.trailerNeeded ? <span className="text-gold">Trailer Included</span> : <span className="text-stone-300">No Trailer</span>}
                       </p>
                       <p className="font-bold text-stone-900 flex items-center gap-2">
-                        {formData.isFirstTimer ? <span className="text-green-600">Packing Clinic Required</span> : <span className="text-stone-300">Clinic Not Needed</span>}
+                        {formData.isFirstTimer ? <span className="text-gold">Packing Clinic Required</span> : <span className="text-stone-300">Clinic Not Needed</span>}
                       </p>
                     </div>
                   </div>
@@ -453,7 +453,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Pricing Breakdown</p>
                 <div className="flex flex-wrap gap-4 text-[10px] font-bold uppercase tracking-widest">
                   {pricingBreakdown.seasonal !== 0 && (
-                    <span className={pricingBreakdown.seasonal > 0 ? 'text-amber-600' : 'text-green-600'}>
+                    <span className={pricingBreakdown.seasonal > 0 ? 'text-amber-600' : 'text-gold'}>
                       {pricingBreakdown.seasonal > 0 ? 'Peak Season Surcharge' : 'Off-Season Discount'}
                     </span>
                   )}
@@ -467,7 +467,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
               </div>
               <div className="text-right">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-1">Estimated Investment</p>
-                <div className="text-4xl font-black text-green-800">
+                <div className="text-4xl font-black text-gold">
                   ${estimate.toLocaleString()}
                 </div>
               </div>
@@ -514,7 +514,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                   <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-4">Start Date</label>
                   <input 
                     type="date" 
-                    className="w-full bg-white border border-stone-100 p-6 rounded-2xl outline-none focus:ring-4 focus:ring-green-500/10 font-bold text-stone-900" 
+                    className="w-full bg-white border border-stone-100 p-6 rounded-2xl outline-none focus:ring-4 focus:ring-gold/10 font-bold text-stone-900" 
                     value={formData.startDate} 
                     readOnly
                   />
@@ -523,7 +523,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                   <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-4">End Date</label>
                   <input 
                     type="date" 
-                    className="w-full bg-white border border-stone-100 p-6 rounded-2xl outline-none focus:ring-4 focus:ring-green-500/10 font-bold text-stone-900" 
+                    className="w-full bg-white border border-stone-100 p-6 rounded-2xl outline-none focus:ring-4 focus:ring-gold/10 font-bold text-stone-900" 
                     value={formData.endDate} 
                     readOnly
                   />
@@ -535,7 +535,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
           {/* Step 2: Gear Rental Add-ons */}
           <div className="space-y-12">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-800 text-white rounded-2xl flex items-center justify-center shadow-xl">
+              <div className="w-12 h-12 bg-midnight text-white rounded-2xl flex items-center justify-center shadow-xl">
                 <Package size={24} />
               </div>
               <div>
@@ -552,7 +552,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                   onClick={() => toggleAddon(addon.id)}
                   className={`flex items-start gap-6 p-8 rounded-[2.5rem] border-2 transition-all text-left ${
                     formData.addons.includes(addon.id)
-                      ? 'bg-green-800 border-green-800 text-white shadow-2xl shadow-green-900/20'
+                      ? 'bg-midnight border-midnight text-white shadow-2xl shadow-midnight/20'
                       : 'bg-white border-stone-100 text-stone-900 hover:border-stone-200'
                   }`}
                 >
@@ -568,7 +568,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-black text-lg tracking-tight">{addon.name}</h4>
                       <span className={`text-xs font-black uppercase tracking-widest ${
-                        formData.addons.includes(addon.id) ? 'text-green-200' : 'text-green-600'
+                        formData.addons.includes(addon.id) ? 'text-gold/50' : 'text-gold'
                       }`}>
                         +${addon.pricePerDay}/day
                       </span>
@@ -597,7 +597,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                 <button 
                   type="button"
                   onClick={() => setFormData({...formData, customOutfitting: !formData.customOutfitting})}
-                  className={`w-16 h-8 rounded-full transition-all relative ${formData.customOutfitting ? 'bg-green-800' : 'bg-stone-200'}`}
+                  className={`w-16 h-8 rounded-full transition-all relative ${formData.customOutfitting ? 'bg-gold' : 'bg-stone-200'}`}
                 >
                   <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${formData.customOutfitting ? 'left-9' : 'left-1'}`} />
                 </button>
@@ -607,7 +607,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                 <div className="space-y-4 animate-in slide-in-from-top-4">
                   <p className="text-xs font-bold text-stone-500 italic">Adds a ${PRICING.customOutfittingFee} flat outfitting fee for custom logistics and gear sourcing.</p>
                   <textarea 
-                    className="w-full bg-white border border-stone-100 p-6 rounded-2xl outline-none focus:ring-4 focus:ring-green-500/10 font-medium text-stone-900 text-sm min-h-[120px]"
+                    className="w-full bg-white border border-stone-100 p-6 rounded-2xl outline-none focus:ring-4 focus:ring-gold/10 font-medium text-stone-900 text-sm min-h-[120px]"
                     placeholder="Describe your custom gear needs or special logistics..."
                     value={formData.customRequests}
                     onChange={(e) => setFormData({...formData, customRequests: e.target.value})}
@@ -639,7 +639,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                     type="range"
                     min="2"
                     max="12"
-                    className="flex-1 accent-green-800"
+                    className="flex-1 accent-gold"
                     value={formData.numLlamas}
                     onChange={(e) => setFormData({...formData, numLlamas: parseInt(e.target.value) || 2})}
                   />
@@ -659,7 +659,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                       : 'bg-white border-stone-100 text-stone-900 hover:border-stone-200'
                   }`}
                 >
-                  <Truck className={`mb-4 ${formData.trailerNeeded ? 'text-green-400' : 'text-stone-300'}`} size={32} />
+                  <Truck className={`mb-4 ${formData.trailerNeeded ? 'text-gold' : 'text-stone-300'}`} size={32} />
                   <h4 className="font-black text-lg tracking-tight mb-1">Trailer Rental</h4>
                   <p className={`text-xs font-bold uppercase tracking-widest ${formData.trailerNeeded ? 'text-stone-400' : 'text-stone-400'}`}>
                     ${PRICING.trailerDaily}/day
@@ -675,7 +675,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                       : 'bg-white border-stone-100 text-stone-900 hover:border-stone-200'
                   }`}
                 >
-                  <GraduationCap className={`mb-4 ${formData.isFirstTimer ? 'text-green-400' : 'text-stone-300'}`} size={32} />
+                  <GraduationCap className={`mb-4 ${formData.isFirstTimer ? 'text-gold' : 'text-stone-300'}`} size={32} />
                   <h4 className="font-black text-lg tracking-tight mb-1">Pack Clinic</h4>
                   <p className={`text-xs font-bold uppercase tracking-widest ${formData.isFirstTimer ? 'text-stone-400' : 'text-stone-400'}`}>
                     ${PRICING.clinicFee} One-time
@@ -701,7 +701,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
               <input 
                 required
                 type="text" 
-                className="w-full px-8 py-6 rounded-3xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-bold text-lg"
+                className="w-full px-8 py-6 rounded-3xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-gold/5 focus:border-gold outline-none transition-all text-stone-900 font-bold text-lg"
                 placeholder="Full Name"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -710,7 +710,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                 <input 
                   required
                   type="email" 
-                  className="w-full px-8 py-6 rounded-3xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-bold text-lg"
+                  className="w-full px-8 py-6 rounded-3xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-gold/5 focus:border-gold outline-none transition-all text-stone-900 font-bold text-lg"
                   placeholder="Email Address"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -718,7 +718,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                 <input 
                   required
                   type="tel" 
-                  className="w-full px-8 py-6 rounded-3xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-green-700/5 focus:border-green-700 outline-none transition-all text-stone-900 font-bold text-lg"
+                  className="w-full px-8 py-6 rounded-3xl bg-stone-50 border border-stone-100 focus:bg-white focus:ring-4 focus:ring-gold/5 focus:border-gold outline-none transition-all text-stone-900 font-bold text-lg"
                   placeholder="Phone Number"
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
@@ -729,7 +729,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
 
           {/* Summary & Submit */}
           <div className="bg-stone-900 p-12 rounded-[4rem] text-white shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-3xl -mr-32 -mt-32" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gold/10 rounded-full blur-3xl -mr-32 -mt-32" />
             <div className="relative z-10">
               <div className="flex justify-between items-end mb-12">
                 <div>
@@ -737,7 +737,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                   <div className="text-6xl font-black tracking-tighter">${estimate.toLocaleString()}</div>
                   <div className="flex flex-wrap gap-2 mt-4">
                     {pricingBreakdown.seasonal !== 0 && (
-                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${pricingBreakdown.seasonal > 0 ? 'bg-amber-500/20 text-amber-400' : 'bg-green-500/20 text-green-400'}`}>
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${pricingBreakdown.seasonal > 0 ? 'bg-amber-500/20 text-amber-400' : 'bg-gold/20 text-gold'}`}>
                         {pricingBreakdown.seasonal > 0 ? 'Peak Rate' : 'Off-Season Rate'}
                       </span>
                     )}

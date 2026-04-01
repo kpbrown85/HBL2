@@ -27,20 +27,20 @@ export const ClinicBookingPage: React.FC<ClinicBookingPageProps> = ({ onBack }) 
           
           <div className="space-y-8">
             <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-stone-100 space-y-6">
-              <div className="w-12 h-12 bg-green-50 text-green-800 rounded-2xl flex items-center justify-center shadow-sm">
+              <div className="w-12 h-12 bg-midnight/5 text-gold rounded-2xl flex items-center justify-center shadow-sm">
                 <Info size={24} />
               </div>
               <h3 className="text-xl font-black text-stone-900 uppercase tracking-tight">What to Expect</h3>
               <ul className="space-y-4 text-stone-500 text-sm font-medium leading-relaxed">
-                <li className="flex gap-3"><ShieldCheck size={16} className="text-green-600 shrink-0" /> 2-hour intensive hands-on session</li>
-                <li className="flex gap-3"><ShieldCheck size={16} className="text-green-600 shrink-0" /> Learn saddling & weight distribution</li>
-                <li className="flex gap-3"><ShieldCheck size={16} className="text-green-600 shrink-0" /> Practice leading through obstacles</li>
-                <li className="flex gap-3"><ShieldCheck size={16} className="text-green-600 shrink-0" /> Basic first aid & trail nutrition</li>
+                <li className="flex gap-3"><ShieldCheck size={16} className="text-gold shrink-0" /> 2-hour intensive hands-on session</li>
+                <li className="flex gap-3"><ShieldCheck size={16} className="text-gold shrink-0" /> Learn saddling & weight distribution</li>
+                <li className="flex gap-3"><ShieldCheck size={16} className="text-gold shrink-0" /> Practice leading through obstacles</li>
+                <li className="flex gap-3"><ShieldCheck size={16} className="text-gold shrink-0" /> Basic first aid & trail nutrition</li>
               </ul>
             </div>
 
             <div className="bg-stone-900 text-white p-10 rounded-[3rem] shadow-xl space-y-6">
-              <div className="w-12 h-12 bg-white/10 text-green-400 rounded-2xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-white/10 text-gold rounded-2xl flex items-center justify-center">
                 <GraduationCap size={24} />
               </div>
               <h3 className="text-xl font-black uppercase tracking-tight">Certification</h3>

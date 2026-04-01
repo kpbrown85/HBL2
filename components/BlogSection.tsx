@@ -61,13 +61,13 @@ export const BlogSection: React.FC = () => {
                     <Calendar size={14} /> {entry.date}
                   </div>
                 </div>
-                <h3 className="text-3xl font-black tracking-tight text-stone-900 mb-4 group-hover:text-green-800 transition-colors">
+                <h3 className="text-3xl font-black tracking-tight text-stone-900 mb-4 group-hover:text-gold transition-colors">
                   {entry.title}
                 </h3>
                 <p className="text-stone-500 font-medium text-lg leading-relaxed mb-6">
                   {entry.excerpt}
                 </p>
-                <div className="flex items-center gap-2 text-green-800 font-black text-xs uppercase tracking-widest">
+                <div className="flex items-center gap-2 text-gold font-black text-xs uppercase tracking-widest">
                   Read Full Report <ArrowRight size={16} className="transition-transform group-hover:translate-x-2" />
                 </div>
               </div>
@@ -116,11 +116,11 @@ export const BlogSection: React.FC = () => {
               <div className="flex-1 overflow-y-auto p-12 lg:p-20 custom-scrollbar">
                 <div className="flex items-center gap-6 mb-12 text-stone-400 font-black text-xs uppercase tracking-widest">
                   <div className="flex items-center gap-2">
-                    <User size={16} className="text-green-600" /> {selectedEntry.author}
+                    <User size={16} className="text-gold" /> {selectedEntry.author}
                   </div>
                   <div className="w-1.5 h-1.5 bg-stone-200 rounded-full" />
                   <div className="flex items-center gap-2">
-                    <Calendar size={16} className="text-green-600" /> {selectedEntry.date}
+                    <Calendar size={16} className="text-gold" /> {selectedEntry.date}
                   </div>
                 </div>
                 <div className="prose prose-stone prose-2xl max-w-none text-stone-600 font-medium leading-relaxed">

@@ -107,14 +107,14 @@ export const PhotoCarousel: React.FC<PhotoCarouselProps> = ({
               />
             ) : (
               <div className="w-full h-full bg-stone-900 flex items-center justify-center">
-                <div className="w-10 h-10 border-4 border-white/10 border-t-green-500 rounded-full animate-spin" />
+                <div className="w-10 h-10 border-4 border-white/10 border-t-gold rounded-full animate-spin" />
               </div>
             )}
             {/* Caption Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent">
               <div className="absolute bottom-16 left-8 md:left-16 right-8 md:right-16 text-left">
                 <div className="overflow-hidden">
-                  <p className={`text-green-400 text-xs font-black uppercase tracking-[0.4em] mb-4 transition-transform duration-700 delay-100 ${index === currentIndex ? 'translate-y-0' : 'translate-y-full'}`}>
+                  <p className={`text-gold text-xs font-black uppercase tracking-[0.4em] mb-4 transition-transform duration-700 delay-100 ${index === currentIndex ? 'translate-y-0' : 'translate-y-full'}`}>
                     Expedition Logs
                   </p>
                 </div>
@@ -132,7 +132,7 @@ export const PhotoCarousel: React.FC<PhotoCarouselProps> = ({
       {/* Progress Bar */}
       <div className="absolute bottom-0 left-0 w-full h-1.5 bg-white/10 z-30">
         <div 
-          className="h-full bg-green-500 transition-all duration-100 ease-linear"
+          className="h-full bg-gold transition-all duration-100 ease-linear"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -141,14 +141,14 @@ export const PhotoCarousel: React.FC<PhotoCarouselProps> = ({
       <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-6 z-30 pointer-events-none">
         <button
           onClick={prevSlide}
-          className="w-16 h-16 bg-black/20 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-green-600 transition-all opacity-0 group-hover:opacity-100 pointer-events-auto active:scale-90"
+          className="w-16 h-16 bg-black/20 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-gold transition-all opacity-0 group-hover:opacity-100 pointer-events-auto active:scale-90"
           aria-label="Previous slide"
         >
           <ChevronLeft className="w-8 h-8" />
         </button>
         <button
           onClick={nextSlide}
-          className="w-16 h-16 bg-black/20 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-green-600 transition-all opacity-0 group-hover:opacity-100 pointer-events-auto active:scale-90"
+          className="w-16 h-16 bg-black/20 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-gold transition-all opacity-0 group-hover:opacity-100 pointer-events-auto active:scale-90"
           aria-label="Next slide"
         >
           <ChevronRight className="w-8 h-8" />
@@ -162,7 +162,7 @@ export const PhotoCarousel: React.FC<PhotoCarouselProps> = ({
         </div>
         <button 
           onClick={() => setIsPaused(!isPaused)}
-          className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-white hover:text-green-400 transition-colors"
+          className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-white hover:text-gold transition-colors"
           title={isPaused ? "Play" : "Pause"}
         >
           {isPaused ? <Play size={20} fill="currentColor" /> : <Pause size={20} fill="currentColor" />}
@@ -183,7 +183,7 @@ export const PhotoCarousel: React.FC<PhotoCarouselProps> = ({
             aria-label={`Go to slide ${index + 1}`}
           >
             <div className={`h-1 rounded-full transition-all duration-500 ${
-              index === currentIndex ? 'w-12 bg-green-500' : 'w-4 bg-white/30 group-hover:bg-white/60'
+              index === currentIndex ? 'w-12 bg-gold' : 'w-4 bg-white/30 group-hover:bg-white/60'
             }`} />
           </button>
         ))}

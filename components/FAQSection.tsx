@@ -74,7 +74,7 @@ export const FAQSection: React.FC = () => {
     <div className="space-y-12">
       {/* Header Info */}
       <div className="text-center max-w-2xl mx-auto mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-[9px] font-black uppercase tracking-[0.2em] mb-4 border border-green-100">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-midnight/5 text-gold rounded-full text-[9px] font-black uppercase tracking-[0.2em] mb-4 border border-midnight/10">
           <Activity size={10} className="animate-pulse" /> Trail Status: Active
         </div>
         <h2 className="text-5xl font-black text-stone-900 mb-6 tracking-tight">Trail Manual & FAQ</h2>
@@ -88,7 +88,7 @@ export const FAQSection: React.FC = () => {
           <input 
             type="text"
             placeholder="Search the field manual..."
-            className="w-full bg-stone-50 border border-stone-100 pl-14 pr-6 py-4 rounded-2xl font-bold text-stone-900 focus:bg-white focus:border-green-800 outline-none transition-all"
+            className="w-full bg-stone-50 border border-stone-100 pl-14 pr-6 py-4 rounded-2xl font-bold text-stone-900 focus:bg-white focus:border-gold outline-none transition-all"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -101,7 +101,7 @@ export const FAQSection: React.FC = () => {
               onClick={() => setActiveCategory(cat)}
               className={`px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
                 activeCategory === cat 
-                  ? 'bg-green-800 text-white shadow-lg shadow-green-900/20' 
+                  ? 'bg-midnight text-white shadow-lg shadow-midnight/20' 
                   : 'bg-stone-50 text-stone-400 hover:bg-stone-100 hover:text-stone-600'
               }`}
             >
@@ -124,8 +124,8 @@ export const FAQSection: React.FC = () => {
                   key={index} 
                   className={`group bg-white rounded-[2rem] border transition-all duration-300 overflow-hidden ${
                     isOpen 
-                      ? 'border-green-200 shadow-xl ring-4 ring-green-500/5' 
-                      : 'border-stone-100 hover:border-green-100 shadow-sm'
+                      ? 'border-gold/20 shadow-xl ring-4 ring-gold/5' 
+                      : 'border-stone-100 hover:border-gold/10 shadow-sm'
                   }`}
                 >
                   <button
@@ -135,13 +135,13 @@ export const FAQSection: React.FC = () => {
                   >
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                        isOpen ? 'bg-green-800 text-white shadow-lg shadow-green-900/20' : 'bg-stone-50 text-stone-400 group-hover:bg-green-50 group-hover:text-green-700'
+                        isOpen ? 'bg-midnight text-white shadow-lg shadow-midnight/20' : 'bg-stone-50 text-stone-400 group-hover:bg-midnight/5 group-hover:text-gold'
                       }`}>
                         <Icon className="w-6 h-6" />
                       </div>
                       <div>
                         <span className={`text-lg font-black tracking-tight transition-colors block leading-tight ${
-                          isOpen ? 'text-green-900' : 'text-stone-900'
+                          isOpen ? 'text-midnight' : 'text-stone-900'
                         }`}>
                           {faq.question}
                         </span>
@@ -149,7 +149,7 @@ export const FAQSection: React.FC = () => {
                       </div>
                     </div>
                     <div className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'}`}>
-                      <ChevronDown className={isOpen ? 'text-green-800' : 'text-stone-300'} />
+                      <ChevronDown className={isOpen ? 'text-gold' : 'text-stone-300'} />
                     </div>
                   </button>
                   
@@ -167,7 +167,7 @@ export const FAQSection: React.FC = () => {
                       <div className="flex items-center justify-between pt-4 border-t border-stone-50">
                         <span className="text-[10px] font-black text-stone-300 uppercase tracking-widest">Knowledge Verified</span>
                         <div className="flex gap-2">
-                          <button className="p-2 rounded-lg bg-stone-50 text-stone-400 hover:text-green-700 transition-colors">
+                          <button className="p-2 rounded-lg bg-stone-50 text-stone-400 hover:text-gold transition-colors">
                             <ThumbsUp size={14} />
                           </button>
                         </div>
@@ -194,7 +194,7 @@ export const FAQSection: React.FC = () => {
             
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center shadow-lg"><Sparkles className="w-6 h-6 text-stone-900"/></div>
+                <div className="w-10 h-10 bg-gold rounded-xl flex items-center justify-center shadow-lg"><Sparkles className="w-6 h-6 text-midnight"/></div>
                 <h3 className="text-2xl font-black tracking-tight">AI Trail Guide</h3>
               </div>
               
@@ -204,14 +204,14 @@ export const FAQSection: React.FC = () => {
 
               <form onSubmit={handleAiSubmit} className="space-y-4">
                 <textarea 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 font-medium text-sm text-white placeholder:text-stone-600 outline-none focus:border-green-500/50 focus:bg-white/10 transition-all h-32 resize-none shadow-inner"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 font-medium text-sm text-white placeholder:text-stone-600 outline-none focus:border-gold/50 focus:bg-white/10 transition-all h-32 resize-none shadow-inner"
                   placeholder="e.g. Can llamas cross rivers in early June?"
                   value={aiQuery}
                   onChange={(e) => setAiQuery(e.target.value)}
                 />
                 <button 
                   disabled={isAiLoading || !aiQuery.trim()}
-                  className="w-full bg-green-500 text-stone-900 py-4 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-400 disabled:opacity-50 transition-all shadow-lg active:scale-95"
+                  className="w-full bg-gold text-midnight py-4 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gold/80 disabled:opacity-50 transition-all shadow-lg active:scale-95"
                 >
                   {isAiLoading ? <Loader2 className="animate-spin" /> : <><Sparkles size={14}/> Query Intel</>}
                 </button>
@@ -220,7 +220,7 @@ export const FAQSection: React.FC = () => {
               {aiResponse && (
                 <div className="mt-8 p-6 bg-white/5 rounded-2xl border border-white/10 animate-in fade-in slide-in-from-top-4 backdrop-blur-sm">
                   <div className="flex justify-between items-start mb-4">
-                    <span className="text-[9px] font-black uppercase text-green-500 tracking-[0.2em]">Intel Response</span>
+                    <span className="text-[9px] font-black uppercase text-gold tracking-[0.2em]">Intel Response</span>
                     <button onClick={() => setAiResponse(null)} className="text-white/20 hover:text-white transition-colors"><X size={14}/></button>
                   </div>
                   <p className="text-sm font-medium leading-relaxed italic text-stone-200">"{aiResponse}"</p>
@@ -231,7 +231,7 @@ export const FAQSection: React.FC = () => {
           
           <div className="bg-stone-100 p-8 rounded-[3rem] border border-stone-200 shadow-sm text-center">
             <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest mb-4">Need personalized help?</p>
-            <a href="mailto:kevin.paul.brown@gmail.com" className="group flex items-center justify-center gap-2 text-stone-900 font-black text-sm hover:text-green-800 transition-colors">
+            <a href="mailto:kevin.paul.brown@gmail.com" className="group flex items-center justify-center gap-2 text-stone-900 font-black text-sm hover:text-gold transition-colors">
               Contact Outfitter <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </a>
           </div>

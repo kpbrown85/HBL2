@@ -268,7 +268,7 @@ api.get("/test-email", async (req, res) => {
       subject: "HBL Email System Test",
       html: `
         <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-          <h2 style="color: #166534;">Email System Test Successful!</h2>
+          <h2 style="color: #0B1D21;">Email System Test Successful!</h2>
           <p>Your Resend configuration is working correctly.</p>
           <p>Timestamp: ${new Date().toISOString()}</p>
           <p>If you received this, your email system is fully operational.</p>
@@ -391,7 +391,7 @@ api.post("/create-booking", async (req, res) => {
       // ADMIN NOTIFICATION
       const adminHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-          <h2 style="color: #166534; border-bottom: 2px solid #166534; padding-bottom: 10px;">New ${booking.bookingType === 'clinic' ? 'Clinic' : 'Expedition'} Request</h2>
+          <h2 style="color: #0B1D21; border-bottom: 2px solid #0B1D21; padding-bottom: 10px;">New ${booking.bookingType === 'clinic' ? 'Clinic' : 'Expedition'} Request</h2>
           <p><strong>Name:</strong> ${booking.name}</p>
           <p><strong>Email:</strong> ${booking.email}</p>
           <p><strong>Phone:</strong> ${booking.phone}</p>
@@ -401,7 +401,7 @@ api.post("/create-booking", async (req, res) => {
           <p><strong>Clinic Required:</strong> ${booking.isFirstTimer ? 'Yes' : 'No'}</p>
           ${dbError ? `<p style="color: red;"><strong>Note:</strong> Database save failed, but request was captured via email.</p>` : ''}
           <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-          <a href="${process.env.APP_URL || 'https://www.helenallamas.com'}/admin" style="display: inline-block; background: #166534; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Dashboard</a>
+          <a href="${process.env.APP_URL || 'https://www.helenallamas.com'}/admin" style="display: inline-block; background: #0B1D21; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Dashboard</a>
         </div>
       `;
 
@@ -416,20 +416,20 @@ api.post("/create-booking", async (req, res) => {
       const customerHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 30px; border-radius: 15px; color: #333;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #166534; margin: 0;">Helena Backcountry Llamas</h1>
+            <h1 style="color: #0B1D21; margin: 0;">Helena Backcountry Llamas</h1>
             <p style="color: #666; font-style: italic;">Your High Country Adventure Starts Here</p>
           </div>
           <p>Hi ${booking.name},</p>
           <p>Thank you for requesting a ${booking.bookingType === 'clinic' ? 'Llama Packing Clinic' : 'expedition'} with our herd! We've received your request and our team is currently reviewing the ${booking.bookingType === 'clinic' ? 'clinic schedule' : 'trail conditions and llama availability'} for your dates.</p>
           
-          <div style="background: #f0fdf4; padding: 25px; border-radius: 15px; margin: 25px 0; border: 2px dashed #166534; text-align: center;">
-            <h3 style="margin-top: 0; color: #166534;">MANDATORY: Sign Your Waiver</h3>
+          <div style="background: #f0fdf4; padding: 25px; border-radius: 15px; margin: 25px 0; border: 2px dashed #0B1D21; text-align: center;">
+            <h3 style="margin-top: 0; color: #0B1D21;">MANDATORY: Sign Your Waiver</h3>
             <p>To finalize your booking, please sign the Rental Agreement and Liability Waiver electronically:</p>
-            <a href="${waiverUrl}" style="display: inline-block; background: #166534; color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; margin-top: 10px;">Sign Agreement Now</a>
+            <a href="${waiverUrl}" style="display: inline-block; background: #0B1D21; color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; margin-top: 10px;">Sign Agreement Now</a>
           </div>
 
           <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #166534;">Request Summary:</h3>
+            <h3 style="margin-top: 0; color: #0B1D21;">Request Summary:</h3>
             <ul style="list-style: none; padding: 0;">
               <li><strong>Dates:</strong> ${booking.startDate} ${booking.bookingType === 'clinic' ? '' : `to ${booking.endDate}`}</li>
               ${booking.bookingType === 'clinic' ? '<li><strong>Type:</strong> Llama Packing Clinic Training</li>' : `
@@ -600,7 +600,7 @@ api.post("/update-booking", async (req, res) => {
       
         const invoiceHtml = `
         <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e7e5e4; border-radius: 16px; overflow: hidden; background: #fff;">
-          <div style="background: #166534; padding: 40px; text-align: center; color: white;">
+          <div style="background: #0B1D21; padding: 40px; text-align: center; color: white;">
             ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 20px; border-radius: 8px;" />` : ''}
             <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -0.02em;">Booking Accepted</h1>
             <p style="margin: 10px 0 0; opacity: 0.8; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">Invoice #${booking.id.slice(0,8).toUpperCase()}</p>
@@ -610,9 +610,9 @@ api.post("/update-booking", async (req, res) => {
             <p style="font-size: 16px; color: #444; margin-bottom: 30px;">Hello <strong>${booking.name}</strong>, your ${booking.bookingType === 'clinic' ? 'Llama Packing Clinic' : 'expedition into the Montana high country'} has been accepted! To secure your dates, please sign the waiver and pay a $100 deposit.</p>
             
             <div style="background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 30px;">
-              <h3 style="margin: 0 0 12px; color: #166534; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">Action Required: Sign Waiver</h3>
-              <p style="margin: 0 0 20px; font-size: 14px; color: #166534;">Please sign the mandatory rental agreement and liability waiver.</p>
-              <a href="${waiverUrl}" style="display: inline-block; background: #166534; color: white; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: 900; font-size: 16px;">Sign Waiver Now</a>
+              <h3 style="margin: 0 0 12px; color: #0B1D21; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">Action Required: Sign Waiver</h3>
+              <p style="margin: 0 0 20px; font-size: 14px; color: #0B1D21;">Please sign the mandatory rental agreement and liability waiver.</p>
+              <a href="${waiverUrl}" style="display: inline-block; background: #0B1D21; color: white; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: 900; font-size: 16px;">Sign Waiver Now</a>
             </div>
 
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
@@ -648,14 +648,14 @@ api.post("/update-booking", async (req, res) => {
                 </tr>` : ''}
                 <tr>
                   <td style="padding: 24px 0; font-size: 18px; font-weight: 900; color: #1c1917;">Total Due</td>
-                  <td style="padding: 24px 0; text-align: right; font-size: 24px; font-weight: 900; color: #166534;">$${grandTotal.toFixed(2)}</td>
+                  <td style="padding: 24px 0; text-align: right; font-size: 24px; font-weight: 900; color: #0B1D21;">$${grandTotal.toFixed(2)}</td>
                 </tr>
               </tbody>
             </table>
 
             <div style="background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 12px; padding: 24px; text-align: center;">
-              <h3 style="margin: 0 0 12px; color: #166534; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">Payment via Venmo</h3>
-              <p style="margin: 0 0 20px; font-size: 14px; color: #166534;">Please send a <strong>$100 deposit</strong> to <strong>${venmoHandle}</strong> to secure your dates. The remaining balance will be due before your trip.</p>
+              <h3 style="margin: 0 0 12px; color: #0B1D21; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">Payment via Venmo</h3>
+              <p style="margin: 0 0 20px; font-size: 14px; color: #0B1D21;">Please send a <strong>$100 deposit</strong> to <strong>${venmoHandle}</strong> to secure your dates. The remaining balance will be due before your trip.</p>
               <a href="${venmoLink}" style="display: inline-block; background: #008CFF; color: white; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: 900; font-size: 16px; box-shadow: 0 4px 12px rgba(0,140,255,0.3);">Pay $100 Deposit</a>
             </div>
           </div>
@@ -759,9 +759,9 @@ api.get("/invoice/:id", async (req, res) => {
         <style>
           body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1c1917; margin: 0; padding: 40px; background: #f5f5f4; }
           .invoice-box { max-width: 800px; margin: auto; padding: 40px; border: 1px solid #e7e5e4; background: #fff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #166534; padding-bottom: 20px; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #0B1D21; padding-bottom: 20px; }
           .logo { height: 60px; border-radius: 8px; }
-          .title { font-size: 32px; font-weight: 900; color: #166534; margin: 0; }
+          .title { font-size: 32px; font-weight: 900; color: #0B1D21; margin: 0; }
           .meta { text-align: right; }
           .meta p { margin: 5px 0; font-size: 14px; color: #78716c; }
           .details { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
@@ -772,14 +772,14 @@ api.get("/invoice/:id", async (req, res) => {
           td { padding: 20px 0; border-bottom: 1px solid #f5f5f4; }
           .total-row td { border-bottom: none; padding-top: 30px; }
           .total-label { font-size: 20px; font-weight: 900; }
-          .total-amount { font-size: 32px; font-weight: 900; color: #166534; text-align: right; }
+          .total-amount { font-size: 32px; font-weight: 900; color: #0B1D21; text-align: right; }
           .footer { text-align: center; margin-top: 60px; border-top: 1px solid #e7e5e4; padding-top: 20px; font-size: 12px; color: #a8a29e; }
           @media print {
             body { background: white; padding: 0; }
             .invoice-box { border: none; box-shadow: none; padding: 0; }
             .no-print { display: none; }
           }
-          .print-btn { position: fixed; top: 20px; right: 20px; background: #166534; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(22,101,52,0.3); }
+          .print-btn { position: fixed; top: 20px; right: 20px; background: #0B1D21; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(11,29,33,0.3); }
         </style>
       </head>
       <body>
@@ -787,7 +787,7 @@ api.get("/invoice/:id", async (req, res) => {
         <div class="invoice-box">
           <div class="header">
             <div>
-              ${branding.logoUrl ? `<img src="${branding.logoUrl}" class="logo" />` : '<div style="font-size: 24px; font-weight: 900; color: #166534;">HBL</div>'}
+              ${branding.logoUrl ? `<img src="${branding.logoUrl}" class="logo" />` : '<div style="font-size: 24px; font-weight: 900; color: #0B1D21;">HBL</div>'}
               <h1 class="title">INVOICE</h1>
             </div>
             <div class="meta">
@@ -849,17 +849,17 @@ api.get("/invoice/:id", async (req, res) => {
               </tr>
               ${depositPaid > 0 ? `
               <tr>
-                <td style="padding: 10px 0; color: #166534; font-weight: bold;">Deposit Paid</td>
-                <td style="padding: 10px 0; text-align: right; color: #166534; font-weight: bold;">-$${depositPaid.toFixed(2)}</td>
+                <td style="padding: 10px 0; color: #0B1D21; font-weight: bold;">Deposit Paid</td>
+                <td style="padding: 10px 0; text-align: right; color: #0B1D21; font-weight: bold;">-$${depositPaid.toFixed(2)}</td>
               </tr>` : ''}
               ${totalPaid > 0 ? `
               <tr>
-                <td style="padding: 10px 0; color: #166534; font-weight: bold;">Additional Payments</td>
-                <td style="padding: 10px 0; text-align: right; color: #166534; font-weight: bold;">-$${totalPaid.toFixed(2)}</td>
+                <td style="padding: 10px 0; color: #0B1D21; font-weight: bold;">Additional Payments</td>
+                <td style="padding: 10px 0; text-align: right; color: #0B1D21; font-weight: bold;">-$${totalPaid.toFixed(2)}</td>
               </tr>` : ''}
-              <tr style="border-top: 2px solid #166534;">
+              <tr style="border-top: 2px solid #0B1D21;">
                 <td style="padding: 20px 0; font-size: 24px; font-weight: 900;">Remaining Balance</td>
-                <td style="padding: 20px 0; text-align: right; font-size: 32px; font-weight: 900; color: ${remainingBalance <= 0 ? '#166534' : '#1c1917'};">
+                <td style="padding: 20px 0; text-align: right; font-size: 32px; font-weight: 900; color: ${remainingBalance <= 0 ? '#0B1D21' : '#1c1917'};">
                   ${remainingBalance <= 0 ? 'PAID IN FULL' : `$${remainingBalance.toFixed(2)}`}
                 </td>
               </tr>
@@ -867,11 +867,11 @@ api.get("/invoice/:id", async (req, res) => {
           </table>
 
           <div style="background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 12px; padding: 24px;">
-            <h3 style="margin: 0 0 10px; color: #166534; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">Payment Instructions</h3>
+            <h3 style="margin: 0 0 10px; color: #0B1D21; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">Payment Instructions</h3>
             ${remainingBalance > 0 ? `
               <p style="margin: 0; font-size: 14px;">Please send your payment to Venmo: <strong>${venmoHandle}</strong>. Reference Invoice #${booking.id.slice(0,8).toUpperCase()}.</p>
             ` : `
-              <p style="margin: 0; font-size: 14px; font-weight: bold; color: #166534;">Thank you! Your expedition is fully paid.</p>
+              <p style="margin: 0; font-size: 14px; font-weight: bold; color: #0B1D21;">Thank you! Your expedition is fully paid.</p>
             `}
           </div>
 

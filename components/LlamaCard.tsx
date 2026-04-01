@@ -29,10 +29,10 @@ export const LlamaCard: React.FC<{ llama: Llama }> = ({ llama }) => {
       <div className="p-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="text-2xl font-black text-stone-900 group-hover:text-green-800 transition-colors">{llama.name}</h3>
+            <h3 className="text-2xl font-black text-stone-900 group-hover:text-gold transition-colors">{llama.name}</h3>
             <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">{llama.age} years old</p>
           </div>
-          <div className="flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
+          <div className="flex items-center gap-1.5 bg-midnight/5 text-gold px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
             <SpecialtyIcon type={llama.specialty} />
             {llama.specialty}
           </div>

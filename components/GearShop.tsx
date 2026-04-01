@@ -83,7 +83,7 @@ export const GearShop: React.FC<GearShopProps> = ({ items }) => {
           <div className="bg-white p-6 rounded-3xl shadow-xl border border-stone-100 flex items-center gap-8 animate-in slide-in-from-right-8">
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">Rental Total</p>
-              <p className="text-3xl font-black text-green-800">${total}</p>
+              <p className="text-3xl font-black text-gold">${total}</p>
             </div>
             <button className="bg-stone-900 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all flex items-center gap-3">
               <Check size={18} /> Add to Booking
@@ -103,7 +103,7 @@ export const GearShop: React.FC<GearShopProps> = ({ items }) => {
                 </span>
               </div>
               <div className="absolute bottom-6 right-6">
-                <span className="bg-green-800 text-white px-4 py-2 rounded-full text-sm font-black shadow-lg">
+                <span className="bg-midnight text-white px-4 py-2 rounded-full text-sm font-black shadow-lg">
                   ${item.price}
                 </span>
               </div>
@@ -127,7 +127,7 @@ export const GearShop: React.FC<GearShopProps> = ({ items }) => {
                     <span className="text-lg font-black w-6 text-center">{cart[item.id]}</span>
                     <button 
                       onClick={() => updateCart(item.id, 1)}
-                      className="w-10 h-10 bg-white text-stone-900 rounded-xl flex items-center justify-center shadow-sm hover:bg-green-50 hover:text-green-600 transition-all"
+                      className="w-10 h-10 bg-white text-stone-900 rounded-xl flex items-center justify-center shadow-sm hover:bg-midnight/5 hover:text-gold transition-all"
                     >
                       <Plus size={16} />
                     </button>
@@ -148,13 +148,13 @@ export const GearShop: React.FC<GearShopProps> = ({ items }) => {
 
       <div className="bg-stone-900 rounded-[3rem] p-12 text-white flex flex-col lg:flex-row items-center gap-12">
         <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center shrink-0">
-          <Info size={40} className="text-green-400" />
+          <Info size={40} className="text-gold" />
         </div>
         <div className="flex-1 text-center lg:text-left">
           <h4 className="text-2xl font-black mb-2">Need a full pack list?</h4>
           <p className="text-stone-400 font-medium">Use our automated packing list generator to ensure you have everything needed for a safe Montana expedition.</p>
         </div>
-        <button className="px-10 py-5 bg-green-800 hover:bg-green-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl">
+        <button className="px-10 py-5 bg-midnight hover:bg-midnight/90 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl">
           Generate List
         </button>
       </div>

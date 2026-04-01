@@ -38,7 +38,7 @@ export const AvailabilityCalendar: React.FC = () => {
         <div className="flex-1 space-y-8">
           <header>
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 bg-green-800 text-white rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-midnight text-white rounded-2xl flex items-center justify-center shadow-lg">
                 <CalendarIcon size={24} />
               </div>
               <h2 className="text-4xl font-black tracking-tight text-stone-900">Herd Availability</h2>
@@ -49,11 +49,11 @@ export const AvailabilityCalendar: React.FC = () => {
           </header>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-green-50 p-6 rounded-3xl border border-green-100 flex items-center gap-4">
-              <CheckCircle2 className="text-green-600 shrink-0" size={24} />
+            <div className="bg-midnight/5 p-6 rounded-3xl border border-midnight/10 flex items-center gap-4">
+              <CheckCircle2 className="text-gold shrink-0" size={24} />
               <div>
-                <p className="font-black text-[10px] uppercase tracking-widest text-green-800">Available</p>
-                <p className="text-sm text-green-700 font-bold">Ready for booking</p>
+                <p className="font-black text-[10px] uppercase tracking-widest text-gold">Available</p>
+                <p className="text-sm text-gold font-bold">Ready for booking</p>
               </div>
             </div>
             <div className="bg-red-50 p-6 rounded-3xl border border-red-100 flex items-center gap-4">
@@ -97,7 +97,7 @@ export const AvailabilityCalendar: React.FC = () => {
               text-decoration: line-through !important;
             }
             .available-date {
-              color: #166534 !important;
+              color: #C5943E !important;
             }
             .react-calendar__navigation button {
               font-weight: 900 !important;
@@ -115,10 +115,10 @@ export const AvailabilityCalendar: React.FC = () => {
             }
             .react-calendar__tile--now {
               background: #f5f5f4 !important;
-              border: 2px solid #166534 !important;
+              border: 2px solid #C5943E !important;
             }
             .react-calendar__tile--active {
-              background: #166534 !important;
+              background: #C5943E !important;
               color: white !important;
             }
           `}</style>

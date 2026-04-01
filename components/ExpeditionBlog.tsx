@@ -50,9 +50,9 @@ export const ExpeditionBlog: React.FC = () => {
   return (
     <div className="space-y-16">
       <header className="text-center max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-3 bg-green-50 px-6 py-3 rounded-full border border-green-100 mb-8">
-          <BookOpen className="text-green-800" size={18} />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-green-800">The High Country Journal</span>
+        <div className="inline-flex items-center gap-3 bg-midnight/5 px-6 py-3 rounded-full border border-midnight/10 mb-8">
+          <BookOpen className="text-gold" size={18} />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gold">The High Country Journal</span>
         </div>
         <h2 className="text-6xl font-black tracking-tight text-stone-900 mb-8">Expedition Reports & Field Notes</h2>
         <p className="text-stone-500 font-bold text-xl leading-relaxed">
@@ -79,7 +79,7 @@ export const ExpeditionBlog: React.FC = () => {
                   <span className="w-1 h-1 bg-white/40 rounded-full" />
                   <span>{post.readTime}</span>
                 </div>
-                <h3 className="text-3xl font-black text-white leading-tight group-hover:text-green-400 transition-colors">
+                <h3 className="text-3xl font-black text-white leading-tight group-hover:text-gold transition-colors">
                   {post.title}
                 </h3>
               </div>
@@ -90,7 +90,7 @@ export const ExpeditionBlog: React.FC = () => {
             </p>
             
             <div className="flex items-center gap-3 px-4 text-stone-900 font-black text-xs uppercase tracking-widest group-hover:gap-6 transition-all">
-              Read Full Report <ArrowRight size={16} className="text-green-800" />
+              Read Full Report <ArrowRight size={16} className="text-gold" />
             </div>
           </article>
         ))}

@@ -79,7 +79,7 @@ export const TrailMap: React.FC = () => {
             <Popup>
               <div className="p-2">
                 <h3 className="font-black text-lg text-stone-900 m-0">{trail.name}</h3>
-                <p className="text-xs font-bold text-green-800 uppercase tracking-widest mt-1">{trail.city} • {trail.difficulty}</p>
+                <p className="text-xs font-bold text-gold uppercase tracking-widest mt-1">{trail.city} • {trail.difficulty}</p>
                 <p className="text-sm text-stone-600 mt-2">{trail.description}</p>
                 <button className="mt-3 w-full bg-stone-900 text-white py-2 rounded-lg text-[10px] font-black uppercase tracking-widest">
                   View Trail Conditions
@@ -96,7 +96,7 @@ export const TrailMap: React.FC = () => {
         <div className="space-y-3">
           {['Helena', 'Butte', 'Bozeman', 'Missoula'].map(city => (
             <div key={city} className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-green-800 rounded-full" />
+              <div className="w-3 h-3 bg-gold rounded-full" />
               <span className="text-sm font-bold text-stone-700">{city} Highlands</span>
             </div>
           ))}

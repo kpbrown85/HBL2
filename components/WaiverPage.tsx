@@ -72,7 +72,7 @@ export const WaiverPage: React.FC<WaiverPageProps> = ({ bookingId, onComplete })
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center p-8">
         <div className="bg-white p-16 rounded-[4rem] shadow-2xl max-w-lg w-full text-center space-y-8 animate-in zoom-in duration-500">
-          <div className="w-24 h-24 bg-green-100 text-green-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner">
+          <div className="w-24 h-24 bg-midnight/5 text-gold rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner">
             <CheckCircle2 size={48} />
           </div>
           <h2 className="text-4xl font-black text-stone-900 tracking-tighter">Agreement Signed</h2>
@@ -195,7 +195,7 @@ export const WaiverPage: React.FC<WaiverPageProps> = ({ bookingId, onComplete })
             <button 
               onClick={save}
               disabled={isSubmitting || !!(error && error.includes("No Booking ID"))}
-              className="w-full py-8 bg-green-800 text-white rounded-[2rem] font-black text-lg uppercase tracking-[0.2em] shadow-2xl shadow-green-900/20 hover:bg-green-900 transition-all active:scale-95 flex items-center justify-center gap-4 disabled:opacity-50"
+              className="w-full py-8 bg-midnight text-white rounded-[2rem] font-black text-lg uppercase tracking-[0.2em] shadow-2xl shadow-midnight/20 hover:bg-midnight/90 transition-all active:scale-95 flex items-center justify-center gap-4 disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 className="animate-spin" /> : <ShieldAlert size={24} />}
               {isSubmitting ? "Recording Agreement..." : "I Accept & Sign Agreement"}

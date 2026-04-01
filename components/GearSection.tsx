@@ -32,8 +32,8 @@ export const GearSection: React.FC = () => {
       onClick={() => setFilter(type)}
       className={`flex items-center gap-2 px-8 py-4 rounded-full font-black text-xs uppercase tracking-widest transition-all border-2 ${
         filter === type 
-          ? 'bg-green-800 text-white border-green-800 shadow-xl shadow-green-900/20' 
-          : 'bg-white text-stone-400 border-stone-100 hover:border-green-200 hover:text-green-700'
+          ? 'bg-midnight text-white border-midnight shadow-xl shadow-midnight/20' 
+          : 'bg-white text-stone-400 border-stone-100 hover:border-gold/20 hover:text-gold'
       }`}
     >
       <Icon className="w-4 h-4" />
@@ -49,13 +49,13 @@ export const GearSection: React.FC = () => {
           <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
             <PackageCheck className="w-32 h-32" />
           </div>
-          <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-green-500 mb-4">Standard Issue</h4>
+          <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gold mb-4">Standard Issue</h4>
           <h3 className="text-3xl font-black mb-6">What We Provide</h3>
           <ul className="space-y-4 text-stone-400 font-medium">
-            <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-green-500" /> Professional Decker Pack Saddle</li>
-            <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-green-500" /> Dual Canvas Panniers (80L capacity)</li>
-            <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-green-500" /> High-Vis Halter & 10ft Lead</li>
-            <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-green-500" /> Digital Hanging Scale for Balancing</li>
+            <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-gold" /> Professional Decker Pack Saddle</li>
+            <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-gold" /> Dual Canvas Panniers (80L capacity)</li>
+            <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-gold" /> High-Vis Halter & 10ft Lead</li>
+            <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-gold" /> Digital Hanging Scale for Balancing</li>
           </ul>
         </div>
 
@@ -66,10 +66,10 @@ export const GearSection: React.FC = () => {
           <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 mb-4">Explorer Checklist</h4>
           <h3 className="text-3xl font-black mb-6">What You Bring</h3>
           <ul className="space-y-4 text-stone-500 font-medium">
-            <li className="flex items-center gap-3"><Info className="w-5 h-5 text-green-800" /> Personal Tent & Sleeping Systems</li>
-            <li className="flex items-center gap-3"><Info className="w-5 h-5 text-green-800" /> Freeze-Dried Rations & Cooking Gear</li>
-            <li className="flex items-center gap-3"><Info className="w-5 h-5 text-green-800" /> Bear-Safe Storage (Mandatory)</li>
-            <li className="flex items-center gap-3"><Info className="w-5 h-5 text-green-800" /> Water Filtration & Emergency GPS</li>
+            <li className="flex items-center gap-3"><Info className="w-5 h-5 text-gold" /> Personal Tent & Sleeping Systems</li>
+            <li className="flex items-center gap-3"><Info className="w-5 h-5 text-gold" /> Freeze-Dried Rations & Cooking Gear</li>
+            <li className="flex items-center gap-3"><Info className="w-5 h-5 text-gold" /> Bear-Safe Storage (Mandatory)</li>
+            <li className="flex items-center gap-3"><Info className="w-5 h-5 text-gold" /> Water Filtration & Emergency GPS</li>
           </ul>
         </div>
       </div>
@@ -89,18 +89,18 @@ export const GearSection: React.FC = () => {
             onClick={() => toggleCheck(item.id)}
             className={`cursor-pointer p-8 rounded-[2.5rem] border-2 transition-all group relative flex flex-col h-full ${
               checklist.has(item.id) 
-                ? 'bg-green-50 border-green-200 shadow-inner' 
-                : 'bg-white border-stone-100 hover:border-green-200 shadow-sm'
+                ? 'bg-midnight/5 border-midnight/10 shadow-inner' 
+                : 'bg-white border-stone-100 hover:border-gold/20 shadow-sm'
             }`}
           >
             <div className="flex justify-between items-start mb-6">
               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 ${
-                checklist.has(item.id) ? 'bg-green-800 text-white' : 'bg-green-50 text-green-800 group-hover:bg-green-800 group-hover:text-white'
+                checklist.has(item.id) ? 'bg-midnight text-white' : 'bg-midnight/5 text-gold group-hover:bg-midnight group-hover:text-white'
               }`}>
                 {item.icon}
               </div>
               <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                checklist.has(item.id) ? 'bg-green-800 border-green-800 text-white' : 'border-stone-200'
+                checklist.has(item.id) ? 'bg-midnight border-midnight text-white' : 'border-stone-200'
               }`}>
                 {checklist.has(item.id) && <CheckCircle2 className="w-4 h-4" />}
               </div>
@@ -129,7 +129,7 @@ export const GearSection: React.FC = () => {
       <div className="text-center mt-12 bg-stone-50 p-12 rounded-[3rem] border border-stone-200">
         <h4 className="text-2xl font-black mb-4 text-stone-900">Load Management Rule</h4>
         <p className="text-stone-500 max-w-2xl mx-auto leading-relaxed font-medium">
-          "Panniers must be balanced within <span className="text-green-800 font-black">2 lbs</span> of each other. 
+          "Panniers must be balanced within <span className="text-gold font-black">2 lbs</span> of each other. 
           Uneven loads cause saddle sores and trail fatigue for your llama. Never exceed the individual load limit of your assigned pack string."
         </p>
       </div>
@@ -137,7 +137,7 @@ export const GearSection: React.FC = () => {
       {/* Personal Gear Checklist Section */}
       <div className="mt-32 pt-32 border-t border-stone-100">
         <header className="text-center mb-16">
-          <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-green-700 mb-4">Preparation Protocol</h4>
+          <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gold mb-4">Preparation Protocol</h4>
           <h2 className="text-6xl font-black tracking-tighter leading-none mb-8">Personal Kit.</h2>
           <p className="text-stone-500 text-lg font-medium max-w-2xl mx-auto">Essential items you must pack for a safe and successful high-country mission.</p>
         </header>
@@ -149,17 +149,17 @@ export const GearSection: React.FC = () => {
               onClick={() => togglePersonalCheck(item.id)}
               className={`flex items-center gap-4 p-6 rounded-2xl border transition-all cursor-pointer group ${
                 personalChecklist.has(item.id) 
-                  ? 'bg-green-50 border-green-200 shadow-sm' 
-                  : 'bg-white border-stone-100 hover:border-green-200'
+                  ? 'bg-midnight/5 border-midnight/10 shadow-sm' 
+                  : 'bg-white border-stone-100 hover:border-gold/20'
               }`}
             >
               <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${
-                personalChecklist.has(item.id) ? 'bg-green-800 border-green-800 text-white' : 'bg-white border-stone-200'
+                personalChecklist.has(item.id) ? 'bg-midnight border-midnight text-white' : 'bg-white border-stone-200'
               }`}>
                 {personalChecklist.has(item.id) && <Check size={14} strokeWidth={4} />}
               </div>
               <div className="flex flex-col">
-                <span className={`font-bold text-sm transition-all ${personalChecklist.has(item.id) ? 'text-green-900 line-through opacity-60' : 'text-stone-900'}`}>
+                <span className={`font-bold text-sm transition-all ${personalChecklist.has(item.id) ? 'text-midnight line-through opacity-60' : 'text-stone-900'}`}>
                   {item.label}
                 </span>
                 {item.essential && !personalChecklist.has(item.id) && (

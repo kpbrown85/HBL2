@@ -23,7 +23,7 @@ export const LlamaGuidePage: React.FC<LlamaGuidePageProps> = ({ onBack }) => {
           <div className="p-12 md:p-20 space-y-20">
             {/* Introduction */}
             <section className="space-y-8">
-              <div className="flex items-center gap-4 text-green-800">
+              <div className="flex items-center gap-4 text-gold">
                 <BookOpen size={32} />
                 <h2 className="text-3xl font-black tracking-tight uppercase">Introduction</h2>
               </div>
@@ -34,7 +34,7 @@ export const LlamaGuidePage: React.FC<LlamaGuidePageProps> = ({ onBack }) => {
 
             {/* General Info */}
             <section className="space-y-12">
-              <div className="flex items-center gap-4 text-green-800">
+              <div className="flex items-center gap-4 text-gold">
                 <Info size={32} />
                 <h2 className="text-3xl font-black tracking-tight uppercase">General Information</h2>
               </div>
@@ -60,7 +60,7 @@ export const LlamaGuidePage: React.FC<LlamaGuidePageProps> = ({ onBack }) => {
 
             {/* Equipment */}
             <section className="space-y-12">
-              <div className="flex items-center gap-4 text-green-800">
+              <div className="flex items-center gap-4 text-gold">
                 <Package size={32} />
                 <h2 className="text-3xl font-black tracking-tight uppercase">Essential Equipment</h2>
               </div>
@@ -98,36 +98,36 @@ export const LlamaGuidePage: React.FC<LlamaGuidePageProps> = ({ onBack }) => {
 
             {/* Backcountry Care */}
             <section className="space-y-12">
-              <div className="flex items-center gap-4 text-green-800">
+              <div className="flex items-center gap-4 text-gold">
                 <Heart size={32} />
                 <h2 className="text-3xl font-black tracking-tight uppercase">Backcountry Care</h2>
               </div>
-              <div className="bg-green-50 p-12 rounded-[3rem] border border-green-100 space-y-8">
+              <div className="bg-midnight/5 p-12 rounded-[3rem] border border-midnight/10 space-y-8">
                 <div className="space-y-4">
-                  <h4 className="font-black text-green-900 uppercase tracking-widest text-xs">Feeding & Water</h4>
-                  <p className="text-green-800/70 text-sm leading-relaxed">Llamas are browsers and eat green vegetation. They need daily water but can go 3-4 days in emergencies. Lead them to water sources away from camp to minimize impact.</p>
+                  <h4 className="font-black text-midnight uppercase tracking-widest text-xs">Feeding & Water</h4>
+                  <p className="text-midnight/70 text-sm leading-relaxed">Llamas are browsers and eat green vegetation. They need daily water but can go 3-4 days in emergencies. Lead them to water sources away from camp to minimize impact.</p>
                 </div>
                 <div className="space-y-4">
-                  <h4 className="font-black text-green-900 uppercase tracking-widest text-xs">Handling on the Trail</h4>
-                  <p className="text-green-800/70 text-sm leading-relaxed">Llamas follow on a lead rope. Allow 20-30 seconds of rest for every 30-40 feet of elevation gain. Give them time to assess obstacles like streams or logs.</p>
+                  <h4 className="font-black text-midnight uppercase tracking-widest text-xs">Handling on the Trail</h4>
+                  <p className="text-midnight/70 text-sm leading-relaxed">Llamas follow on a lead rope. Allow 20-30 seconds of rest for every 30-40 feet of elevation gain. Give them time to assess obstacles like streams or logs.</p>
                 </div>
                 <div className="space-y-4">
-                  <h4 className="font-black text-green-900 uppercase tracking-widest text-xs">Health & Safety</h4>
-                  <p className="text-green-800/70 text-sm leading-relaxed">Brush llamas before saddling to prevent irritation. Check for sores daily. Be alert for signs of fatigue like lagging or lying down.</p>
+                  <h4 className="font-black text-midnight uppercase tracking-widest text-xs">Health & Safety</h4>
+                  <p className="text-midnight/70 text-sm leading-relaxed">Brush llamas before saddling to prevent irritation. Check for sores daily. Be alert for signs of fatigue like lagging or lying down.</p>
                 </div>
               </div>
             </section>
 
             {/* Etiquette */}
             <section className="space-y-12">
-              <div className="flex items-center gap-4 text-green-800">
+              <div className="flex items-center gap-4 text-gold">
                 <ShieldCheck size={32} />
                 <h2 className="text-3xl font-black tracking-tight uppercase">Safety & Etiquette</h2>
               </div>
               <div className="space-y-6 text-stone-600 font-medium">
-                <p className="flex gap-4 items-start"><span className="text-green-800 font-black">Trail Etiquette:</span> When meeting horses, call out to the party, inform them you have llamas, and move off the trail to let them pass.</p>
-                <p className="flex gap-4 items-start"><span className="text-green-800 font-black">Camping:</span> Choose a campsite at least 200 feet from water. Monitor picket lines periodically, even at night.</p>
-                <p className="flex gap-4 items-start"><span className="text-green-800 font-black">Leave No Trace:</span> Pack out all trash. Llamas can easily carry it out for you.</p>
+                <p className="flex gap-4 items-start"><span className="text-gold font-black">Trail Etiquette:</span> When meeting horses, call out to the party, inform them you have llamas, and move off the trail to let them pass.</p>
+                <p className="flex gap-4 items-start"><span className="text-gold font-black">Camping:</span> Choose a campsite at least 200 feet from water. Monitor picket lines periodically, even at night.</p>
+                <p className="flex gap-4 items-start"><span className="text-gold font-black">Leave No Trace:</span> Pack out all trash. Llamas can easily carry it out for you.</p>
               </div>
             </section>
 
@@ -139,7 +139,7 @@ export const LlamaGuidePage: React.FC<LlamaGuidePageProps> = ({ onBack }) => {
                   <p className="text-stone-400 text-sm font-medium">For injured llamas or lost equipment during your trek.</p>
                 </div>
                 <div className="flex items-center gap-4 bg-white/10 px-8 py-4 rounded-2xl">
-                  <Phone size={20} className="text-green-400" />
+                  <Phone size={20} className="text-gold" />
                   <span className="text-xl font-black tracking-widest">801-372-0353</span>
                 </div>
               </div>

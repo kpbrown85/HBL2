@@ -34,12 +34,12 @@ export const Testimonials: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {reviews.map((review) => (
           <div key={review.id} className="bg-white p-8 rounded-[2rem] border border-stone-100 shadow-xl relative group">
-            <Quote className="absolute top-6 right-6 w-8 h-8 text-stone-100 group-hover:text-green-50 transition-colors" />
+            <Quote className="absolute top-6 right-6 w-8 h-8 text-stone-100 group-hover:text-gold/10 transition-colors" />
             <div className="flex gap-1 mb-4">
               {[...Array(5)].map((_, i) => (
                 <Star 
                   key={i} 
-                  className={`w-4 h-4 ${i < review.rating ? 'fill-green-600 text-green-600' : 'text-stone-200'}`} 
+                  className={`w-4 h-4 ${i < review.rating ? 'fill-gold text-gold' : 'text-stone-200'}`} 
                 />
               ))}
             </div>
@@ -65,7 +65,7 @@ export const Testimonials: React.FC = () => {
           <div className="max-w-xl mx-auto bg-stone-50 p-10 rounded-[2.5rem] border border-stone-200 shadow-inner animate-in fade-in zoom-in duration-300">
             {isSubmitted ? (
               <div className="py-10">
-                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gold/10 text-gold rounded-full flex items-center justify-center mx-auto mb-4">
                   <Star className="w-8 h-8 fill-current" />
                 </div>
                 <h4 className="text-2xl font-black text-stone-900">Review Published!</h4>
@@ -78,7 +78,7 @@ export const Testimonials: React.FC = () => {
                   <input 
                     required
                     type="text" 
-                    className="w-full bg-white border border-stone-200 px-6 py-4 rounded-xl outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full bg-white border border-stone-200 px-6 py-4 rounded-xl outline-none focus:ring-2 focus:ring-gold"
                     placeholder="Adventure Seeker"
                     value={newReview.name}
                     onChange={(e) => setNewReview({...newReview, name: e.target.value})}
@@ -92,7 +92,7 @@ export const Testimonials: React.FC = () => {
                         key={r}
                         type="button"
                         onClick={() => setNewReview({...newReview, rating: r})}
-                        className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all ${newReview.rating >= r ? 'bg-green-600 text-white' : 'bg-white text-stone-300 border border-stone-200'}`}
+                        className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all ${newReview.rating >= r ? 'bg-gold text-white' : 'bg-white text-stone-300 border border-stone-200'}`}
                       >
                         <Star className={`w-6 h-6 ${newReview.rating >= r ? 'fill-current' : ''}`} />
                       </button>
@@ -104,7 +104,7 @@ export const Testimonials: React.FC = () => {
                   <textarea 
                     required
                     rows={4}
-                    className="w-full bg-white border border-stone-200 px-6 py-4 rounded-xl outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full bg-white border border-stone-200 px-6 py-4 rounded-xl outline-none focus:ring-2 focus:ring-gold"
                     placeholder="Tell us about your trip and your llama companion..."
                     value={newReview.comment}
                     onChange={(e) => setNewReview({...newReview, comment: e.target.value})}
@@ -113,7 +113,7 @@ export const Testimonials: React.FC = () => {
                 <div className="flex gap-4">
                   <button 
                     type="submit"
-                    className="flex-1 bg-green-800 text-white py-4 rounded-xl font-bold hover:bg-green-900 shadow-lg shadow-green-900/20 active:scale-95 transition-all"
+                    className="flex-1 bg-midnight text-white py-4 rounded-xl font-bold hover:bg-midnight/90 shadow-lg shadow-midnight/20 active:scale-95 transition-all"
                   >
                     Post Review
                   </button>

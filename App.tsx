@@ -787,7 +787,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen selection:bg-green-100 selection:text-green-900">
+    <div className="min-h-screen selection:bg-gold/30 selection:text-midnight">
       {currentPath.startsWith('/sign/') ? (
         <WaiverPage bookingId={waiverBookingId || ''} onComplete={() => navigate('/')} />
       ) : currentPath === '/guide' ? (
@@ -798,7 +798,7 @@ const App: React.FC = () => {
         <ClinicBookingPage onBack={() => navigate('/')} />
       ) : currentPath === '/map' ? (
         <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
-          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
+          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-gold transition-all">
             <ChevronLeft size={16} /> Back to Base Camp
           </button>
           <header className="mb-24 text-center">
@@ -809,21 +809,21 @@ const App: React.FC = () => {
         </div>
       ) : currentPath === '/availability' ? (
         <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
-          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
+          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-gold transition-all">
             <ChevronLeft size={16} /> Back to Base Camp
           </button>
           <AvailabilityCalendar />
         </div>
       ) : currentPath === '/gear-shop' ? (
         <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
-          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
+          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-gold transition-all">
             <ChevronLeft size={16} /> Back to Base Camp
           </button>
           <GearShop items={gearItems} />
         </div>
       ) : currentPath === '/blog' ? (
         <div className="pt-32 px-8 max-w-7xl mx-auto pb-24">
-          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-green-800 transition-all">
+          <button onClick={() => navigate('/')} className="mb-12 flex items-center gap-2 text-stone-500 font-black text-xs uppercase tracking-widest hover:text-gold transition-all">
             <ChevronLeft size={16} /> Back to Base Camp
           </button>
           <ExpeditionBlog />
@@ -838,7 +838,7 @@ const App: React.FC = () => {
         <span className="text-3xl group-hover:rotate-12 transition-transform">🦙</span>
         {isAdmin && (
           <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
-             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+             <div className="w-2 h-2 bg-gold rounded-full animate-pulse" />
           </div>
         )}
       </button>
@@ -847,7 +847,7 @@ const App: React.FC = () => {
       {showAdminLogin && (
         <div className="fixed inset-0 z-[300] bg-stone-950/90 backdrop-blur-xl flex items-center justify-center p-6">
           <div className="bg-white rounded-[4rem] p-12 max-w-sm w-full shadow-2xl animate-in zoom-in duration-500">
-             <div className="w-20 h-20 bg-green-800 text-white rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-xl ring-8 ring-green-800/10">
+             <div className="w-20 h-20 bg-midnight text-white rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-xl ring-8 ring-midnight/10">
                <Lock size={36} />
              </div>
              <h3 className="text-3xl font-black text-center mb-12 tracking-tight text-stone-900">Mission Control</h3>
@@ -855,12 +855,12 @@ const App: React.FC = () => {
                <input 
                 type="password" 
                 placeholder="Access Key" 
-                className="w-full bg-stone-50 border border-stone-100 p-5 rounded-2xl outline-none focus:ring-4 focus:ring-green-500/10 font-black text-center text-lg text-stone-900" 
+                className="w-full bg-stone-50 border border-stone-100 p-5 rounded-2xl outline-none focus:ring-4 focus:ring-gold/10 font-black text-center text-lg text-stone-900" 
                 value={passwordInput} 
                 onChange={(e) => setPasswordInput(e.target.value)} 
                 autoFocus 
                />
-               <button type="submit" className="w-full bg-green-800 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-lg hover:bg-green-900 transition-colors">Authenticate</button>
+               <button type="submit" className="w-full bg-midnight text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-lg hover:bg-midnight/90 transition-colors">Authenticate</button>
                <button type="button" onClick={() => setShowAdminLogin(false)} className="w-full py-3 text-stone-400 font-bold text-xs uppercase tracking-widest hover:text-stone-600">Close</button>
              </form>
           </div>
@@ -875,15 +875,15 @@ const App: React.FC = () => {
                 <Logo branding={branding} onClick={() => setShowDashboard(false)} />
                 <div className="hidden lg:flex flex-col gap-1">
                   <div className="flex items-center gap-4 bg-stone-50 px-4 py-2 rounded-full border border-stone-100">
-                    <Globe size={14} className={apiStatus === 'online' ? 'text-green-600' : 'text-red-600'} />
+                    <Globe size={14} className={apiStatus === 'online' ? 'text-gold' : 'text-red-600'} />
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 flex items-center gap-2">
-                        API Status: <span className={apiStatus === 'online' ? 'text-green-600' : 'text-red-600'}>
+                        API Status: <span className={apiStatus === 'online' ? 'text-gold' : 'text-red-600'}>
                           {apiStatus.toUpperCase()} {apiVersion && `(v${apiVersion})`}
                         </span>
                         <button 
                           onClick={() => { setApiStatus('checking'); checkApi(); }}
-                          className="hover:text-green-800 transition-colors"
+                          className="hover:text-gold transition-colors"
                           title="Refresh Status"
                         >
                           <RefreshCcw size={10} className={apiStatus === 'checking' ? 'animate-spin' : ''} />
@@ -952,7 +952,7 @@ const App: React.FC = () => {
                     </div>
                     <button 
                       onClick={() => saveBranding(branding)} 
-                      className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
+                      className="bg-midnight text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-midnight/90 transition-all active:scale-95"
                     >
                       <Save size={20}/> Save Branding
                     </button>
@@ -988,14 +988,14 @@ const App: React.FC = () => {
                         {/* Logo Control Area */}
                         <div className="pt-12 border-t border-stone-50 space-y-10">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-green-800 text-white rounded-xl flex items-center justify-center shadow-lg"><Palette size={20}/></div>
+                            <div className="w-10 h-10 bg-midnight text-white rounded-xl flex items-center justify-center shadow-lg"><Palette size={20}/></div>
                             <h3 className="text-2xl font-black text-stone-900">Primary Logo & Branding</h3>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                             <div className="space-y-4">
                               <label className="label-cms">Logo Accent Text</label>
                               <div className="relative">
-                                <input className="input-cms pl-14 font-black italic text-green-800" value={branding.accentName} onChange={e => setBranding({...branding, accentName: e.target.value})} />
+                                <input className="input-cms pl-14 font-black italic text-gold" value={branding.accentName} onChange={e => setBranding({...branding, accentName: e.target.value})} />
                                 <Zap className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
                               </div>
                             </div>
@@ -1036,7 +1036,7 @@ const App: React.FC = () => {
                               <input className="input-cms pl-14" value={branding.heroImageUrl} onChange={e => setBranding({...branding, heroImageUrl: e.target.value})} />
                               <Camera className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
                             </div>
-                            <button onClick={handleGenerateHero} disabled={isProcessing} className="w-full bg-green-800 text-white py-6 rounded-[2rem] flex items-center justify-center gap-3 hover:bg-green-900 transition-all active:scale-95 disabled:opacity-50 shadow-2xl shadow-green-900/20">
+                            <button onClick={handleGenerateHero} disabled={isProcessing} className="w-full bg-midnight text-white py-6 rounded-[2rem] flex items-center justify-center gap-3 hover:bg-midnight/90 transition-all active:scale-95 disabled:opacity-50 shadow-2xl shadow-midnight/20">
                               {isProcessing ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />}
                               <span className="font-black text-xs uppercase tracking-[0.2em]">Generate High-Country Backdrop</span>
                             </button>
@@ -1086,7 +1086,7 @@ const App: React.FC = () => {
                         {/* Invoicing & Pricing Section */}
                         <div className="pt-12 border-t border-stone-50 space-y-10">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-green-600 text-white rounded-xl flex items-center justify-center shadow-lg"><CreditCard size={20}/></div>
+                            <div className="w-10 h-10 bg-gold text-white rounded-xl flex items-center justify-center shadow-lg"><CreditCard size={20}/></div>
                             <h3 className="text-2xl font-black text-stone-900">Invoicing & Pricing</h3>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -1117,7 +1117,7 @@ const App: React.FC = () => {
                     <div className="space-y-8">
                       <div className="bg-stone-900 p-12 rounded-[4rem] shadow-2xl border border-white/5 text-white sticky top-12">
                         <header className="flex items-center gap-3 mb-10 pb-8 border-b border-white/5">
-                          <Eye size={20} className="text-green-500" />
+                          <Eye size={20} className="text-gold" />
                           <h3 className="text-2xl font-black tracking-tight leading-none">Real-time Preview</h3>
                         </header>
                         <div className="space-y-12">
@@ -1137,7 +1137,7 @@ const App: React.FC = () => {
                       <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Invoice Ledger</h2>
                       <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Track revenue and payment status for confirmed expeditions</p>
                     </div>
-                    <div className="bg-green-800 text-white p-8 rounded-[2.5rem] shadow-2xl flex flex-col items-end">
+                    <div className="bg-midnight text-white p-8 rounded-[2.5rem] shadow-2xl flex flex-col items-end">
                       <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">Total Confirmed Revenue</p>
                       <p className="text-4xl font-black tracking-tighter">
                         ${bookings.filter(b => b.status === 'confirmed').reduce((acc, b) => acc + (b.totalPrice || 0), 0).toLocaleString()}
@@ -1177,9 +1177,9 @@ const App: React.FC = () => {
                                   <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">to {booking.endDate}</p>
                                 </td>
                                 <td className="p-10 font-black text-stone-900">${(booking.totalPrice || 0).toFixed(2)}</td>
-                                <td className="p-10 font-bold text-green-700">${totalPaid.toFixed(2)}</td>
+                                <td className="p-10 font-bold text-gold">${totalPaid.toFixed(2)}</td>
                                 <td className="p-10">
-                                  <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${balance <= 0 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                  <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${balance <= 0 ? 'bg-gold/10 text-gold' : 'bg-amber-100 text-amber-700'}`}>
                                     {balance <= 0 ? 'Paid' : `$${balance.toFixed(2)} Due`}
                                   </span>
                                 </td>
@@ -1226,7 +1226,7 @@ const App: React.FC = () => {
                             alert('Failed to reach test endpoint');
                           }
                         }}
-                        className="mt-4 text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-green-800 transition-colors"
+                        className="mt-4 text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-gold transition-colors"
                       >
                         Test Database Connection
                       </button>
@@ -1234,7 +1234,7 @@ const App: React.FC = () => {
                     {!editingShopItem ? (
                       <button 
                         onClick={() => setEditingShopItem({ id: Date.now().toString(), name: 'New Gear Item', category: 'Other', price: 10, description: 'A high-quality rental item.', imageUrl: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=400' })} 
-                        className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
+                        className="bg-midnight text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-midnight/90 transition-all active:scale-95"
                       >
                         <Plus size={20}/> New Item
                       </button>
@@ -1254,7 +1254,7 @@ const App: React.FC = () => {
                               : [...gearItems, editingShopItem];
                             saveGear(updated);
                           }} 
-                          className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
+                          className="bg-midnight text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-midnight/90 transition-all active:scale-95"
                         >
                           <Save size={20}/> Save Changes
                         </button>
@@ -1271,7 +1271,7 @@ const App: React.FC = () => {
                             type="text" 
                             value={editingShopItem.name} 
                             onChange={e => setEditingShopItem({...editingShopItem, name: e.target.value})}
-                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-2xl font-black tracking-tight focus:ring-2 focus:ring-green-800 outline-none"
+                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-2xl font-black tracking-tight focus:ring-2 focus:ring-gold outline-none"
                             placeholder="Item Name"
                           />
                         </div>
@@ -1281,7 +1281,7 @@ const App: React.FC = () => {
                             <select 
                               value={editingShopItem.category}
                               onChange={e => setEditingShopItem({...editingShopItem, category: e.target.value as any})}
-                              className="w-full bg-stone-50 border-none rounded-3xl p-6 text-lg font-bold focus:ring-2 focus:ring-green-800 outline-none"
+                              className="w-full bg-stone-50 border-none rounded-3xl p-6 text-lg font-bold focus:ring-2 focus:ring-gold outline-none"
                             >
                               <option value="Camping">Camping</option>
                               <option value="Kitchen">Kitchen</option>
@@ -1298,7 +1298,7 @@ const App: React.FC = () => {
                                 const val = parseFloat(e.target.value);
                                 setEditingShopItem({...editingShopItem, price: isNaN(val) ? 0 : val});
                               }}
-                              className="w-full bg-stone-50 border-none rounded-3xl p-6 text-xl font-black focus:ring-2 focus:ring-green-800 outline-none"
+                              className="w-full bg-stone-50 border-none rounded-3xl p-6 text-xl font-black focus:ring-2 focus:ring-gold outline-none"
                             />
                           </div>
                         </div>
@@ -1307,7 +1307,7 @@ const App: React.FC = () => {
                           <textarea 
                             value={editingShopItem.description} 
                             onChange={e => setEditingShopItem({...editingShopItem, description: e.target.value})}
-                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-lg font-medium leading-relaxed focus:ring-2 focus:ring-green-800 outline-none h-40 resize-none"
+                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-lg font-medium leading-relaxed focus:ring-2 focus:ring-gold outline-none h-40 resize-none"
                             placeholder="Describe the gear item..."
                           />
                         </div>
@@ -1320,7 +1320,7 @@ const App: React.FC = () => {
                                 : [...gearItems, editingShopItem];
                               saveGear(updated);
                             }} 
-                            className="flex-1 bg-green-800 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-xl hover:bg-green-900 transition-all active:scale-95"
+                            className="flex-1 bg-midnight text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-xl hover:bg-midnight/90 transition-all active:scale-95"
                           >
                             Save Item
                           </button>
@@ -1344,7 +1344,7 @@ const App: React.FC = () => {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                       {gearItems.map(item => (
-                        <div key={item.id} className="bg-white p-8 rounded-[3rem] shadow-xl border border-stone-100 flex items-center gap-8 group hover:border-green-200 transition-all">
+                        <div key={item.id} className="bg-white p-8 rounded-[3rem] shadow-xl border border-stone-100 flex items-center gap-8 group hover:border-gold/20 transition-all">
                           <div className="w-24 h-24 rounded-3xl overflow-hidden bg-stone-100 flex-shrink-0">
                             <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                           </div>
@@ -1353,7 +1353,7 @@ const App: React.FC = () => {
                             <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mt-1">{item.category} • ${item.price}</p>
                           </div>
                           <div className="flex gap-2">
-                            <button onClick={() => setEditingShopItem(item)} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-green-50 hover:text-green-800 transition-all"><Edit3 size={18}/></button>
+                            <button onClick={() => setEditingShopItem(item)} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-gold/10 hover:text-gold transition-all"><Edit3 size={18}/></button>
                             <button onClick={() => deleteShopItem(item.id)} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all"><Trash2 size={18}/></button>
                           </div>
                         </div>
@@ -1370,7 +1370,7 @@ const App: React.FC = () => {
                     {!editingLlama ? (
                       <button 
                         onClick={() => setEditingLlama({ id: Date.now().toString(), name: 'New Llama', age: 4, personality: 'A fresh recruit to the mountain string.', maxLoad: 75, imageUrl: 'https://images.unsplash.com/photo-1591073113125-e46713c829ed?auto=format&fit=crop&q=80&w=800', specialty: 'Backpacking' })} 
-                        className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
+                        className="bg-midnight text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-midnight/90 transition-all active:scale-95"
                       >
                         <Plus size={20}/> New Recruit
                       </button>
@@ -1384,7 +1384,7 @@ const App: React.FC = () => {
                         </button>
                         <button 
                           onClick={() => saveLlama(editingLlama)} 
-                          className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
+                          className="bg-midnight text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-midnight/90 transition-all active:scale-95"
                         >
                           <Save size={20}/> Save Changes
                         </button>
@@ -1401,7 +1401,7 @@ const App: React.FC = () => {
                             type="text" 
                             value={editingLlama.name} 
                             onChange={e => setEditingLlama({...editingLlama, name: e.target.value})}
-                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-2xl font-black tracking-tight focus:ring-2 focus:ring-green-800 outline-none"
+                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-2xl font-black tracking-tight focus:ring-2 focus:ring-gold outline-none"
                             placeholder="Name"
                           />
                         </div>
@@ -1412,7 +1412,7 @@ const App: React.FC = () => {
                               type="number" 
                               value={editingLlama.age} 
                               onChange={e => setEditingLlama({...editingLlama, age: parseInt(e.target.value)})}
-                              className="w-full bg-stone-50 border-none rounded-3xl p-6 text-xl font-black focus:ring-2 focus:ring-green-800 outline-none"
+                              className="w-full bg-stone-50 border-none rounded-3xl p-6 text-xl font-black focus:ring-2 focus:ring-gold outline-none"
                             />
                           </div>
                           <div className="space-y-4">
@@ -1421,7 +1421,7 @@ const App: React.FC = () => {
                               type="number" 
                               value={editingLlama.maxLoad} 
                               onChange={e => setEditingLlama({...editingLlama, maxLoad: parseInt(e.target.value)})}
-                              className="w-full bg-stone-50 border-none rounded-3xl p-6 text-xl font-black focus:ring-2 focus:ring-green-800 outline-none"
+                              className="w-full bg-stone-50 border-none rounded-3xl p-6 text-xl font-black focus:ring-2 focus:ring-gold outline-none"
                             />
                           </div>
                         </div>
@@ -1430,7 +1430,7 @@ const App: React.FC = () => {
                           <select 
                             value={editingLlama.specialty}
                             onChange={e => setEditingLlama({...editingLlama, specialty: e.target.value as any})}
-                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-lg font-bold focus:ring-2 focus:ring-green-800 outline-none"
+                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-lg font-bold focus:ring-2 focus:ring-gold outline-none"
                           >
                             <option value="Backpacking">Backpacking</option>
                             <option value="Hunting">Hunting</option>
@@ -1443,12 +1443,12 @@ const App: React.FC = () => {
                           <textarea 
                             value={editingLlama.personality} 
                             onChange={e => setEditingLlama({...editingLlama, personality: e.target.value})}
-                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-lg font-medium leading-relaxed focus:ring-2 focus:ring-green-800 outline-none h-40 resize-none"
+                            className="w-full bg-stone-50 border-none rounded-3xl p-6 text-lg font-medium leading-relaxed focus:ring-2 focus:ring-gold outline-none h-40 resize-none"
                             placeholder="Describe their temperament..."
                           />
                         </div>
                         <div className="flex gap-4 pt-8">
-                          <button onClick={() => saveLlama(editingLlama)} className="flex-1 bg-green-800 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-xl hover:bg-green-900 transition-all active:scale-95">Save Changes</button>
+                          <button onClick={() => saveLlama(editingLlama)} className="flex-1 bg-midnight text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-xl hover:bg-midnight/90 transition-all active:scale-95">Save Changes</button>
                           <button onClick={() => setEditingLlama(null)} className="flex-1 bg-stone-100 text-stone-900 py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest hover:bg-stone-200 transition-all active:scale-95">Cancel</button>
                         </div>
                       </div>
@@ -1469,7 +1469,7 @@ const App: React.FC = () => {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                       {llamas.map(l => (
-                        <div key={l.id} className="bg-white p-8 rounded-[3rem] shadow-xl border border-stone-100 flex items-center gap-8 group hover:border-green-200 transition-all">
+                        <div key={l.id} className="bg-white p-8 rounded-[3rem] shadow-xl border border-stone-100 flex items-center gap-8 group hover:border-gold/20 transition-all">
                           <div className="w-24 h-24 rounded-3xl overflow-hidden bg-stone-100 flex-shrink-0">
                             <img src={l.imageUrl} alt={l.name} className="w-full h-full object-cover" />
                           </div>
@@ -1478,7 +1478,7 @@ const App: React.FC = () => {
                             <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mt-1">{l.specialty}</p>
                           </div>
                           <div className="flex gap-2">
-                            <button onClick={() => setEditingLlama(l)} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-green-50 hover:text-green-800 transition-all"><Edit3 size={18}/></button>
+                            <button onClick={() => setEditingLlama(l)} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-gold/10 hover:text-gold transition-all"><Edit3 size={18}/></button>
                             <button onClick={() => deleteLlama(l.id)} className="p-4 bg-stone-50 text-stone-400 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all"><Trash2 size={18}/></button>
                           </div>
                         </div>
@@ -1506,7 +1506,7 @@ const App: React.FC = () => {
                       />
                       <button 
                         onClick={() => document.getElementById('bulk-gallery-upload')?.click()} 
-                        className="bg-green-800 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-green-900 transition-all active:scale-95"
+                        className="bg-midnight text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-midnight/90 transition-all active:scale-95"
                       >
                         <Upload size={20}/> Bulk Upload
                       </button>
@@ -1532,7 +1532,7 @@ const App: React.FC = () => {
                           <textarea 
                             value={img.caption}
                             onChange={(e) => updateGalleryCaption(idx, e.target.value)}
-                            className="w-full bg-stone-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-green-800 outline-none h-24 resize-none"
+                            className="w-full bg-stone-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-gold outline-none h-24 resize-none"
                             placeholder="Describe this moment..."
                           />
                         </div>
@@ -1563,10 +1563,10 @@ const App: React.FC = () => {
                         </div>
                       )}
                       <div className="flex items-center gap-4">
-                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${apiStatus === 'online' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${apiStatus === 'online' ? 'bg-gold/10 text-gold border-gold/20' : 'bg-red-50 text-red-700 border-red-100'}`}>
                           System: {apiStatus}
                         </div>
-                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${supabaseStatus ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-stone-50 text-stone-600 border-stone-100'}`}>
+                        <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${supabaseStatus ? 'bg-gold/10 text-gold border-gold/20' : 'bg-stone-50 text-stone-600 border-stone-100'}`}>
                           Database: {supabaseStatus ? 'Supabase Connected' : 'Local Storage'}
                         </div>
                         <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${emailStatus === true ? 'bg-blue-50 text-blue-700 border-blue-100' : emailStatus === false ? 'bg-red-50 text-red-700 border-red-100' : 'bg-stone-50 text-stone-400 border-stone-100'}`}>
@@ -1638,7 +1638,7 @@ const App: React.FC = () => {
                       </div>
                     ) : (
                       bookings.map((booking) => (
-                        <div key={booking.id} className={`bg-white p-10 rounded-[3rem] shadow-xl border-2 transition-all ${!booking.isRead ? 'border-green-500/20 bg-green-50/5' : 'border-stone-100'}`}>
+                        <div key={booking.id} className={`bg-white p-10 rounded-[3rem] shadow-xl border-2 transition-all ${!booking.isRead ? 'border-gold/20 bg-gold/5' : 'border-stone-100'}`}>
                           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-12">
                             <div className="flex-1 space-y-8">
                               <div className="flex items-center gap-6">
@@ -1648,7 +1648,7 @@ const App: React.FC = () => {
                                 <div>
                                   <div className="flex items-center gap-3 mb-1">
                                     <h4 className="text-2xl font-black tracking-tight">{booking.name}</h4>
-                                    {!booking.isRead && <span className="px-3 py-1 bg-green-800 text-white text-[9px] font-black uppercase tracking-widest rounded-full">New</span>}
+                                    {!booking.isRead && <span className="px-3 py-1 bg-midnight text-white text-[9px] font-black uppercase tracking-widest rounded-full">New</span>}
                                     {booking.status === 'confirmed' && <span className="px-3 py-1 bg-blue-100 text-blue-700 text-[9px] font-black uppercase tracking-widest rounded-full">Confirmed</span>}
                                     {booking.status === 'canceled' && <span className="px-3 py-1 bg-red-100 text-red-700 text-[9px] font-black uppercase tracking-widest rounded-full">Canceled</span>}
                                     {booking.signature_data ? (
@@ -1707,7 +1707,7 @@ const App: React.FC = () => {
                                           </html>
                                         `);
                                       }}
-                                      className="flex items-center gap-2 text-green-800 font-black text-[10px] uppercase tracking-widest hover:text-green-900 transition-colors"
+                                      className="flex items-center gap-2 text-gold font-black text-[10px] uppercase tracking-widest hover:text-gold/80 transition-colors"
                                     >
                                       <Eye size={12} /> View Signed Waiver
                                     </button>
@@ -1722,7 +1722,7 @@ const App: React.FC = () => {
                                         type="number" 
                                         defaultValue={booking.depositPaid || 0}
                                         onBlur={(e) => updateBooking(booking.id, 'updatePayment', Number(e.target.value), booking.totalPaid)}
-                                        className="w-24 bg-stone-50 border-none rounded-xl p-2 text-xs font-bold focus:ring-2 focus:ring-green-800 outline-none"
+                                        className="w-24 bg-stone-50 border-none rounded-xl p-2 text-xs font-bold focus:ring-2 focus:ring-gold outline-none"
                                       />
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -1731,10 +1731,10 @@ const App: React.FC = () => {
                                         type="number" 
                                         defaultValue={booking.totalPaid || 0}
                                         onBlur={(e) => updateBooking(booking.id, 'updatePayment', booking.depositPaid, Number(e.target.value))}
-                                        className="w-24 bg-stone-50 border-none rounded-xl p-2 text-xs font-bold focus:ring-2 focus:ring-green-800 outline-none"
+                                        className="w-24 bg-stone-50 border-none rounded-xl p-2 text-xs font-bold focus:ring-2 focus:ring-gold outline-none"
                                       />
                                     </div>
-                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-green-800 bg-green-50 px-4 py-2 rounded-2xl">
+                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gold bg-gold/10 px-4 py-2 rounded-2xl">
                                       <CreditCard size={12} />
                                       Balance: ${((booking.totalPrice || 0) - (booking.depositPaid || 0) - (booking.totalPaid || 0)).toFixed(2)}
                                     </div>
@@ -1746,7 +1746,7 @@ const App: React.FC = () => {
                             <div className="flex lg:flex-col gap-3 shrink-0">
                               {booking.status === 'pending' && (
                                 <>
-                                  <button onClick={() => updateBooking(booking.id, 'confirm')} className="flex-1 lg:w-48 bg-green-800 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-green-900 transition-all shadow-lg flex items-center justify-center gap-2">
+                                  <button onClick={() => updateBooking(booking.id, 'confirm')} className="flex-1 lg:w-48 bg-midnight text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-midnight/90 transition-all shadow-lg flex items-center justify-center gap-2">
                                     <CheckCircle2 size={16}/> Confirm Trip
                                   </button>
                                   <button onClick={() => updateBooking(booking.id, 'cancel')} className="flex-1 lg:w-48 bg-stone-100 text-stone-600 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-stone-200 transition-all flex items-center justify-center gap-2">
@@ -1791,7 +1791,7 @@ const App: React.FC = () => {
                     <div className="flex items-center justify-between gap-12 bg-stone-50 p-10 rounded-[2.5rem] border border-stone-100">
                       <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-3 h-3 rounded-full animate-pulse ${hasApiKey ? 'bg-green-500' : 'bg-orange-500'}`} />
+                          <div className={`w-3 h-3 rounded-full animate-pulse ${hasApiKey ? 'bg-gold' : 'bg-orange-500'}`} />
                           <h4 className="text-2xl font-black tracking-tight">{hasApiKey ? 'API Connection Active' : 'API Setup Required'}</h4>
                         </div>
                         <p className="text-stone-500 text-sm font-medium leading-relaxed max-w-md">Required for high-res imagery and real-time conditions sync.</p>

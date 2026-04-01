@@ -56,14 +56,14 @@ export const PackingListGenerator: React.FC = () => {
             }
             .header {
               margin-bottom: 40px;
-              border-bottom: 4px solid #166534;
+              border-bottom: 4px solid #0B1D21;
               padding-bottom: 20px;
             }
             .site-name {
               font-family: serif;
               font-size: 24px;
               font-weight: 900;
-              color: #166534;
+              color: #0B1D21;
               margin: 0;
             }
             .trip-meta {
@@ -122,7 +122,7 @@ export const PackingListGenerator: React.FC = () => {
         {/* Form Side */}
         <div className="p-8 md:p-12 border-b lg:border-b-0 lg:border-r border-stone-100">
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 bg-green-800 text-white rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-midnight text-white rounded-2xl flex items-center justify-center shadow-lg">
               <ClipboardList size={24} />
             </div>
             <div>
@@ -158,7 +158,7 @@ export const PackingListGenerator: React.FC = () => {
                 type="range" 
                 min="1" 
                 max="14" 
-                className="w-full accent-green-800"
+                className="w-full accent-gold"
                 value={duration}
                 onChange={(e) => setDuration(parseInt(e.target.value))}
               />
@@ -176,7 +176,7 @@ export const PackingListGenerator: React.FC = () => {
                   <button 
                     key={opt.label}
                     onClick={() => setWeather(opt.label)}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all border-2 ${weather === opt.label ? 'bg-green-50 border-green-200 text-green-900 shadow-sm' : 'bg-stone-50 border-transparent text-stone-400'}`}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all border-2 ${weather === opt.label ? 'bg-gold/10 border-gold/20 text-midnight shadow-sm' : 'bg-stone-50 border-transparent text-stone-400'}`}
                   >
                     <opt.icon size={20} />
                     <span className="text-[9px] font-black uppercase tracking-widest text-center">{opt.label.split(' ')[0]}</span>
@@ -188,7 +188,7 @@ export const PackingListGenerator: React.FC = () => {
             <button 
               onClick={handleGenerate}
               disabled={isLoading}
-              className="w-full bg-green-800 text-white py-6 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-green-900 transition-all shadow-xl shadow-green-900/20 active:scale-[0.98] disabled:opacity-50"
+              className="w-full bg-midnight text-white py-6 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-midnight/90 transition-all shadow-xl shadow-midnight/20 active:scale-[0.98] disabled:opacity-50"
             >
               {isLoading ? (
                 <><Loader2 className="animate-spin" /> Analyzing Terrain Requirements...</>
@@ -205,7 +205,7 @@ export const PackingListGenerator: React.FC = () => {
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="flex justify-between items-center mb-8">
                 <h4 className="text-xl font-black text-stone-900 tracking-tight flex items-center gap-2">
-                  <ClipboardList size={20} className="text-green-800" />
+                  <ClipboardList size={20} className="text-gold" />
                   Your Field List
                 </h4>
                 <button 
@@ -217,7 +217,7 @@ export const PackingListGenerator: React.FC = () => {
                 </button>
               </div>
               <div className="prose prose-stone prose-sm max-w-none text-stone-700 font-medium leading-relaxed prose-headings:font-black prose-headings:text-stone-900 prose-ul:list-none prose-ul:p-0 prose-li:mb-4 prose-li:p-4 prose-li:bg-white prose-li:rounded-xl prose-li:shadow-sm prose-li:border prose-li:border-stone-100">
-                <div dangerouslySetInnerHTML={{ __html: result.replace(/\n/g, '<br/>').replace(/### (.*)/g, '<h5 class="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mt-8 mb-4">$1</h5>').replace(/- (.*)/g, '<div class="flex items-start gap-3 p-4 bg-white rounded-xl mb-2 shadow-sm border border-stone-100"><div class="w-4 h-4 rounded border-2 border-stone-200 mt-0.5 shrink-0"></div><span>$1</span></div>').replace(/Llama Breed & Herd Recommendation/g, '<span class="text-green-800 font-black flex items-center gap-2 mb-2"><Mountain size={14}/> Llama Breed & Herd Recommendation</span>') }} />
+                <div dangerouslySetInnerHTML={{ __html: result.replace(/\n/g, '<br/>').replace(/### (.*)/g, '<h5 class="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mt-8 mb-4">$1</h5>').replace(/- (.*)/g, '<div class="flex items-start gap-3 p-4 bg-white rounded-xl mb-2 shadow-sm border border-stone-100"><div class="w-4 h-4 rounded border-2 border-stone-200 mt-0.5 shrink-0"></div><span>$1</span></div>').replace(/Llama Breed & Herd Recommendation/g, '<span class="text-gold font-black flex items-center gap-2 mb-2"><Mountain size={14}/> Llama Breed & Herd Recommendation</span>') }} />
               </div>
             </div>
           ) : (
@@ -234,7 +234,7 @@ export const PackingListGenerator: React.FC = () => {
       {/* Footer Info */}
       <div className="bg-stone-900 text-stone-500 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/5">
         <div className="flex items-center gap-3">
-          <Info size={16} className="text-green-500" />
+          <Info size={16} className="text-gold" />
           <p className="text-[10px] font-black uppercase tracking-widest">AI suggestions are based on high-country logistics. Always carry bear-safety items.</p>
         </div>
         <div className="flex items-center gap-2 text-white/50">
