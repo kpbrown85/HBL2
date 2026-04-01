@@ -519,9 +519,15 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    console.log("Attempting Google Sign-In...");
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log("Login successful:", result.user.email);
     } catch (err) {
       console.error("Login failed:", err);
     }
@@ -1926,6 +1932,23 @@ const App: React.FC = () => {
               <button onClick={() => { navigate('/blog'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Journal</button>
               <button onClick={() => { navigate('/videos'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Videos</button>
               <button onClick={() => { navigate('/book-clinic'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Book Clinic</button>
+              
+              {isAuthReady && (
+                user ? (
+                  <div className="flex items-center gap-6 py-8 border-t border-white/10">
+                    <img src={user.photoURL || ''} alt="Profile" className="w-16 h-16 rounded-2xl border border-white/10 shadow-xl" />
+                    <div className="flex flex-col">
+                      <span className="text-paper text-xl font-black lowercase tracking-widest">{user.displayName}</span>
+                      <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="text-gold hover:text-gold/80 text-sm font-black uppercase tracking-widest text-left mt-1">Sign Out</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={(e) => { handleLogin(e); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left flex items-center gap-4">
+                    <User size={32} /> Sign In
+                  </button>
+                )
+              )}
+
               <a href="#booking" onClick={() => setIsMenuOpen(false)} className="bg-gold text-midnight py-10 rounded-[2rem] text-2xl font-black uppercase tracking-widest text-center shadow-2xl">Plan My Trek</a>
             </div>
           </div>
