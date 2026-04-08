@@ -18,6 +18,7 @@ import { AvailabilityCalendar } from './components/AvailabilityCalendar';
 import { GearShop, DEFAULT_GEAR_ITEMS } from './components/GearShop';
 import { ExpeditionBlog } from './components/ExpeditionBlog';
 import { LlamaFactCarousel } from './components/LlamaFactCarousel';
+import { HighCountryAIHub } from './components/AIServices';
 import { generateWelcomeSlogan, generateBackdrop, getHighCountryAdvice, getQuickAdvice } from './services/geminiService';
 import { auth, db, googleProvider, signInWithPopup, signOut, onSnapshot, collection, query, where, orderBy, limit, doc, setDoc, handleFirestoreError, OperationType } from './firebase';
 import { User as FirebaseUser } from 'firebase/auth';
@@ -1877,10 +1878,18 @@ const App: React.FC = () => {
               <Logo branding={branding} light onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
               <div className="hidden lg:flex items-center gap-12 font-black uppercase text-[10px] tracking-[0.25em]">
                 <div className="flex items-center gap-10 pr-12 border-r border-white/10">
-                  {['Benefits', 'About', 'Trip Reports', 'Videos'].map(item => (
+                  {['Benefits', 'About', 'Trip Reports', 'AI Hub', 'Videos'].map(item => (
                     <button 
                       key={item} 
-                      onClick={() => item === 'Trip Reports' ? navigate('/blog') : item === 'Videos' ? navigate('/videos') : window.location.hash = item.toLowerCase()} 
+                      onClick={() => {
+                        if (item === 'Trip Reports') navigate('/blog');
+                        else if (item === 'AI Hub') {
+                          const element = document.getElementById('ai-hub');
+                          if (element) element.scrollIntoView({ behavior: 'smooth' });
+                        }
+                        else if (item === 'Videos') navigate('/videos');
+                        else window.location.hash = item.toLowerCase();
+                      }} 
                       className="text-paper/60 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold"
                     >
                       {item}
@@ -2053,18 +2062,18 @@ const App: React.FC = () => {
               </div>
             </section>
 
-            {/* AI Scout Section */}
-            <section id="ai-scout" className="py-64 bg-paper relative overflow-hidden">
+            {/* AI Hub Section */}
+            <section id="ai-hub" className="py-64 bg-paper relative overflow-hidden">
               <div className="absolute inset-0 -z-10 opacity-[0.02] pointer-events-none">
                 <img src={branding.heroImageUrl} className="w-full h-full object-cover grayscale" alt="Mountain Texture" />
               </div>
               <div className="max-w-7xl mx-auto px-8">
                 <header className="text-center mb-24">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gold mb-4">Real-Time Intelligence</h4>
-                  <h2 className="text-8xl font-black tracking-tighter leading-none mb-8 text-midnight">AI Scout.</h2>
-                  <p className="text-midnight/60 text-xl font-medium max-w-2xl mx-auto">Get expert advice on trail conditions, weather, and llama packing safety.</p>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gold mb-4">Advanced Intelligence</h4>
+                  <h2 className="text-8xl font-black tracking-tighter leading-none mb-8 text-midnight">AI Hub.</h2>
+                  <p className="text-midnight/60 text-xl font-medium max-w-2xl mx-auto">Access our full suite of AI tools for expedition planning, trail intel, and creative media.</p>
                 </header>
-                <HighCountryAIScout />
+                <HighCountryAIHub />
               </div>
             </section>
 
