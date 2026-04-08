@@ -58,6 +58,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
 
   const [estimate, setEstimate] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [adminEmail, setAdminEmail] = useState('kevin.paul.brown@gmail.com');
   const [existingBookings, setExistingBookings] = useState<BookingData[]>([]);
@@ -276,9 +277,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmissionError(null);
     
     if (!auth.currentUser) {
-      alert("Please sign in to request an expedition.");
+      setSubmissionError("Please sign in to request an expedition.");
+      return;
+    }
+
+    if (!formData.startDate || !formData.endDate) {
+      setSubmissionError("Please select your expedition dates on the calendar.");
       return;
     }
 
@@ -320,7 +327,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
       window.dispatchEvent(new Event('hbl_new_booking'));
       setIsSubmitted(true);
     } catch (error: any) {
-      handleFirestoreError(error, OperationType.CREATE, 'bookings');
+      console.error("Submission error:", error);
+      setSubmissionError("There was an error processing your request. Please try again.");
+      // We don't call handleFirestoreError here to avoid the JSON error throw which might break the UI flow if not caught by an error boundary
     } finally {
       setIsSubmitting(false);
     }
@@ -715,7 +724,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
             <div className="absolute top-0 right-0 w-64 h-64 bg-gold/10 rounded-full blur-3xl -mr-32 -mt-32" />
             <div className="relative z-10">
               <div className="flex justify-between items-end mb-12">
-                <div>
+                <div className="flex-1">
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-500 mb-2">Estimated Investment</p>
                   <div className="text-6xl font-black tracking-tighter">${estimate.toLocaleString()}</div>
                   <div className="flex flex-wrap gap-2 mt-4">
@@ -731,6 +740,13 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                 </div>
                 <Calculator className="text-stone-700" size={48} />
               </div>
+
+              {submissionError && (
+                <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-400 text-sm font-bold animate-in fade-in slide-in-from-top-2">
+                  <Info size={18} />
+                  {submissionError}
+                </div>
+              )}
               
               <button 
                 type="submit"
@@ -738,9 +754,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
                 className={`w-full bg-white text-stone-900 py-8 rounded-3xl font-black text-xl transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-stone-100'}`}
               >
                 {isSubmitting ? (
-                  <>Processing... <Loader2 className="w-6 h-6 animate-spin" /></>
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <span>Processing Request...</span>
+                  </>
                 ) : (
-                  <>Send Expedition Request <ArrowRight className="w-6 h-6" /></>
+                  <>
+                    <span>Send Expedition Request</span>
+                    <ArrowRight className="w-6 h-6" />
+                  </>
                 )}
               </button>
               <p className="text-center text-stone-500 text-[10px] font-black uppercase tracking-widest mt-8">
