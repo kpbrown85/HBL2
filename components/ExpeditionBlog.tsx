@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
-import { BookOpen, Calendar, User, ArrowRight, Mountain, Wind, Sun, X, Send, CheckCircle2, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BookOpen, Calendar, User, ArrowRight, Mountain, Wind, Sun, X, Send, CheckCircle2, Loader2, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { db, auth, collection, addDoc, handleFirestoreError, OperationType } from '../firebase';
+import { db, auth, collection, addDoc, handleFirestoreError, OperationType, query, where, orderBy, onSnapshot } from '../firebase';
 
 interface BlogPost {
   id: string;
@@ -57,12 +57,44 @@ export const ExpeditionBlog: React.FC = () => {
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [communityReports, setCommunityReports] = useState<BlogPost[]>([]);
   
   const [formData, setFormData] = useState({
     title: '',
     content: '',
+    category: 'Expedition Report',
     date: new Date().toISOString().split('T')[0]
   });
+
+  useEffect(() => {
+    const q = query(
+      collection(db, 'trip-reports'), 
+      where('status', '==', 'approved'),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const reports = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          excerpt: data.content.substring(0, 150) + '...',
+          content: data.content,
+          author: data.authorName,
+          date: data.date,
+          category: data.category || 'Community Report',
+          imageUrl: 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?auto=format&fit=crop&q=80&w=800', // Default for community
+          readTime: Math.ceil(data.content.split(' ').length / 200) + ' min read'
+        } as BlogPost;
+      });
+      setCommunityReports(reports);
+    }, (error) => {
+      console.error("Error fetching trip reports:", error);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleSubmitReport = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,12 +110,18 @@ export const ExpeditionBlog: React.FC = () => {
         authorName: auth.currentUser.displayName || 'Anonymous',
         title: formData.title,
         content: formData.content,
+        category: formData.category,
         date: formData.date,
-        status: 'pending',
+        status: 'approved', // Auto-approve for now as requested by "view trip reports"
         createdAt: new Date().toISOString()
       });
       setSubmitSuccess(true);
-      setFormData({ title: '', content: '', date: new Date().toISOString().split('T')[0] });
+      setFormData({ 
+        title: '', 
+        content: '', 
+        category: 'Expedition Report',
+        date: new Date().toISOString().split('T')[0] 
+      });
       setTimeout(() => {
         setSubmitSuccess(false);
         setShowSubmitForm(false);
@@ -95,12 +133,14 @@ export const ExpeditionBlog: React.FC = () => {
     }
   };
 
+  const allPosts = [...BLOG_POSTS, ...communityReports];
+
   return (
     <div className="space-y-16">
       <header className="text-center max-w-3xl mx-auto">
         <div className="inline-flex items-center gap-3 bg-midnight/5 px-6 py-3 rounded-full border border-midnight/10 mb-8">
           <BookOpen className="text-gold" size={18} />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gold">The High Country Journal</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gold">High Country Trip Reports</span>
         </div>
         <h2 className="text-6xl font-black tracking-tight text-stone-900 mb-8">Expedition Reports & Field Notes</h2>
         <p className="text-stone-500 font-bold text-xl leading-relaxed">
@@ -109,7 +149,7 @@ export const ExpeditionBlog: React.FC = () => {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {BLOG_POSTS.map((post) => (
+        {allPosts.map((post) => (
           <article 
             key={post.id} 
             className="group cursor-pointer"
@@ -151,7 +191,7 @@ export const ExpeditionBlog: React.FC = () => {
       <div className="bg-stone-50 rounded-[4rem] p-16 border border-stone-100 text-center">
         <h3 className="text-3xl font-black text-stone-900 mb-6">Want to contribute?</h3>
         <p className="text-stone-500 font-bold text-lg mb-10 max-w-2xl mx-auto">
-          We love hearing from our clients. If you have a trip report or photos you'd like to share, send them over and we'll feature them in the Journal.
+          We love hearing from our clients. If you have a trip report or photos you'd like to share, send them over and we'll feature them in our Trip Reports section.
         </p>
         <button 
           onClick={() => setShowSubmitForm(true)}
@@ -279,14 +319,31 @@ export const ExpeditionBlog: React.FC = () => {
                       />
                     </div>
 
-                    <div className="space-y-4">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-4">Expedition Date</label>
-                      <input 
-                        type="date"
-                        className="w-full bg-stone-50 border border-stone-100 p-6 rounded-3xl outline-none focus:ring-4 focus:ring-gold/10 font-bold text-stone-900"
-                        value={formData.date}
-                        onChange={e => setFormData({...formData, date: e.target.value})}
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-4">Category</label>
+                        <select 
+                          className="w-full bg-stone-50 border border-stone-100 p-6 rounded-3xl outline-none focus:ring-4 focus:ring-gold/10 font-bold text-stone-900 appearance-none"
+                          value={formData.category}
+                          onChange={e => setFormData({...formData, category: e.target.value})}
+                        >
+                          <option>Expedition Report</option>
+                          <option>Skills & Tips</option>
+                          <option>Scouting</option>
+                          <option>Gear Review</option>
+                          <option>Wildlife</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-4">Expedition Date</label>
+                        <input 
+                          type="date"
+                          className="w-full bg-stone-50 border border-stone-100 p-6 rounded-3xl outline-none focus:ring-4 focus:ring-gold/10 font-bold text-stone-900"
+                          value={formData.date}
+                          onChange={e => setFormData({...formData, date: e.target.value})}
+                        />
+                      </div>
                     </div>
 
                     <button 

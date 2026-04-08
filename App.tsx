@@ -1548,7 +1548,7 @@ const App: React.FC = () => {
                 <div className="space-y-16 animate-in slide-in-from-bottom-8">
                   <header className="flex justify-between items-end">
                     <div>
-                      <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Expedition Journal</h2>
+                      <h2 className="text-6xl font-black tracking-tighter text-stone-900 leading-none">Trip Reports</h2>
                       <p className="text-stone-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-6">Manage field notes and high-country imagery</p>
                     </div>
                     <div className="flex gap-4">
@@ -1877,10 +1877,10 @@ const App: React.FC = () => {
               <Logo branding={branding} light onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
               <div className="hidden lg:flex items-center gap-12 font-black uppercase text-[10px] tracking-[0.25em]">
                 <div className="flex items-center gap-10 pr-12 border-r border-white/10">
-                  {['Benefits', 'About', 'Journal', 'Videos'].map(item => (
+                  {['Benefits', 'About', 'Trip Reports', 'Videos'].map(item => (
                     <button 
                       key={item} 
-                      onClick={() => item === 'Journal' ? navigate('/blog') : item === 'Videos' ? navigate('/videos') : window.location.hash = item.toLowerCase()} 
+                      onClick={() => item === 'Trip Reports' ? navigate('/blog') : item === 'Videos' ? navigate('/videos') : window.location.hash = item.toLowerCase()} 
                       className="text-paper/60 hover:text-gold transition-all py-2 border-b-2 border-transparent hover:border-gold"
                     >
                       {item}
@@ -1938,7 +1938,7 @@ const App: React.FC = () => {
               <button onClick={() => { navigate('/map'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Map</button>
               <button onClick={() => { navigate('/availability'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Availability</button>
               <button onClick={() => { navigate('/gear-shop'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Gear Shop</button>
-              <button onClick={() => { navigate('/blog'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Journal</button>
+              <button onClick={() => { navigate('/blog'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Trip Reports</button>
               <button onClick={() => { navigate('/videos'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Videos</button>
               <button onClick={() => { navigate('/book-clinic'); setIsMenuOpen(false); }} className="text-4xl font-black text-paper hover:text-gold transition-all tracking-tighter uppercase text-left">Book Clinic</button>
               
@@ -2084,7 +2084,7 @@ const App: React.FC = () => {
             </section>
 
             {/* Gallery Section */}
-            <section id="gallery" className="py-64 bg-midnight text-paper"><div className="max-w-7xl mx-auto px-8"><header className="flex flex-col md:flex-row justify-between items-end mb-32 gap-8"><h2 className="text-9xl font-black tracking-tighter leading-none">Journal.</h2><div className="bg-white/5 border border-white/10 px-12 py-6 rounded-full text-gold font-black uppercase tracking-widest text-xs">High Country Field Notes</div></header><PhotoCarousel images={gallery} /></div></section>
+            <section id="gallery" className="py-64 bg-midnight text-paper"><div className="max-w-7xl mx-auto px-8"><header className="flex flex-col md:flex-row justify-between items-end mb-32 gap-8"><h2 className="text-9xl font-black tracking-tighter leading-none">Trip Reports.</h2><div className="bg-white/5 border border-white/10 px-12 py-6 rounded-full text-gold font-black uppercase tracking-widest text-xs">High Country Field Notes</div></header><PhotoCarousel images={gallery} /></div></section>
 
             <section id="trailheads" className="py-64 bg-paper relative overflow-hidden">
               <div className="absolute inset-0 -z-10 opacity-[0.02] pointer-events-none">
