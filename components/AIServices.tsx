@@ -19,9 +19,11 @@ import {
   Info,
   Globe,
   Navigation,
-  CheckCircle2
+  CheckCircle2,
+  ClipboardList
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PackingListGenerator } from './PackingListGenerator';
 
 // Initialize AI
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -33,7 +35,7 @@ interface Message {
 }
 
 export const HighCountryAIHub: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'chat' | 'scout' | 'studio' | 'analyst'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'scout' | 'studio' | 'analyst' | 'loadout'>('chat');
   
   return (
     <div className="bg-white rounded-[4rem] shadow-2xl border border-stone-100 overflow-hidden flex flex-col h-[800px]">
@@ -51,6 +53,7 @@ export const HighCountryAIHub: React.FC = () => {
         <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10">
           <TabButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare size={18} />} label="Planner" />
           <TabButton active={activeTab === 'scout'} onClick={() => setActiveTab('scout')} icon={<Search size={18} />} label="Scout" />
+          <TabButton active={activeTab === 'loadout'} onClick={() => setActiveTab('loadout')} icon={<ClipboardList size={18} />} label="Loadout" />
           <TabButton active={activeTab === 'studio'} onClick={() => setActiveTab('studio')} icon={<ImageIcon size={18} />} label="Studio" />
           <TabButton active={activeTab === 'analyst'} onClick={() => setActiveTab('analyst')} icon={<Camera size={18} />} label="Analyst" />
         </div>
@@ -60,6 +63,7 @@ export const HighCountryAIHub: React.FC = () => {
         <AnimatePresence mode="wait">
           {activeTab === 'chat' && <AIChat key="chat" />}
           {activeTab === 'scout' && <AIScout key="scout" />}
+          {activeTab === 'loadout' && <PackingListGenerator key="loadout" />}
           {activeTab === 'studio' && <AIStudio key="studio" />}
           {activeTab === 'analyst' && <AIAnalyst key="analyst" />}
         </AnimatePresence>

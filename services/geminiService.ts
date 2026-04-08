@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 
 export async function getLlamaAdvice(question: string) {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Question: ${question}`,
@@ -25,7 +25,7 @@ export async function getLlamaAdvice(question: string) {
 
 export async function generateWelcomeSlogan(): Promise<string> {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: "Generate a short, punchy 1-sentence slogan for a llama rental company in Helena, Montana. Focus on the bond between human and animal in the rugged wilderness.",
@@ -43,7 +43,7 @@ export async function generateWelcomeSlogan(): Promise<string> {
 
 export async function generatePackingList(tripType: string, duration: number, weather: string): Promise<string> {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const prompt = `Generate a detailed packing list for a ${duration}-day ${tripType} expedition. 
     The expected weather is ${weather}.
     The list must include:
@@ -72,7 +72,7 @@ export async function generatePackingList(tripType: string, duration: number, we
 
 export async function generateBackdrop(prompt: string) {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const fullPrompt = `A stunning, high-quality landscape photograph of the Montana wilderness. ${prompt}. Realistic, natural lighting, sharp focus, 4k resolution, cinematic composition.`;
     
     const response = await ai.models.generateContent({
@@ -109,7 +109,7 @@ export interface AIScoutResponse {
 
 export async function getHighCountryAdvice(query: string): Promise<AIScoutResponse> {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Question: ${query}`,
@@ -142,7 +142,7 @@ export async function getHighCountryAdvice(query: string): Promise<AIScoutRespon
 
 export async function getQuickAdvice(query: string): Promise<string> {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3.1-flash-lite-preview',
       contents: `Question: ${query}`,
