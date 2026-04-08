@@ -26,16 +26,16 @@ export const LlamaCard: React.FC<{ llama: Llama }> = ({ llama }) => {
         />
         <div className="absolute inset-0 bg-stone-900/10 group-hover:bg-transparent transition-colors duration-500" />
       </div>
-      <div className="p-8">
-        <div className="flex justify-between items-start mb-4">
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-3">
           <div>
             <h3 className="text-2xl font-black text-stone-900 group-hover:text-gold transition-colors">{llama.name}</h3>
             <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">{llama.age} years old</p>
           </div>
         </div>
-        <p className="text-stone-600 mb-8 italic leading-relaxed line-clamp-2">"{llama.personality}"</p>
+        <p className="text-stone-600 mb-5 italic leading-relaxed line-clamp-2">"{llama.personality}"</p>
         
-        <div className="grid grid-cols-2 gap-4 border-t border-stone-50 pt-6">
+        <div className="grid grid-cols-2 gap-4 border-t border-stone-50 pt-5">
           <div className="flex flex-col">
             <span className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mb-1">Capacity</span>
             <div className="flex items-center gap-2">
