@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 console.log("VITE.CONFIG.TS: LOADING...");
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import express from 'express';
 import api from './api';
 
@@ -12,6 +13,7 @@ app.use(api); // Also mount at root for aliases
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     {
       name: 'api-server',
       configureServer(server) {
@@ -42,6 +44,7 @@ export default defineConfig({
     allowedHosts: true
   },
   define: {
-    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || '')
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || ''),
+    'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY || '')
   }
 });
