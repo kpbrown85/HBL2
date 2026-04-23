@@ -135,16 +135,16 @@ service cloud.firestore {
 
     match /bookings/{bookingId} {
       allow read: if true; // Publicly readable for availability checks (no PII)
-      allow create: if isAuthenticated() && isValidBooking(request.resource.data) &&
-                      (request.auth.uid == request.resource.data.uid || isAdmin());
+      allow create: if isValidBooking(request.resource.data) &&
+                      (request.resource.data.uid == 'guest' || (isAuthenticated() && request.auth.uid == request.resource.data.uid) || isAdmin());
       allow update: if isAuthenticated() && isValidBooking(request.resource.data) &&
                       ((request.auth.uid == resource.data.uid && request.resource.data.uid == resource.data.uid && request.resource.data.status == resource.data.status) || isAdmin());
       allow delete: if isAdmin();
 
       match /private/details {
         allow read: if isAuthenticated() && (request.auth.uid == get(/databases/$(database)/documents/bookings/$(bookingId)).data.uid || isAdmin());
-        allow write: if isAuthenticated() && isValidBookingPrivate(request.resource.data) &&
-                       (request.auth.uid == get(/databases/$(database)/documents/bookings/$(bookingId)).data.uid || isAdmin());
+        allow write: if isValidBookingPrivate(request.resource.data) &&
+                       (get(/databases/$(database)/documents/bookings/$(bookingId)).data.uid == 'guest' || (isAuthenticated() && request.auth.uid == get(/databases/$(database)/documents/bookings/$(bookingId)).data.uid) || isAdmin());
       }
     }
 

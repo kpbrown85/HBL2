@@ -279,10 +279,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
     e.preventDefault();
     setSubmissionError(null);
     
-    if (!auth.currentUser) {
-      setSubmissionError("Please sign in to request an expedition.");
-      return;
-    }
+    // if (!auth.currentUser) {
+    //   setSubmissionError("Please sign in to request an expedition.");
+    //   return;
+    // }
 
     if (!formData.startDate || !formData.endDate) {
       setSubmissionError("Please select your expedition dates on the calendar.");
@@ -300,7 +300,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
 
     const newBooking = {
       ...publicFormData,
-      uid: auth.currentUser.uid,
+      uid: auth.currentUser?.uid || 'guest',
       status: 'pending',
       isRead: false,
       totalPrice: estimate,
