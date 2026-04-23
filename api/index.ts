@@ -471,40 +471,45 @@ api.post("/create-booking", async (req, res) => {
 });
 
 api.get("/get-bookings", async (req, res) => {
-  console.log(`[${new Date().toISOString()}] GET /get-bookings hit`);
+  console.log(`[${new Date().toISOString()}] GET /get-bookings merge logic started`);
+  let allBookings: any[] = [];
+  
+  // 1. Always load local bookings as a baseline
+  try {
+    if (fs.existsSync(BOOKINGS_FILE)) {
+      const localData = fs.readFileSync(BOOKINGS_FILE, "utf-8");
+      allBookings = JSON.parse(localData);
+      console.log(`[${new Date().toISOString()}] Loaded ${allBookings.length} local bookings`);
+    }
+  } catch (localErr) {
+    console.warn("Local storage fetch failed:", localErr);
+  }
+
+  // 2. Try Supabase and merge if available
   try {
     if (supabase) {
+      console.log(`[${new Date().toISOString()}] Fetching from Supabase...`);
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
         .order('timestamp', { ascending: false });
       
       if (error) {
-        console.error("Supabase Fetch Error, falling back to local file:", error);
-        // Fallback to local file
-        try {
-          const data = fs.existsSync(BOOKINGS_FILE) ? fs.readFileSync(BOOKINGS_FILE, "utf-8") : "[]";
-          return res.json(JSON.parse(data));
-        } catch (localErr) {
-          return res.status(500).json({ error: "Supabase fetch failed and local fallback failed", details: error.message });
-        }
-      }
-      
-      console.log(`[${new Date().toISOString()}] Supabase: Fetched ${data?.length || 0} bookings`);
-      res.json(data || []);
-    } else {
-      try {
-        const data = fs.existsSync(BOOKINGS_FILE) ? fs.readFileSync(BOOKINGS_FILE, "utf-8") : "[]";
-        res.json(JSON.parse(data));
-      } catch (parseErr) {
-        console.error("Error parsing bookings file:", parseErr);
-        res.json([]);
+        console.error("Supabase fetch failed during merge:", error.message);
+        // We already have localBookings, so we just continue
+      } else if (data) {
+        console.log(`[${new Date().toISOString()}] Supabase returned ${data.length} bookings`);
+        // Merge and deduplicate by ID
+        const remoteIds = new Set(data.map((b: any) => b.id));
+        const localUnique = allBookings.filter(b => !remoteIds.has(b.id));
+        allBookings = [...data, ...localUnique].sort((a, b) => b.timestamp - a.timestamp);
       }
     }
   } catch (e: any) {
-    console.error("Fetch error:", e);
-    res.status(500).json({ error: "Failed to load bookings", details: e.message });
+    console.error("Critical error in get-bookings:", e);
   }
+  
+  res.json(allBookings);
 });
 
 api.post("/update-booking", async (req, res) => {
@@ -519,36 +524,40 @@ api.post("/update-booking", async (req, res) => {
 
     let booking: any = null;
 
-    if (supabase) {
-      if (action === 'delete') {
-        const { error } = await supabase.from('bookings').delete().eq('id', id);
-        if (error) throw error;
-      } else {
-        // Fetch booking first to get email for notification
-        const { data: existing } = await supabase.from('bookings').select('*').eq('id', id).single();
-        booking = existing;
-        
-        const { error } = await supabase.from('bookings').update(update).eq('id', id);
-        if (error) {
-          console.error("Supabase Update Error:", error);
-          const sqlFix = `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "depositPaid" NUMERIC DEFAULT 0; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "totalPaid" NUMERIC DEFAULT 0;`;
-          throw new Error(`${error.message}. Please run this SQL in your Supabase SQL Editor: ${sqlFix}`);
-        }
-      }
-    } else {
-      const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
-      let bookings = JSON.parse(data);
-      const index = bookings.findIndex((b: any) => b.id === id);
-      if (index !== -1) {
-        booking = bookings[index];
+      if (supabase) {
         if (action === 'delete') {
-          bookings = bookings.filter((b: any) => b.id !== id);
+          const { error } = await supabase.from('bookings').delete().eq('id', id);
+          if (error) throw error;
         } else {
-          bookings[index] = { ...bookings[index], ...update };
+          // Fetch booking first to get email for notification
+          const { data: existing } = await supabase.from('bookings').select('*').eq('id', id).single();
+          booking = existing;
+          
+          const { error } = await supabase.from('bookings').update(update).eq('id', id);
+          if (error) {
+            console.error("Supabase Update Error:", error);
+            const sqlFix = `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "depositPaid" NUMERIC DEFAULT 0; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "totalPaid" NUMERIC DEFAULT 0;`;
+            throw new Error(`${error.message}. Please run this SQL in your Supabase SQL Editor: ${sqlFix}`);
+          }
         }
-        fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
       }
-    }
+
+      // Always update local file as a baseline/fallback
+      if (fs.existsSync(BOOKINGS_FILE)) {
+        const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
+        let bookings = JSON.parse(data);
+        const index = bookings.findIndex((b: any) => b.id === id);
+        if (index !== -1) {
+          if (!booking) booking = bookings[index];
+          if (action === 'delete') {
+            bookings = bookings.filter((b: any) => b.id !== id);
+          } else {
+            bookings[index] = { ...bookings[index], ...update };
+            booking = bookings[index];
+          }
+          fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+        }
+      }
 
     // Calculate totalPrice if status is confirmed
     if (booking && (action === 'approve' || status === 'confirmed')) {
