@@ -327,7 +327,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData, // Includes name, email, phone, customRequests
+          ...formData, // Includes name, email, phone, customRequests, startDate, endDate, etc.
           id: bookingId,
           uid: auth.currentUser?.uid || 'guest',
           estimate: estimate,
@@ -336,8 +336,16 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
         })
       });
 
+      const apiResult = await apiResponse.json().catch(() => ({ error: 'Unknown API error' }));
+
       if (!apiResponse.ok) {
-        console.warn("Backend API sync failed, but Firestore save succeeded.");
+        console.error("Backend API sync failed:", apiResult);
+        throw new Error(apiResult.error || "Server failed to process booking");
+      }
+      
+      // Check for partial success (e.g. Email worked but DB failed)
+      if (apiResult._diagnostics?.dbError) {
+        console.warn("Booking saved via Email fallback, but DB failed:", apiResult._diagnostics.dbError);
       }
       
       const savedBooking = { id: bookingId, ...newBooking };
@@ -347,8 +355,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
       setIsSubmitted(true);
     } catch (error: any) {
       console.error("Submission error:", error);
-      setSubmissionError("There was an error processing your request. Please try again.");
-      // We don't call handleFirestoreError here to avoid the JSON error throw which might break the UI flow if not caught by an error boundary
+      setSubmissionError(error.message || "There was an error processing your request. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

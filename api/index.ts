@@ -323,6 +323,9 @@ api.post("/sign-waiver", async (req, res) => {
 });
 
 api.post("/create-booking", async (req, res) => {
+  console.log(`[${new Date().toISOString()}] POST /create-booking started`);
+  console.log(`[${new Date().toISOString()}] Body keys: ${Object.keys(req.body).join(", ")}`);
+  
   const booking = { 
     ...req.body, 
     id: req.body.id || uuidv4(), 
@@ -332,13 +335,16 @@ api.post("/create-booking", async (req, res) => {
   };
 
   const waiverUrl = `${process.env.APP_URL || 'https://www.helenallamas.com'}/sign/${booking.id}`;
+  const adminEmail = process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com";
 
   let dbError = null;
   let emailSent = false;
+  let emailError = null;
 
   // 1. Try Database
   try {
     if (supabase) {
+      console.log(`[${new Date().toISOString()}] Attempting Supabase save for ${booking.id}...`);
       const { error } = await supabase.from('bookings').insert([{
         id: booking.id,
         uid: booking.uid || 'guest',
@@ -358,130 +364,109 @@ api.post("/create-booking", async (req, res) => {
         status: booking.status,
         isRead: booking.isRead
       }]);
+      
       if (error) {
-        console.error("Supabase Insert Error:", error);
-        const sqlFix = `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "bookingType" TEXT; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "totalPrice" NUMERIC; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "depositPaid" NUMERIC DEFAULT 0; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "totalPaid" NUMERIC DEFAULT 0;`;
-        throw new Error(`Database save failed: ${error.message}. Please run this SQL in your Supabase SQL Editor: ${sqlFix}`);
+        console.error("Supabase Insert Error, falling back to local file:", error);
+        dbError = `Supabase Error: ${error.message}`;
+        
+        // Fallback to local file so it appears in dashboard (if not using Supabase for fetch)
+        // OR if using local storage for dashboard
+        let bookings = [];
+        if (fs.existsSync(BOOKINGS_FILE)) {
+          try {
+            const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
+            bookings = JSON.parse(data);
+          } catch (e) {
+            bookings = [];
+          }
+        }
+        bookings.unshift(booking);
+        fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+      } else {
+        console.log(`[${new Date().toISOString()}] Supabase save successful`);
       }
     } else {
+      console.log(`[${new Date().toISOString()}] No Supabase, saving to local file...`);
       let bookings = [];
       if (fs.existsSync(BOOKINGS_FILE)) {
-        try {
-          const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
-          bookings = JSON.parse(data);
-        } catch (e) {
-          console.error("Error parsing bookings file, resetting:", e);
-          bookings = [];
-        }
+        const data = fs.readFileSync(BOOKINGS_FILE, "utf-8");
+        bookings = JSON.parse(data);
       }
       bookings.unshift(booking);
       fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+      console.log(`[${new Date().toISOString()}] Local file save successful`);
     }
   } catch (err: any) {
-    console.error("Database error:", err);
+    console.error("Database error (critical):", err);
     dbError = err.message || String(err);
-    // If Supabase is configured, we MUST fail if the DB save fails
-    if (supabase) {
-      return res.status(500).json({ error: "Database save failed", details: dbError });
-    }
   }
 
-  // 2. Try Email (Always attempt)
+  // 2. Try Email
   try {
-    if (getResendApiKey()) {
-      // ADMIN NOTIFICATION
-      const adminHtml = `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-          <h2 style="color: #0B1D21; border-bottom: 2px solid #0B1D21; padding-bottom: 10px;">New ${booking.bookingType === 'clinic' ? 'Clinic' : 'Expedition'} Request</h2>
-          <p><strong>Name:</strong> ${booking.name}</p>
-          <p><strong>Email:</strong> ${booking.email}</p>
-          <p><strong>Phone:</strong> ${booking.phone}</p>
-          <p><strong>Dates:</strong> ${booking.startDate} ${booking.bookingType === 'clinic' ? '' : `to ${booking.endDate}`}</p>
-          ${booking.bookingType === 'clinic' ? '' : `<p><strong>Llamas:</strong> ${booking.numLlamas}</p>`}
-          ${booking.bookingType === 'clinic' ? '' : `<p><strong>Trailer:</strong> ${booking.trailerNeeded ? 'Yes' : 'No'}</p>`}
-          <p><strong>Clinic Required:</strong> ${booking.isFirstTimer ? 'Yes' : 'No'}</p>
-          ${dbError ? `<p style="color: red;"><strong>Note:</strong> Database save failed, but request was captured via email.</p>` : ''}
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-          <a href="${process.env.APP_URL || 'https://www.helenallamas.com'}/admin" style="display: inline-block; background: #0B1D21; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Dashboard</a>
-        </div>
-      `;
-
+    const resend = getResendClient();
+    if (resend) {
+      console.log(`[${new Date().toISOString()}] Sending notifications to admin: ${adminEmail}`);
+      
+      // Admin Email
       await sendEmail({
-        to: process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com",
-        subject: `New Booking: ${booking.name}`,
-        html: adminHtml,
-        fromName: "HBL Notifications"
+        to: adminEmail,
+        subject: `New Expedition Request: ${booking.name}`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #0B1D21;">New Request Received</h2>
+            <p><strong>Name:</strong> ${booking.name}</p>
+            <p><strong>Email:</strong> ${booking.email}</p>
+            <p><strong>Phone:</strong> ${booking.phone}</p>
+            <p><strong>Dates:</strong> ${booking.startDate} to ${booking.endDate}</p>
+            <p><strong>Llamas:</strong> ${booking.numLlamas}</p>
+            <p><strong>Database Status:</strong> ${dbError ? `FAILED (${dbError})` : 'Saved Successfully'}</p>
+            <a href="${process.env.APP_URL || 'https://www.helenallamas.com'}/admin" style="display: inline-block; background: #0B1D21; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 15px;">Open Admin Dashboard</a>
+          </div>
+        `
       });
 
-      // CUSTOMER CONFIRMATION
-      const customerHtml = `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 30px; border-radius: 15px; color: #333;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #0B1D21; margin: 0;">Helena Backcountry Llamas</h1>
-            <p style="color: #666; font-style: italic;">Your High Country Adventure Starts Here</p>
-          </div>
-          <p>Hi ${booking.name},</p>
-          <p>Thank you for requesting a ${booking.bookingType === 'clinic' ? 'Llama Packing Clinic' : 'expedition'} with our herd! We've received your request and our team is currently reviewing the ${booking.bookingType === 'clinic' ? 'clinic schedule' : 'trail conditions and llama availability'} for your dates.</p>
-          
-          <div style="background: #f0fdf4; padding: 25px; border-radius: 15px; margin: 25px 0; border: 2px dashed #0B1D21; text-align: center;">
-            <h3 style="margin-top: 0; color: #0B1D21;">MANDATORY: Sign Your Waiver</h3>
-            <p>To finalize your booking, please sign the Rental Agreement and Liability Waiver electronically:</p>
-            <a href="${waiverUrl}" style="display: inline-block; background: #0B1D21; color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; margin-top: 10px;">Sign Agreement Now</a>
-          </div>
-
-          <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #0B1D21;">Request Summary:</h3>
-            <ul style="list-style: none; padding: 0;">
-              <li><strong>Dates:</strong> ${booking.startDate} ${booking.bookingType === 'clinic' ? '' : `to ${booking.endDate}`}</li>
-              ${booking.bookingType === 'clinic' ? '<li><strong>Type:</strong> Llama Packing Clinic Training</li>' : `
-              <li><strong>Llamas:</strong> ${booking.numLlamas} Pack Animals</li>
-              <li><strong>Equipment:</strong> ${booking.trailerNeeded ? 'Trailer Rental Requested' : 'Standard Gear'}</li>
-              `}
-            </ul>
-          </div>
-
-          <p><strong>What's Next?</strong></p>
-          <p>Once your waiver is signed, we will review your request and contact you at <strong>${booking.phone}</strong> within 24-48 hours to finalize the details and discuss trail logistics.</p>
-          
-          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
-          <p style="font-size: 12px; color: #999; text-align: center;">
-            Helena Backcountry Llamas<br/>
-            Helena, Montana
-          </p>
-        </div>
-      `;
-
+      // Customer Email
       await sendEmail({
         to: booking.email,
-        subject: `Expedition Request Received: ${booking.startDate}`,
-        html: customerHtml,
-        fromName: "Helena Backcountry Llamas"
+        subject: "We've received your request - Helena Backcountry Llamas",
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; padding: 30px; border: 1px solid #eee; border-radius: 15px;">
+            <h2 style="color: #0B1D21;">Adventure Awaits!</h2>
+            <p>Hi ${booking.name},</p>
+            <p>We've received your request for an expedition on ${booking.startDate}. Our team will review the details and get back to you shortly.</p>
+            <div style="background: #fdf2f2; padding: 20px; border-radius: 10px; margin: 20px 0; border: 2px dashed #0B1D21;">
+              <h3 style="margin-top: 0;">Next Step: Signature Required</h3>
+              <p>Please sign your rental agreement to finalize the request:</p>
+              <a href="${waiverUrl}" style="display: inline-block; background: #0B1D21; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Sign Waiver Now</a>
+            </div>
+            <p>Current Phone on File: ${booking.phone}</p>
+          </div>
+        `
       });
-
+      
       emailSent = true;
+      console.log(`[${new Date().toISOString()}] Emails sent successfully`);
+    } else {
+      console.warn(`[${new Date().toISOString()}] Email not sent: Resend not configured`);
     }
-
-    // 3. Try SMS (Twilio)
-    if (twilioClient && process.env.TWILIO_PHONE_NUMBER && booking.phone) {
-      try {
-        await twilioClient.messages.create({
-          body: `HBL: Expedition request received for ${booking.startDate}. Please check your email to sign the mandatory waiver.`,
-          from: process.env.TWILIO_PHONE_NUMBER,
-          to: booking.phone
-        });
-      } catch (smsErr) {
-        console.error("SMS Alert failed:", smsErr);
-      }
-    }
-  } catch (err) {
-    console.error("Email error:", err);
+  } catch (err: any) {
+    console.error("Email delivery failed:", err);
+    emailError = err.message || String(err);
   }
 
-  // Respond with success if at least one method worked
+  // 3. Final Response
   if (!dbError || emailSent) {
-    res.status(201).json({ ...booking, _diagnostics: { dbError, emailSent } });
+    console.log(`[${new Date().toISOString()}] Booking success: DB=${!dbError}, Mail=${emailSent}`);
+    res.status(201).json({ 
+      ...booking, 
+      _diagnostics: { dbError, emailSent, emailError } 
+    });
   } else {
-    res.status(500).json({ error: "Booking failed completely", dbError });
+    console.error(`[${new Date().toISOString()}] Booking complete failure`);
+    res.status(500).json({ 
+      error: "Booking failed completely", 
+      details: { dbError, emailError } 
+    });
   }
 });
 
@@ -495,8 +480,14 @@ api.get("/get-bookings", async (req, res) => {
         .order('timestamp', { ascending: false });
       
       if (error) {
-        console.error("Supabase Fetch Error:", error);
-        return res.status(500).json({ error: "Supabase fetch failed", details: error.message, hint: "Check if Row Level Security (RLS) is blocking access." });
+        console.error("Supabase Fetch Error, falling back to local file:", error);
+        // Fallback to local file
+        try {
+          const data = fs.existsSync(BOOKINGS_FILE) ? fs.readFileSync(BOOKINGS_FILE, "utf-8") : "[]";
+          return res.json(JSON.parse(data));
+        } catch (localErr) {
+          return res.status(500).json({ error: "Supabase fetch failed and local fallback failed", details: error.message });
+        }
       }
       
       console.log(`[${new Date().toISOString()}] Supabase: Fetched ${data?.length || 0} bookings`);
