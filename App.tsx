@@ -359,7 +359,7 @@ const App: React.FC = () => {
       }
 
       // 2. SECONDARY SOURCE: API (Supabase/Local File)
-      // We merge in case any bookings were ONLY saved to the API (though our form saves to both)
+      // We merge and enrich because the API often has PII that Firestore restricts
       try {
         const response = await fetch(logsUrl);
         const contentType = response.headers.get("content-type");
@@ -369,7 +369,30 @@ const App: React.FC = () => {
           console.log(`[${new Date().toISOString()}] API provided ${apiData.length} records`);
           
           if (apiData.length > 0) {
-            // Merge: Prefer Firestore records if they exist, otherwise use API
+            // Merge & Enrich: 
+            // 1. If Firestore has it, enrich it with PII from API
+            // 2. If Firestore doesn't have it, add it from API
+            const apiMap = new Map<string, any>(apiData.map((b: any) => [b.id, b]));
+            
+            // Enrich Firestore records
+            mergedBookings = mergedBookings.map(fsBooking => {
+              const apiMatch = apiMap.get(fsBooking.id);
+              if (apiMatch) {
+                // Return combination, preferring API for PII fields if they are missing
+                return { 
+                  ...fsBooking, 
+                  name: fsBooking.name || apiMatch.name,
+                  email: fsBooking.email || apiMatch.email,
+                  phone: fsBooking.phone || apiMatch.phone,
+                  customRequests: fsBooking.customRequests || apiMatch.customRequests,
+                  // Also syncing status if Firestore was lagging
+                  status: fsBooking.status === 'pending' ? apiMatch.status : fsBooking.status
+                } as BookingData;
+              }
+              return fsBooking;
+            });
+
+            // Add unique API records
             const seenIds = new Set(mergedBookings.map(b => b.id));
             const uniqueApi = apiData.filter((b: any) => !seenIds.has(b.id));
             mergedBookings = [...mergedBookings, ...uniqueApi].sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
@@ -391,6 +414,13 @@ const App: React.FC = () => {
       setApiError(`Refresh failed: ${err.message}`);
     }
   };
+
+  useEffect(() => {
+    if (isAdmin) {
+      console.log("Admin detected, reloading logs to fetch PII...");
+      loadLogs();
+    }
+  }, [isAdmin]);
 
   useEffect(() => {
     generateWelcomeSlogan().then(val => { if (val) setSlogan(val); });
@@ -646,7 +676,25 @@ const App: React.FC = () => {
       }
     }
     
-    console.log(`Attempting ${action} on booking ${id}`);
+    console.log(`[${new Date().toISOString()}] Attempting ${action} on booking ${id}`);
+    
+    // Performance: Optimistic Update
+    const originalBookings = [...bookings];
+    setBookings(prev => prev.map(b => {
+      if (b.id === id) {
+        if (action === 'delete') return null; // We'll filter later
+        const update: any = { ...b, isRead: true };
+        if (action === 'confirm') update.status = 'confirmed';
+        if (action === 'cancel') update.status = 'canceled';
+        if (action === 'updatePayment') {
+          update.depositPaid = depositPaid;
+          update.totalPaid = totalPaid;
+        }
+        return update;
+      }
+      return b;
+    }).filter(Boolean) as BookingData[]);
+
     const apiPath = `${window.location.origin}/api/update-booking`;
     
     try {
@@ -670,23 +718,12 @@ const App: React.FC = () => {
       });
 
       if (!response.ok) {
-        const contentType = response.headers.get("content-type");
-        let errorMessage = `Server error (${response.status})`;
-        
-        if (contentType && contentType.includes("application/json")) {
-          const errData = await response.json();
-          const rawError = errData.details || errData.error || errorMessage;
-          errorMessage = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
-        } else {
-          const text = await response.text();
-          errorMessage += `: ${String(text).substring(0, 100)}`;
-        }
-        throw new Error(errorMessage);
+        throw new Error(`API failed: ${response.status}`);
       }
       
       // Sync with Firestore for customer view
-      const bookingRef = doc(db, 'bookings', id);
       try {
+        const bookingRef = doc(db, 'bookings', id);
         if (action === 'delete') {
           await deleteDoc(bookingRef);
         } else {
@@ -700,15 +737,16 @@ const App: React.FC = () => {
           await updateDoc(bookingRef, updateData);
         }
       } catch (fsErr) {
-        console.warn("API succeeded but Firestore sync failed:", fsErr);
+        console.warn("API succeeded but Firestore sync failed (permissions?):", fsErr);
       }
       
       console.log(`${action} successful for ${id}`);
-      window.dispatchEvent(new Event('hbl_new_booking'));
+      // Final sync with server state
+      loadLogs();
     } catch (error: any) {
       console.error("Booking action error:", error);
-      const msg = error instanceof Error ? error.message : String(error);
-      alert(`Action Failed: ${msg}`);
+      setBookings(originalBookings); // Rollback
+      alert(`Action Failed: ${error.message || 'Server error'}`);
     }
   };
 
