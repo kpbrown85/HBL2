@@ -373,24 +373,31 @@ const App: React.FC = () => {
             const apiIds = new Set(apiMap.keys());
             
             // Enrich & Filter Firestore records
-            // If we are an admin, the API is the source of truth for existence (to handle deletions)
+            console.log(`[${new Date().toISOString()}] Merging ${mergedBookings.length} Firestore records with ${apiData.length} API records`);
+            
             const now = Date.now();
             mergedBookings = mergedBookings.filter(fsBooking => {
-              if (!isAdmin) return true; // Clients see their own even if API is slow
+              if (!isAdmin) return true;
               const inApi = apiIds.has(fsBooking.id);
-              const isVeryNew = (now - Number(fsBooking.timestamp || 0)) < 30000; // 30 seconds grace for new bookings
+              const isVeryNew = (now - Number(fsBooking.timestamp || 0)) < 30000;
               return inApi || isVeryNew;
             }).map(fsBooking => {
               const apiMatch = apiMap.get(fsBooking.id);
               if (apiMatch) {
-                return { 
+                // Return combination, preferring non-empty values
+                const enriched = { 
                   ...fsBooking, 
-                  name: fsBooking.name || apiMatch.name,
-                  email: fsBooking.email || apiMatch.email,
-                  phone: fsBooking.phone || apiMatch.phone,
+                  name: fsBooking.name || apiMatch.name || 'Unknown Name',
+                  email: fsBooking.email || apiMatch.email || 'No Email',
+                  phone: fsBooking.phone || apiMatch.phone || 'No Phone',
                   customRequests: fsBooking.customRequests || apiMatch.customRequests,
                   status: fsBooking.status === 'pending' ? apiMatch.status : fsBooking.status
                 } as BookingData;
+                
+                if (!fsBooking.name && apiMatch.name) {
+                  console.log(`[${new Date().toISOString()}] Enriched booking ${fsBooking.id} with name: ${apiMatch.name}`);
+                }
+                return enriched;
               }
               return fsBooking;
             });

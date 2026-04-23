@@ -324,7 +324,13 @@ api.post("/sign-waiver", async (req, res) => {
 
 api.post("/create-booking", async (req, res) => {
   console.log(`[${new Date().toISOString()}] POST /create-booking started`);
-  console.log(`[${new Date().toISOString()}] Body keys: ${Object.keys(req.body).join(", ")}`);
+  console.log(`[${new Date().toISOString()}] Payload Data:`, {
+    id: req.body.id,
+    name: req.body.name,
+    email: req.body.email,
+    uid: req.body.uid,
+    hasStartDate: !!req.body.startDate
+  });
   
   const booking = { 
     ...req.body, 
@@ -499,10 +505,41 @@ api.get("/get-bookings", async (req, res) => {
         // We already have localBookings, so we just continue
       } else if (data) {
         console.log(`[${new Date().toISOString()}] Supabase returned ${data.length} bookings`);
-        // Merge and deduplicate by ID
-        const remoteIds = new Set(data.map((b: any) => b.id));
-        const localUnique = allBookings.filter(b => !remoteIds.has(b.id));
-        allBookings = [...data, ...localUnique].sort((a, b) => b.timestamp - a.timestamp);
+        
+        // Deep Merge Strategy:
+        // We combine records with the same ID, preferring non-empty fields from local storage
+        // (This handles cases where Supabase schema might be missing columns)
+        const localMap = new Map(allBookings.map(b => [b.id, b]));
+        const mergedBookingsMap = new Map();
+
+        // 1. Process Supabase records
+        data.forEach((sb: any) => {
+          const local = localMap.get(sb.id);
+          if (local) {
+            // merge
+            mergedBookingsMap.set(sb.id, {
+              ...local, // keep all local fields as base
+              ...sb,    // overwrite with Supabase fields (status, etc.)
+              // But ensure PII is kept if Supabase fields are blank
+              name: sb.name || local.name,
+              email: sb.email || local.email,
+              phone: sb.phone || local.phone,
+              customRequests: sb.customRequests || local.customRequests,
+              signature_data: sb.signature_data || local.signature_data
+            });
+          } else {
+            mergedBookingsMap.set(sb.id, sb);
+          }
+        });
+
+        // 2. Add local records not in Supabase
+        allBookings.forEach(local => {
+          if (!mergedBookingsMap.has(local.id)) {
+            mergedBookingsMap.set(local.id, local);
+          }
+        });
+
+        allBookings = Array.from(mergedBookingsMap.values()).sort((a: any, b: any) => b.timestamp - a.timestamp);
       }
     }
   } catch (e: any) {
