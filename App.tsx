@@ -75,6 +75,7 @@ import {
   Wind,
   PenTool,
   ShieldAlert,
+  ShieldCheck,
   Database,
   Play,
   FileText
@@ -318,8 +319,26 @@ const App: React.FC = () => {
     }
   };
 
+  const [isHealthChecking, setIsHealthChecking] = useState(false);
+  const [dbHealth, setDbHealth] = useState<any>(null);
+
+  const checkDbHealth = async () => {
+    setIsHealthChecking(true);
+    try {
+      const res = await fetch(`${window.location.origin}/api/db-health`);
+      if (res.ok) {
+        const data = await res.json();
+        setDbHealth(data);
+      }
+    } catch (e) {
+      console.error("Health check failed:", e);
+    } finally {
+      setIsHealthChecking(false);
+    }
+  };
+
   const loadLogs = async () => {
-    const logsUrl = `${window.location.origin}/api/get-bookings`;
+    const logsUrl = `${window.location.origin}/api/get-bookings?t=${Date.now()}`;
     console.log(`[${new Date().toISOString()}] Refreshing logs...`);
     
     try {
@@ -1737,6 +1756,14 @@ const App: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <button 
+                            onClick={checkDbHealth}
+                            disabled={isHealthChecking}
+                            className={`p-2 rounded-full transition-colors ${isHealthChecking ? 'bg-stone-100 text-stone-400' : 'bg-gold/10 text-gold hover:bg-gold/20'}`}
+                            title="Check Database Integrity"
+                          >
+                            <ShieldCheck size={14} className={isHealthChecking ? 'animate-pulse' : ''} />
+                          </button>
+                          <button 
                             onClick={handleTestEmail}
                             disabled={isTestingEmail}
                             className={`p-2 rounded-full transition-colors ${isTestingEmail ? 'bg-stone-100 text-stone-400' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
@@ -1786,6 +1813,59 @@ const App: React.FC = () => {
                       )}
                     </div>
                   </header>
+
+                  {dbHealth && (
+                    <div className={`p-8 rounded-[2rem] border-2 animate-in fade-in slide-in-from-top-4 ${dbHealth.missingPotentialPII ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'}`}>
+                      <div className="flex items-start gap-6">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${dbHealth.missingPotentialPII ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                          {dbHealth.missingPotentialPII ? <ShieldAlert size={24} /> : <ShieldCheck size={24} />}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className={`text-lg font-black uppercase tracking-tight ${dbHealth.missingPotentialPII ? 'text-amber-900' : 'text-emerald-900'}`}>
+                              {dbHealth.missingPotentialPII ? 'Database Schema Warning' : 'Database Integrity Verified'}
+                            </h3>
+                            <button onClick={() => setDbHealth(null)} className="text-stone-400 hover:text-stone-600 font-bold text-xs">Dismiss</button>
+                          </div>
+                          
+                          {dbHealth.missingPotentialPII ? (
+                            <div className="mt-4 space-y-4">
+                              <p className="text-sm font-bold text-amber-800 tracking-tight">
+                                Your Supabase "bookings" table is missing important contact information columns: <span className="font-black underline">{dbHealth.missingPotentialPII.join(', ')}</span>. 
+                                This is why names aren't showing up consistently.
+                              </p>
+                              <div className="bg-white/50 p-4 rounded-xl border border-amber-200/50">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-2">How to fix:</p>
+                                <ol className="text-xs font-bold text-amber-900 space-y-2 list-decimal pl-4">
+                                  <li>Open your <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="underline">Supabase Dashboard</a></li>
+                                  <li>Click <strong>SQL Editor</strong></li>
+                                  <li>Paste and run this command:</li>
+                                </ol>
+                                <div className="mt-3 relative">
+                                  <pre className="text-[10px] bg-stone-900 text-gold p-4 rounded-lg overflow-x-auto font-mono leading-relaxed">
+                                    {dbHealth.sqlFix}
+                                  </pre>
+                                  <button 
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(dbHealth.sqlFix);
+                                      alert("SQL copied to clipboard!");
+                                    }}
+                                    className="absolute top-2 right-2 px-2 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-[8px] font-black uppercase tracking-widest"
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm font-bold text-emerald-800 tracking-tight mt-2">
+                              System successfully detected all required columns (including PII) in your connected database.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-6">
                     {bookings.length === 0 ? (

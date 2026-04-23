@@ -322,23 +322,47 @@ api.post("/sign-waiver", async (req, res) => {
   }
 });
 
+api.get("/db-health", async (req, res) => {
+  if (!supabase) {
+    return res.json({ status: 'warning', message: 'Supabase not configured, using local storage base.' });
+  }
+  try {
+    const { data, error } = await supabase.from('bookings').select('*').limit(1);
+    if (error) throw error;
+    
+    const sample = data?.[0] || {};
+    const expected = ['id', 'name', 'email', 'phone', 'startDate', 'endDate', 'status', 'totalPrice'];
+    const missing = expected.filter(col => !(col in sample) && data.length > 0);
+    
+    res.json({ 
+      status: 'ok', 
+      connected: true, 
+      rowCount: data.length,
+      columnsFound: Object.keys(sample),
+      missingPotentialPII: missing.length > 0 ? missing : null,
+      sqlFix: `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "name" TEXT; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "email" TEXT; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "phone" TEXT; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "customRequests" TEXT; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "depositPaid" NUMERIC DEFAULT 0; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "totalPaid" NUMERIC DEFAULT 0;`
+    });
+  } catch (err: any) {
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+});
+
 api.post("/create-booking", async (req, res) => {
   console.log(`[${new Date().toISOString()}] POST /create-booking started`);
-  console.log(`[${new Date().toISOString()}] Payload Data:`, {
-    id: req.body.id,
-    name: req.body.name,
-    email: req.body.email,
-    uid: req.body.uid,
-    hasStartDate: !!req.body.startDate
-  });
   
+  // Clean payload - ensure no nulls for required fields
   const booking = { 
     ...req.body, 
     id: req.body.id || uuidv4(), 
     timestamp: req.body.timestamp || Date.now(), 
     status: "pending",
-    isRead: false
+    isRead: false,
+    name: req.body.name || 'Unknown Guest',
+    email: req.body.email || 'no-email@provided.com',
+    phone: req.body.phone || 'no-phone'
   };
+
+  console.log(`[${new Date().toISOString()}] Saving booking for ${booking.name} (${booking.id})`);
 
   const waiverUrl = `${process.env.APP_URL || 'https://www.helenallamas.com'}/sign/${booking.id}`;
   const adminEmail = process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com";
