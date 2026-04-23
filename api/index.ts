@@ -524,23 +524,26 @@ api.post("/update-booking", async (req, res) => {
 
     let booking: any = null;
 
-      if (supabase) {
+    if (supabase) {
+      try {
         if (action === 'delete') {
           const { error } = await supabase.from('bookings').delete().eq('id', id);
-          if (error) throw error;
+          if (error) console.error("Supabase Delete Error (logged only):", error);
         } else {
           // Fetch booking first to get email for notification
           const { data: existing } = await supabase.from('bookings').select('*').eq('id', id).single();
-          booking = existing;
+          if (existing) booking = existing;
           
           const { error } = await supabase.from('bookings').update(update).eq('id', id);
           if (error) {
-            console.error("Supabase Update Error:", error);
-            const sqlFix = `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "depositPaid" NUMERIC DEFAULT 0; ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "totalPaid" NUMERIC DEFAULT 0;`;
-            throw new Error(`${error.message}. Please run this SQL in your Supabase SQL Editor: ${sqlFix}`);
+            console.error("Supabase Update Error (logged only):", error);
+            // We don't throw here to allow local update to succeed
           }
         }
+      } catch (sbErr) {
+        console.error("Supabase sync exception (logged only):", sbErr);
       }
+    }
 
       // Always update local file as a baseline/fallback
       if (fs.existsSync(BOOKINGS_FILE)) {

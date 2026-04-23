@@ -368,24 +368,27 @@ const App: React.FC = () => {
           const apiData = await response.json();
           console.log(`[${new Date().toISOString()}] API provided ${apiData.length} records`);
           
-          if (apiData.length > 0) {
-            // Merge & Enrich: 
-            // 1. If Firestore has it, enrich it with PII from API
-            // 2. If Firestore doesn't have it, add it from API
-            const apiMap = new Map<string, any>(apiData.map((b: any) => [b.id, b]));
+          if (apiData || response.ok) {
+            const apiMap = new Map<string, any>((apiData || []).map((b: any) => [b.id, b]));
+            const apiIds = new Set(apiMap.keys());
             
-            // Enrich Firestore records
-            mergedBookings = mergedBookings.map(fsBooking => {
+            // Enrich & Filter Firestore records
+            // If we are an admin, the API is the source of truth for existence (to handle deletions)
+            const now = Date.now();
+            mergedBookings = mergedBookings.filter(fsBooking => {
+              if (!isAdmin) return true; // Clients see their own even if API is slow
+              const inApi = apiIds.has(fsBooking.id);
+              const isVeryNew = (now - Number(fsBooking.timestamp || 0)) < 30000; // 30 seconds grace for new bookings
+              return inApi || isVeryNew;
+            }).map(fsBooking => {
               const apiMatch = apiMap.get(fsBooking.id);
               if (apiMatch) {
-                // Return combination, preferring API for PII fields if they are missing
                 return { 
                   ...fsBooking, 
                   name: fsBooking.name || apiMatch.name,
                   email: fsBooking.email || apiMatch.email,
                   phone: fsBooking.phone || apiMatch.phone,
                   customRequests: fsBooking.customRequests || apiMatch.customRequests,
-                  // Also syncing status if Firestore was lagging
                   status: fsBooking.status === 'pending' ? apiMatch.status : fsBooking.status
                 } as BookingData;
               }
@@ -394,7 +397,7 @@ const App: React.FC = () => {
 
             // Add unique API records
             const seenIds = new Set(mergedBookings.map(b => b.id));
-            const uniqueApi = apiData.filter((b: any) => !seenIds.has(b.id));
+            const uniqueApi = (apiData || []).filter((b: any) => !seenIds.has(b.id));
             mergedBookings = [...mergedBookings, ...uniqueApi].sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
           }
         }
@@ -703,7 +706,7 @@ const App: React.FC = () => {
         action,
         status: action === 'confirm' ? 'confirmed' : (action === 'cancel' ? 'canceled' : undefined), 
         isRead: true,
-        branding, // Pass branding for invoice generation
+        branding: action === 'confirm' ? branding : undefined, // Only send branding when we need to generate an invoice email
         depositPaid,
         totalPaid
       };
@@ -718,26 +721,28 @@ const App: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`API failed: ${response.status}`);
+        throw new Error(`API failed with status ${response.status}`);
       }
       
-      // Sync with Firestore for customer view
-      try {
-        const bookingRef = doc(db, 'bookings', id);
-        if (action === 'delete') {
-          await deleteDoc(bookingRef);
-        } else {
-          const updateData: any = { isRead: true };
-          if (action === 'confirm') updateData.status = 'confirmed';
-          if (action === 'cancel') updateData.status = 'canceled';
-          if (action === 'updatePayment') {
-            updateData.depositPaid = depositPaid;
-            updateData.totalPaid = totalPaid;
+      // Sync with Firestore for customer view if authenticated as admin
+      if (auth.currentUser) {
+        try {
+          const bookingRef = doc(db, 'bookings', id);
+          if (action === 'delete') {
+            await deleteDoc(bookingRef);
+          } else {
+            const updateData: any = { isRead: true };
+            if (action === 'confirm') updateData.status = 'confirmed';
+            if (action === 'cancel') updateData.status = 'canceled';
+            if (action === 'updatePayment') {
+              updateData.depositPaid = depositPaid;
+              updateData.totalPaid = totalPaid;
+            }
+            await updateDoc(bookingRef, updateData);
           }
-          await updateDoc(bookingRef, updateData);
+        } catch (fsErr) {
+          console.warn("API succeeded but Firestore sync failed (likely security rules):", fsErr);
         }
-      } catch (fsErr) {
-        console.warn("API succeeded but Firestore sync failed (permissions?):", fsErr);
       }
       
       console.log(`${action} successful for ${id}`);
