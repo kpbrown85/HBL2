@@ -350,6 +350,11 @@ api.get("/db-health", async (req, res) => {
 api.post("/create-booking", async (req, res) => {
   console.log(`[${new Date().toISOString()}] POST /create-booking started`);
   
+  if (!req.body.name || !req.body.email) {
+    console.warn(`[WARNING] Booking request received with missing PII: name='${req.body.name}', email='${req.body.email}'`);
+    console.debug("Full body keys:", Object.keys(req.body));
+  }
+
   // Clean payload - ensure no nulls for required fields
   const booking = { 
     ...req.body, 
@@ -364,7 +369,12 @@ api.post("/create-booking", async (req, res) => {
 
   console.log(`[${new Date().toISOString()}] Saving booking for ${booking.name} (${booking.id})`);
 
-  const waiverUrl = `${process.env.APP_URL || 'https://www.helenallamas.com'}/sign/${booking.id}`;
+  // Detect base URL dynamically to avoid dead links
+  const protocol = req.headers['x-forwarded-proto'] || 'http';
+  const host = req.headers.host;
+  const baseUrl = process.env.APP_URL || `${protocol}://${host}`;
+  
+  const waiverUrl = `${baseUrl}/sign/${booking.id}`;
   const adminEmail = process.env.ADMIN_EMAIL || "kevin.paul.brown@gmail.com";
 
   let dbError = null;
@@ -450,7 +460,7 @@ api.post("/create-booking", async (req, res) => {
             <p><strong>Dates:</strong> ${booking.startDate} to ${booking.endDate}</p>
             <p><strong>Llamas:</strong> ${booking.numLlamas}</p>
             <p><strong>Database Status:</strong> ${dbError ? `FAILED (${dbError})` : 'Saved Successfully'}</p>
-            <a href="${process.env.APP_URL || 'https://www.helenallamas.com'}/admin" style="display: inline-block; background: #0B1D21; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 15px;">Open Admin Dashboard</a>
+            <a href="${baseUrl}/admin" style="display: inline-block; background: #0B1D21; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 15px;">Open Admin Dashboard</a>
           </div>
         `
       });
@@ -564,6 +574,11 @@ api.get("/get-bookings", async (req, res) => {
         });
 
         allBookings = Array.from(mergedBookingsMap.values()).sort((a: any, b: any) => b.timestamp - a.timestamp);
+        
+        const sample = allBookings[0];
+        if (sample) {
+          console.log(`[${new Date().toISOString()}] Serving ${allBookings.length} records. Latest: ${sample.id}, Name: ${sample.name || 'MISSING'}`);
+        }
       }
     }
   } catch (e: any) {

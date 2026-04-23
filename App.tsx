@@ -413,8 +413,10 @@ const App: React.FC = () => {
                   status: fsBooking.status === 'pending' ? apiMatch.status : fsBooking.status
                 } as BookingData;
                 
-                if (!fsBooking.name && apiMatch.name) {
-                  console.log(`[${new Date().toISOString()}] Enriched booking ${fsBooking.id} with name: ${apiMatch.name}`);
+                if (!fsBooking.name && !apiMatch.name) {
+                  console.warn(`[PII-MISSING] Booking ${fsBooking.id} has no name in Firestore OR API.`);
+                } else if (!fsBooking.name && apiMatch.name) {
+                  console.log(`[PII-FIXED] Enriched booking ${fsBooking.id} with name from API: ${apiMatch.name}`);
                 }
                 return enriched;
               }
