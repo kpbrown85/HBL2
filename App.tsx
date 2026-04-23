@@ -20,7 +20,7 @@ import { ExpeditionBlog } from './components/ExpeditionBlog';
 import { LlamaFactCarousel } from './components/LlamaFactCarousel';
 import { HighCountryAIHub } from './components/AIServices';
 import { generateWelcomeSlogan, generateBackdrop, getHighCountryAdvice, getQuickAdvice } from './services/geminiService';
-import { auth, db, googleProvider, signInWithPopup, signOut, onSnapshot, collection, query, where, orderBy, limit, doc, setDoc, handleFirestoreError, OperationType } from './firebase';
+import { auth, db, googleProvider, signInWithPopup, signOut, onSnapshot, collection, query, where, orderBy, limit, doc, setDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType } from './firebase';
 import { User as FirebaseUser } from 'firebase/auth';
 import { GalleryImage, Llama, BookingData, ShopItem } from './types';
 import { 
@@ -648,6 +648,25 @@ const App: React.FC = () => {
           errorMessage += `: ${String(text).substring(0, 100)}`;
         }
         throw new Error(errorMessage);
+      }
+      
+      // Sync with Firestore for customer view
+      const bookingRef = doc(db, 'bookings', id);
+      try {
+        if (action === 'delete') {
+          await deleteDoc(bookingRef);
+        } else {
+          const updateData: any = { isRead: true };
+          if (action === 'confirm') updateData.status = 'confirmed';
+          if (action === 'cancel') updateData.status = 'canceled';
+          if (action === 'updatePayment') {
+            updateData.depositPaid = depositPaid;
+            updateData.totalPaid = totalPaid;
+          }
+          await updateDoc(bookingRef, updateData);
+        }
+      } catch (fsErr) {
+        console.warn("API succeeded but Firestore sync failed:", fsErr);
       }
       
       console.log(`${action} successful for ${id}`);

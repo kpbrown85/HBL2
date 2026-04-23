@@ -325,8 +325,8 @@ api.post("/sign-waiver", async (req, res) => {
 api.post("/create-booking", async (req, res) => {
   const booking = { 
     ...req.body, 
-    id: uuidv4(), 
-    timestamp: Date.now(), 
+    id: req.body.id || uuidv4(), 
+    timestamp: req.body.timestamp || Date.now(), 
     status: "pending",
     isRead: false
   };
@@ -341,6 +341,7 @@ api.post("/create-booking", async (req, res) => {
     if (supabase) {
       const { error } = await supabase.from('bookings').insert([{
         id: booking.id,
+        uid: booking.uid || 'guest',
         name: booking.name,
         email: booking.email,
         phone: booking.phone,

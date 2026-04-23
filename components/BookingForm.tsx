@@ -316,10 +316,29 @@ export const BookingForm: React.FC<BookingFormProps> = ({ isClinicOnly = false }
     };
 
     try {
+      // 1. Save to Firestore for real-time updates and user "My Treks" view
       // Save public part
       await setDoc(bookingRef, newBooking);
       // Save private part (PII)
       await setDoc(privateRef, privateDetails);
+      
+      // 2. Call backend API for email notifications and admin dashboard sync
+      const apiResponse = await fetch(`${window.location.origin}/api/create-booking`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData, // Includes name, email, phone, customRequests
+          id: bookingId,
+          uid: auth.currentUser?.uid || 'guest',
+          estimate: estimate,
+          totalPrice: estimate,
+          timestamp: newBooking.timestamp
+        })
+      });
+
+      if (!apiResponse.ok) {
+        console.warn("Backend API sync failed, but Firestore save succeeded.");
+      }
       
       const savedBooking = { id: bookingId, ...newBooking };
       const existing = JSON.parse(localStorage.getItem('hbl_bookings') || '[]');
