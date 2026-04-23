@@ -20,13 +20,19 @@ service cloud.firestore {
     // Document ID: bookingId
     // Fields:
     //   - uid: string (required, immutable) - The ID of the user who made the booking.
-    //   - trekName: string (required) - The name of the trek booked.
     //   - startDate: string (required, format: date) - The start date of the trek.
     //   - endDate: string (required, format: date) - The end date of the trek.
     //   - numLlamas: number (required) - Number of llamas.
-    //   - status: string (required, enum: ['pending', 'confirmed', 'cancelled']) - The status of the booking.
+    //   - status: string (required, enum: ['pending', 'confirmed', 'cancelled', 'canceled']) - The status of the booking.
     //   - totalPrice: number (optional) - The total price.
     //   - createdAt: string (required, format: date-time) - The timestamp when the booking was created.
+    //   - timestamp: number (required) - Milliseconds timestamp.
+    //   - bookingType: string - 'expedition' or 'clinic'.
+    //   - trailerNeeded: bool
+    //   - isFirstTimer: bool
+    //   - addons: list
+    //   - customOutfitting: bool
+    //   - isRead: bool
     //
     // Collection: bookings/{bookingId}/private/details
     // Document ID: details
@@ -92,21 +98,29 @@ service cloud.firestore {
     }
 
     function isValidBooking(data) {
-      return hasOnlyAllowedFields(['uid', 'trekName', 'startDate', 'endDate', 'numLlamas', 'status', 'totalPrice', 'createdAt', 'timestamp', 'bookingType', 'trailerNeeded', 'isFirstTimer', 'addons', 'customOutfitting', 'isRead']) &&
+      return hasOnlyAllowedFields(['uid', 'startDate', 'endDate', 'numLlamas', 'status', 'totalPrice', 'createdAt', 'timestamp', 'bookingType', 'trailerNeeded', 'isFirstTimer', 'addons', 'customOutfitting', 'isRead']) &&
              data.uid is string && data.uid.size() > 0 &&
-             data.trekName is string && data.trekName.size() > 0 && data.trekName.size() < 100 &&
-             data.startDate is string && data.startDate.size() > 0 &&
-             data.endDate is string && data.endDate.size() > 0 &&
-             data.numLlamas is number && data.numLlamas >= 0 &&
-             data.status in ['pending', 'confirmed', 'cancelled'] &&
-             isValidDateString(data.createdAt);
+             data.startDate is string &&
+             data.endDate is string &&
+             data.numLlamas is number &&
+             data.status in ['pending', 'confirmed', 'cancelled', 'canceled'] &&
+             isValidDateString(data.createdAt) &&
+             data.timestamp is number &&
+             data.bookingType in ['expedition', 'clinic'] &&
+             data.trailerNeeded is bool &&
+             data.isFirstTimer is bool &&
+             data.addons is list &&
+             data.customOutfitting is bool &&
+             (!('totalPrice' in data) || data.totalPrice is number || data.totalPrice == null) &&
+             (!('isRead' in data) || data.isRead is bool);
     }
 
     function isValidBookingPrivate(data) {
       return hasOnlyAllowedFields(['name', 'email', 'phone', 'customRequests']) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.email is string && isValidEmail(data.email) &&
-             data.phone is string && data.phone.size() > 0 && data.phone.size() < 20;
+             data.phone is string && data.phone.size() > 0 && data.phone.size() < 20 &&
+             (!('customRequests' in data) || data.customRequests is string);
     }
 
     function isValidTripReport(data) {
