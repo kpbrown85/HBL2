@@ -20,7 +20,7 @@ import { ExpeditionBlog } from './components/ExpeditionBlog';
 import { LlamaFactCarousel } from './components/LlamaFactCarousel';
 import { HighCountryAIHub } from './components/AIServices';
 import { generateWelcomeSlogan, generateBackdrop, getHighCountryAdvice, getQuickAdvice } from './services/geminiService';
-import { auth, db, googleProvider, signInWithPopup, signOut, onSnapshot, collection, query, where, orderBy, limit, doc, setDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType } from './firebase';
+import { auth, db, googleProvider, signInWithPopup, signOut, onSnapshot, collection, query, where, orderBy, limit, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType } from './firebase';
 import { User as FirebaseUser } from 'firebase/auth';
 import { GalleryImage, Llama, BookingData, ShopItem } from './types';
 import { 
@@ -320,41 +320,75 @@ const App: React.FC = () => {
 
   const loadLogs = async () => {
     const logsUrl = `${window.location.origin}/api/get-bookings`;
-    console.log(`[${new Date().toISOString()}] Fetching logs from: ${logsUrl}`);
+    console.log(`[${new Date().toISOString()}] Refreshing logs...`);
+    
     try {
-      const response = await fetch(logsUrl);
-      const contentType = response.headers.get("content-type");
-      
-      if (response.ok && contentType && contentType.includes("application/json")) {
-        try {
-          const data = await response.json();
-          console.log(`[${new Date().toISOString()}] Logs received:`, data);
-          setBookings(data);
-          localStorage.setItem('hbl_bookings', JSON.stringify(data));
-          setApiError(null);
-        } catch (jsonErr: any) {
-          console.error("JSON Parse Error in loadLogs:", jsonErr);
-          setApiError(`Invalid JSON response: ${jsonErr.message}`);
-        }
-      } else {
-        const text = await response.text();
-        let errorDetail = `HTTP ${response.status}`;
+      let mergedBookings: BookingData[] = [];
+
+      // 1. PRIMARY SOURCE: Firestore (Real-time and persistent)
+      try {
+        const q = query(collection(db, 'bookings'), orderBy('timestamp', 'desc'), limit(100));
+        const snapshot = await getDocs(q);
         
-        if (contentType && contentType.includes("application/json")) {
-          try {
-            const errData = JSON.parse(text);
-            errorDetail = errData.message || errData.error || errorDetail;
-          } catch (e) {}
-        }
+        const fsBookings = await Promise.all(snapshot.docs.map(async (docSnap) => {
+          const publicData = docSnap.data();
+          let combined = { id: docSnap.id, ...publicData } as BookingData;
+          
+          // If admin, fetch PII from subcollection
+          if (isAdmin) {
+            try {
+              const detailsRef = doc(db, 'bookings', docSnap.id, 'private', 'details');
+              const detailsSnap = await getDoc(detailsRef);
+              if (detailsSnap.exists()) {
+                const details = detailsSnap.data();
+                combined = { ...combined, ...details } as BookingData;
+              }
+            } catch (detailErr) {
+              console.warn(`Failed to fetch details for ${docSnap.id}:`, detailErr);
+            }
+          }
+          return combined;
+        }));
         
-        console.error(`[${new Date().toISOString()}] Logs fetch failed: ${response.status}`, text.substring(0, 100));
-        setApiError(errorDetail);
-        setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
+        if (fsBookings.length > 0) {
+          console.log(`[${new Date().toISOString()}] Firestore provided ${fsBookings.length} records`);
+          mergedBookings = fsBookings;
+        }
+      } catch (fsErr) {
+        console.error("Firestore fetch failed in loadLogs:", fsErr);
       }
-    } catch (error: any) {
-      console.error(`[${new Date().toISOString()}] Logs fetch error:`, error);
-      setApiError(error.message || 'Connection failed');
-      setBookings(JSON.parse(localStorage.getItem('hbl_bookings') || '[]'));
+
+      // 2. SECONDARY SOURCE: API (Supabase/Local File)
+      // We merge in case any bookings were ONLY saved to the API (though our form saves to both)
+      try {
+        const response = await fetch(logsUrl);
+        const contentType = response.headers.get("content-type");
+        
+        if (response.ok && contentType && contentType.includes("application/json")) {
+          const apiData = await response.json();
+          console.log(`[${new Date().toISOString()}] API provided ${apiData.length} records`);
+          
+          if (apiData.length > 0) {
+            // Merge: Prefer Firestore records if they exist, otherwise use API
+            const seenIds = new Set(mergedBookings.map(b => b.id));
+            const uniqueApi = apiData.filter((b: any) => !seenIds.has(b.id));
+            mergedBookings = [...mergedBookings, ...uniqueApi].sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
+          }
+        }
+      } catch (apiErr) {
+        console.warn("API fallback failed in loadLogs:", apiErr);
+      }
+
+      if (mergedBookings.length > 0) {
+        setBookings(mergedBookings);
+        localStorage.setItem('hbl_bookings', JSON.stringify(mergedBookings));
+        setApiError(null);
+      } else {
+        setBookings([]);
+      }
+    } catch (err: any) {
+      console.error("Critical error in loadLogs:", err);
+      setApiError(`Refresh failed: ${err.message}`);
     }
   };
 
